@@ -56,3 +56,7 @@ svg text{fill:var(--mute);font:10px Inter}details summary{cursor:pointer;color:v
 
 .three{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:14px}.three .card{margin:0}.three .num{font-size:22px}
 @media(max-width:860px){.three{grid-template-columns:1fr}nav{overflow-x:auto}nav button{flex:0 0 68px}}
+
+.gate{position:fixed;inset:0;z-index:50;background:linear-gradient(135deg,#E3E5F6,#F2EDF8);display:grid;place-items:center;padding:20px;overflow:auto}
+.gate .box{background:#fff;border-radius:22px;padding:28px;width:100%;max-width:380px}
+.gate .box h1{font-size:26px}.gate .err{color:var(--rose);font-size:13px;min-height:22px;margin:8px 0}

@@ -5,7 +5,7 @@ const today=()=>iso(Date.now()),uid=()=>Math.random().toString(36).slice(2,9);
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 let S=JSON.parse(localStorage.getItem(KEY)||localStorage.getItem('daylog.v1')||'null')||{days:{},tasks:[],tx:[]};
 S.days=S.days||{};S.tasks=S.tasks||[];S.tx=S.tx||[];S.goals=Object.assign({steps:8000,active:60,budget:1000},S.goals);S.cur=S.cur||'₹';
-const save=()=>localStorage.setItem(KEY,JSON.stringify(S));
+const save=()=>{S.mod=Date.now();localStorage.setItem(KEY,JSON.stringify(S));window.Cloud&&Cloud.queue()};
 const peek=d=>S.days[d]||{steps:0,extra:0};
 const day=d=>{const x=S.days[d]||(S.days[d]={steps:0,extra:0});if(x.extra===undefined)x.extra=x.active||0;return x};
 const act=d=>Math.round(peek(d).steps/100)+(peek(d).extra||0); // ~100 steps/min brisk cadence
@@ -139,7 +139,7 @@ review(){const m=month,ds=dm(m),g=S.goals,tx=S.tx.filter(x=>x.date.startsWith(m)
  <div class="card"><h2>Feedback</h2>${F.length?F.map(x=>`<p class="ins">${x}</p>`).join(''):'<div class="empty">Log some days and this fills in.</div>'}</div>
  ${bad.length?`<div class="card"><h2>Unwanted spends</h2>${bad.slice(0,6).map(x=>`<div class="item"><div class="t"><b>${esc(x.cat||'Other')}</b><div class="mute">${x.date}${x.note?' · '+esc(x.note):''}</div></div><b class="dr">${money(x.amount)}</b></div>`).join('')}</div>`:''}
  <div class="card"><h2>Task progress and time taken</h2>${tk.length?[...tk].sort((a,b)=>secs(b)-secs(a)).slice(0,20).map(t=>`<div class="item"><div class="t"><b>${esc(t.title)}</b></div><span class="pill ${st(t)[1]}">${st(t)[0]}</span><span class="mute" style="min-width:64px;text-align:right">${fmt(secs(t))}</span></div>`).join(''):'<div class="empty">No tasks this month.</div>'}</div>`},
-settings(){return `<div class="card"><h2>Goals and data</h2><div class="form"><input id="gs" type="number" value="${S.goals.steps}" aria-label="Step goal"><input id="ga" type="number" value="${S.goals.active}" aria-label="Active minutes goal"><input id="gb" type="number" value="${S.goals.budget}" aria-label="Daily budget"><input id="cu" value="${esc(S.cur)}" style="max-width:70px" aria-label="Currency"><button id="sg">Save</button></div>
+settings(){return `${window.Cloud?Cloud.card():''}<div class="card"><h2>Goals and data</h2><div class="form"><input id="gs" type="number" value="${S.goals.steps}" aria-label="Step goal"><input id="ga" type="number" value="${S.goals.active}" aria-label="Active minutes goal"><input id="gb" type="number" value="${S.goals.budget}" aria-label="Daily budget"><input id="cu" value="${esc(S.cur)}" style="max-width:70px" aria-label="Currency"><button id="sg">Save</button></div>
  <div class="form"><button class="g" id="ex">Export backup</button><button class="g" id="im">Import backup</button><input type="file" id="fi" accept=".json" hidden></div></div>`}};
 
 function render(){$('#view').innerHTML=views[tab]();$('#dl').textContent=new Date().toLocaleDateString(undefined,{weekday:'short',day:'numeric',month:'short'});
@@ -174,7 +174,7 @@ document.addEventListener('change',e=>{const t=e.target;
  if(t.dataset.done){const k=S.tasks.find(x=>x.id===t.dataset.done);if(k.run){k.spent=secs(k);k.run=null}k.done=t.checked;k.date=today();save();render()}
  if(t.id==='sp'){const q=PRE[t.value];$('#sn').value=q[0];$('#scy').value=q[1]}
  if(t.id==='mo'){month=t.value||month;render()}
- if(t.id==='fi'){const r=new FileReader();r.onload=()=>{try{const d=JSON.parse(r.result);if(!d.days||!d.tasks||!d.tx)throw 0;S=d;save();location.reload()}catch{alert('Not a valid Daylog backup.')}};r.readAsText(t.files[0])}});
+ if(t.id==='fi'){const r=new FileReader();r.onload=()=>{try{const d=JSON.parse(r.result);if(!d.days||!d.tasks||!d.tx)throw 0;d.uid=S.uid;S=d;save();location.reload()}catch{alert('Not a valid Daylog backup.')}};r.readAsText(t.files[0])}});
 setInterval(()=>{S.tasks.filter(t=>t.run).forEach(t=>{const e=$(`[data-tm="${t.id}"]`);if(e)e.textContent=fmt(secs(t))+' · focusing';const f=$('#fz');if(f)f.textContent=fmt(secs(t))})},1000);
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)syncHealth()});setInterval(syncHealth,3e5);
 if(S.motion&&!NATIVE&&!(window.DeviceMotionEvent&&DeviceMotionEvent.requestPermission)){addEventListener('devicemotion',onMotion);motionOn=true}

@@ -1,0 +1,2 @@
+// Paste your Supabase values here (Project Settings > API). The anon key is meant to be public; your data is protected by the row rules in supabase.sql.
+window.DAYLOG_CLOUD={url:'https://mtlvmyictwnyglxcojiv.supabase.co/rest/v1/',key:'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im10bHZteWljdHdueWdseGNvaml2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIyNTE5MjgsImV4cCI6MjEwNzgyNzkyOH0.jCg6fz5V96ca3VuhOKIHb-k9dEqPkH82oP0JUvOLmOU'};
