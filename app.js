@@ -10,13 +10,11 @@ const peek=d=>S.days[d]||{steps:0,extra:0};
 const day=d=>{const x=S.days[d]||(S.days[d]={steps:0,extra:0});if(x.extra===undefined)x.extra=x.active||0;return x};
 const act=d=>Math.round(peek(d).steps/100)+(peek(d).extra||0); // ~100 steps/min brisk cadence
 const money=n=>S.cur+Number(n).toLocaleString(undefined,{maximumFractionDigits:2});
-const secs=t=>t.spent+(t.run?(Date.now()-t.run)/1e3:0);
-const fmt=s=>{s=Math.round(s);const h=Math.floor(s/3600),m=Math.floor(s%3600/60);return h?`${h}h ${m}m`:m?`${m}m ${s%60}s`:`${s}s`};
 const last=n=>[...Array(n)].map((_,i)=>{const d=new Date();d.setDate(d.getDate()-(n-1-i));return iso(d)});
 const spend=d=>S.tx.filter(t=>t.date===d&&t.type==='dr').reduce((a,t)=>a+t.amount,0);
-const hasData=d=>peek(d).steps||S.tx.some(t=>t.date===d)||S.tasks.some(t=>t.date===d);
-const score=d=>{const g=S.goals,all=S.tasks.filter(t=>t.date===d),dn=all.filter(t=>t.done).length,sp=spend(d);
- return Math.round(40*Math.min(1,peek(d).steps/g.steps)+25*Math.min(1,act(d)/g.active)+25*(all.length?dn/all.length:.5)+10*(sp<=g.budget?1:g.budget/sp))};
+const hasData=d=>peek(d).steps||S.tx.some(t=>t.date===d);
+const score=d=>{const g=S.goals,sp=spend(d);
+ return Math.round((40*Math.min(1,peek(d).steps/g.steps)+25*Math.min(1,act(d)/g.active)+10*(sp<=g.budget?1:g.budget/sp))/75*100)};
 let tab='today',month=today().slice(0,7);
 const CATS=[['Giving and church',['Tithes and offerings','Church and ministry','Missions and charity','Bible and Christian books']],['Everyday',['Food and dining','Groceries','Transport','Fuel','Shopping','Bills and utilities','Recharge and subscriptions','Rent','Home and maintenance','Personal care','Family and kids','Pets']],['Health and learning',['Health and medical','Medicines','Insurance','Education','Books and stationery']],['Lifestyle',['Entertainment','Travel','Gifts','Eating out','Hobbies']],['Money',['EMI and loans','Investment','Savings','Taxes','Fees and charges']],['Income',['Salary','Business income','Interest','Refund','Gift received','Other income']],['Other',['Other']]];
 const catSel=()=>`<select id="ca" aria-label="Category"><option value="">Choose category</option>${CATS.map(([g,l])=>`<optgroup label="${g}">${l.map(c=>`<option>${c}</option>`).join('')}</optgroup>`).join('')}</select>`;
@@ -51,13 +49,12 @@ function bars(vals,labels){const w=320,h=110,mx=Math.max(...vals,1),bw=w/vals.le
 const PAL=['#5B52D9','#F08A4B','#43B05C','#E8B40C','#B9B5F0'];
 function donut(en,tot){const R=60,C=2*Math.PI*R;let o=0;return `<svg viewBox="0 0 160 160" width="170"><g transform="rotate(-90 80 80)"><circle cx="80" cy="80" r="${R}" fill="none" stroke="var(--track)" stroke-width="18"/>${en.map(([k,v],i)=>{const l=v/tot*C,c=`<circle cx="80" cy="80" r="${R}" fill="none" stroke="${PAL[i%5]}" stroke-width="18" stroke-dasharray="${Math.max(l-2,1)} ${C}" stroke-dashoffset="${-o}"/>`;o+=l;return c}).join('')}</g><text x="80" y="76" text-anchor="middle">Spent this month</text><text x="80" y="96" text-anchor="middle" style="font-size:15px;font-weight:600;fill:var(--ink)">${money(tot)}</text></svg>`}
 const pill=(c,p,inv)=>{if(!p)return'';const r=Math.round((c-p)/p*100),up=r>=0;return `<span class="pill ${up!==!!inv?'up':'dn'}">${up?'+':''}${r}%</span>`};
-const stat=(cls,ic,l,v,pl,ft)=>`<div class="card stat"><div class="row"><div class="chipic ${cls}"><svg viewBox="0 0 24 24">${P[ic]}</svg></div><span class="lbl2">${l}</span></div><div class="val2">${v} ${pl}</div><div class="foot2">${ft}</div></div>`;
+const stat=(cls,ic,l,v,pl,ft,x)=>`<div class="card stat"${x?' style="grid-column:1/-1"':''}><div class="row"><div class="chipic ${cls}"><svg viewBox="0 0 24 24">${P[ic]}</svg></div><span class="lbl2">${l}</span></div><div class="val2">${v} ${pl}</div><div class="foot2">${ft}</div></div>`;
 function heat(){return `<svg viewBox="0 0 288 168" width="100%">${last(84).map((d,i)=>`<rect x="${Math.floor(i/7)*24}" y="${i%7*24}" width="20" height="20" rx="5" fill="var(--acc)" opacity="${hasData(d)?.18+score(d)/100*.82:.06}"><title>${d}: ${hasData(d)?score(d):'no data'}</title></rect>`).join('')}</svg>`}
 function streak(){let n=0,d=new Date();if(peek(today()).steps<S.goals.steps)d.setDate(d.getDate()-1);while(peek(iso(d)).steps>=S.goals.steps){n++;d.setDate(d.getDate()-1)}return n}
 function insights(){const w=last(7),p=last(14).slice(0,7),sum=a=>a.reduce((s,d)=>s+peek(d).steps,0),a=sum(w)/7,b=sum(p)/7,o=[];
  if(a)o.push(`You average ${Math.round(a).toLocaleString()} steps a day this week${b?`, ${a>=b?'up':'down'} ${Math.abs(Math.round((a-b)/b*100))}% on last week`:''}.`);
  const best=Object.keys(S.days).sort((x,y)=>peek(y).steps-peek(x).steps)[0];if(best&&peek(best).steps)o.push(`Your best day was ${best}, with ${peek(best).steps.toLocaleString()} steps.`);
- const f=S.tasks.filter(t=>w.includes(t.date)).reduce((s,t)=>s+t.spent,0);if(f)o.push(`You focused for ${fmt(f)} this week.`);
  const sp=w.reduce((s,d)=>s+spend(d),0);if(sp)o.push(`You spent ${money(sp)} this week, ${money(sp/7)} a day.`);
  return o.length?o.map(x=>`<p class="ins">${x}</p>`).join(''):'<div class="empty">Insights appear after a few days of data.</div>'}
 
@@ -66,7 +63,7 @@ const P={step:'<path d="M3 17l6-6 4 4 8-8M15 7h6v6"/>',act:'<path d="M13 2L4 14h
 const tile=(i,l,v,sub,pc)=>`<div class="tile"><div class="ico"><svg viewBox="0 0 24 24">${P[i]}</svg></div><div class="lbl">${l}</div><div class="val">${v}</div><div class="sub">${sub}</div>${pc==null?'':`<div class="bar"><i style="width:${Math.min(100,pc)}%;${pc>100&&i==='wal'?'background:var(--rose)':''}"></i></div>`}</div>`;
 
 // ---------- subscriptions, budget plan, monthly review ----------
-S.subs=S.subs||[];S.budgets=S.budgets||{};
+S.subs=S.subs||[];
 const CYC={monthly:'Monthly',yearly:'Yearly',28:'Every 28 days',56:'Every 56 days',84:'Every 84 days',365:'Every 365 days'};
 const PRE={jio:['Jio recharge','28','Recharge'],airtel:['Airtel recharge','28','Recharge'],netflix:['Netflix','monthly','Subscriptions'],prime:['Amazon Prime','yearly','Subscriptions'],fibre:['JioFiber','monthly','Bills'],other:['','monthly','Subscriptions']};
 const PRN={jio:'Jio recharge',airtel:'Airtel recharge',netflix:'Netflix',prime:'Amazon Prime',fibre:'JioFiber',other:'Other'};
@@ -115,24 +112,20 @@ const grp=(tx,f)=>{const o={};tx.forEach(x=>{const k=f(x);if(k)o[k]=(o[k]||0)+x.
 const walletSummary=tx=>{const d=tx.filter(x=>x.type==='dr'),m=grp(d,x=>x.pm),a=grp(d.filter(x=>x.ch==='online'),x=>x.app),L=r=>r.map(([k,v])=>`<div class="row" style="padding:5px 0"><span>${esc(k)}</span><b>${money(v)}</b></div>`).join('');
  return m.length||a.length?`<div class="grid" style="margin-bottom:14px"><div class="card"><h2>By card or method</h2>${L(m)||'<div class="mute">No data</div>'}</div><div class="card"><h2>Online, by app</h2>${L(a)||'<div class="mute">No online spends</div>'}</div></div>`:''};
 const views={
-today(){const t=today(),y=last(2)[0],d=peek(t),g=S.goals,tt=S.tasks.filter(x=>x.date===t),dn=tt.filter(x=>x.done).length,sp=spend(t),runT=S.tasks.find(x=>x.run),w=last(7),
+today(){const t=today(),y=last(2)[0],d=peek(t),g=S.goals,sp=spend(t),w=last(7),
  mo=S.tx.filter(x=>x.date.startsWith(t.slice(0,7))&&x.type==='dr'),c={};mo.forEach(x=>c[x.cat||'Other']=(c[x.cat||'Other']||0)+x.amount);
  const en=Object.entries(c).sort((a,b)=>b[1]-a[1]).slice(0,5),tot=mo.reduce((a,x)=>a+x.amount,0),rec=[...S.tx].sort((a,b)=>b.date.localeCompare(a.date)).slice(0,6);
  return `<div class="dash">${bibleCard()}<div class="stats">
- ${stat('c1','step','Steps',d.steps.toLocaleString(),pill(d.steps,peek(y).steps),`${Math.round(Math.min(100,d.steps/g.steps*100))}% of ${g.steps.toLocaleString()} goal<div style="margin-top:8px">${status()}</div>`)}
+ ${stat('c1','step','Steps',d.steps.toLocaleString(),pill(d.steps,peek(y).steps),`${Math.round(Math.min(100,d.steps/g.steps*100))}% of ${g.steps.toLocaleString()} goal · ${streak()}-day streak<div style="margin-top:8px">${status()}</div>`)}
  ${stat('c2','act','Active time',`${Math.floor(act(t)/60)}h ${act(t)%60}m`,pill(act(t),act(y)),`Goal ${g.active} min a day`)}
- ${stat('c4','wal','Spent today',money(sp),pill(sp,spend(y),1),`Budget ${money(g.budget)} a day`)}
- ${stat('c3','chk','Tasks',`${dn} of ${tt.length}`,'',`${streak()}-day step streak`)}</div>
+ ${stat('c4','wal','Spent today',money(sp),pill(sp,spend(y),1),`Budget ${money(g.budget)} a day`,1)}</div>
  <div class="card quick"><h2>Quick add</h2><div class="form"><select id="ty"><option value="dr">Expense</option><option value="cr">Credit</option></select><input id="am" type="number" min="0" step="0.01" placeholder="Amount">${catSel()}<input id="no" placeholder="Note"><select id="tg" aria-label="Worth it"><option value="useful">Useful spend</option><option value="unwanted">Unwanted spend</option></select><select id="pm" aria-label="Paid with">${S.pm.map(p=>`<option>${esc(p)}</option>`).join("")}</select><select id="ch" aria-label="Where"><option value="offline">Offline</option><option value="online">Online</option></select><input id="ap" placeholder="App or site used (e.g. Amazon)" hidden></div><button class="send" id="addtx">Add entry</button>
  <details style="margin-top:14px"><summary>Adjust steps or minutes</summary><div class="form"><input id="st" type="number" min="0" placeholder="Steps"><button class="g" id="addst">Add steps</button><button class="g" id="setst">Set total</button><input id="ac" type="number" min="0" placeholder="Minutes"><button class="g" id="addac">Add minutes</button></div></details></div>
- ${schedCard()}${dueCard()}${revBanner()}${runT?`<div class="card live span3"><div class="lbl">In focus · ${esc(runT.title)}</div><div class="num" id="fz">${fmt(secs(runT))}</div></div>`:''}
+ ${schedCard()}${dueCard()}${revBanner()}
  <div class="card span2"><h2>Steps overview</h2>${bars(w.map(x=>peek(x).steps),w.map(x=>new Date(x+'T12:00').toLocaleDateString(undefined,{weekday:'short'})))}</div>
  <div class="card"><h2>Spending overview</h2>${tot?`<div style="text-align:center">${donut(en,tot)}</div><div class="legend">${en.map(([k,v],i)=>`<span><i style="background:${PAL[i%5]}"></i>${esc(k)}</span>`).join('')}</div>`:'<div class="empty">No expenses this month.</div>'}</div>
  <div class="card span3"><h2>Recent transactions</h2><div class="tbl"><div class="r h"><span>Transaction</span><span>Date</span><span>Category</span><span>Amount</span><span>Type</span></div>
  ${rec.length?rec.map((x,i)=>`<div class="r"><div class="n"><div class="chipic c${i%4+1}" style="font-weight:600">${esc((x.note||x.cat||'?')[0].toUpperCase())}</div><span>${esc(x.note||x.cat||'Entry')}</span></div><span class="mute">${x.date}</span><span>${esc(x.cat||'Other')}</span><b>${money(x.amount)}</b><span><span class="pill ${x.type}">${x.type==='cr'?'Credit':'Expense'}</span></span></div>`).join(''):'<div class="empty">Add your first entry with Quick add.</div>'}</div></div></div>`},
-focus(){const tt=S.tasks.filter(t=>t.date===today()||!t.done);
- return `<div class="form"><input id="tt" placeholder="What will you focus on?" aria-label="Task"><button id="addt">Add task</button></div>
- <div class="card">${tt.length?tt.map(t=>`<div class="item ${t.done?'done':''}"><input type="checkbox" data-done="${t.id}" ${t.done?'checked':''} style="width:20px;height:20px;accent-color:var(--acc)" aria-label="Done"><div class="t"><b>${esc(t.title)}</b><div class="mute ${t.run?'run':''}" data-tm="${t.id}">${fmt(secs(t))}${t.run?' · focusing':''}</div></div>${t.done?'':`<button class="s ${t.run?'':'g'}" data-tog="${t.id}">${t.run?'Pause':'Start'}</button>`}<button class="s g" data-del="${t.id}" aria-label="Delete">✕</button></div>`).join(''):'<div class="empty">No tasks yet. Add one and start its timer.</div>'}</div>`},
 wallet(){const tx=S.tx.filter(t=>t.date.startsWith(month)).sort((a,b)=>b.date.localeCompare(a.date)),pages=Math.max(1,Math.ceil(tx.length/WPS)),pg=wpage=Math.min(Math.max(1,wpage),pages),pageTx=tx.slice((pg-1)*WPS,pg*WPS),cr=tx.filter(t=>t.type==='cr').reduce((a,t)=>a+t.amount,0),dr=tx.filter(t=>t.type==='dr').reduce((a,t)=>a+t.amount,0),c={};
  tx.filter(t=>t.type==='dr').forEach(t=>c[t.cat||'Other']=(c[t.cat||'Other']||0)+t.amount);
  return `<div class="form"><select id="ty"><option value="dr">Expense</option><option value="cr">Credit</option></select><input id="am" type="number" min="0" step="0.01" placeholder="Amount">${catSel()}<input id="no" placeholder="Note"><select id="tg" aria-label="Worth it"><option value="useful">Useful spend</option><option value="unwanted">Unwanted spend</option></select><select id="pm" aria-label="Paid with">${S.pm.map(p=>`<option>${esc(p)}</option>`).join("")}</select><select id="ch" aria-label="Where"><option value="offline">Offline</option><option value="online">Online</option></select><input id="ap" placeholder="App or site used (e.g. Amazon)" hidden><button id="addtx">Save</button></div>
@@ -143,32 +136,20 @@ subs(){const tot=S.subs.filter(s=>!s.noTx).reduce((a,s)=>a+perMonth(s),0),L=[...
  return `<div class="card"><h2>Add a recharge or subscription</h2><div class="form"><select id="sp" aria-label="Type"><option value="" selected>Choose type</option>${Object.entries(PRN).map(([k,v])=>`<option value="${k}">${v}</option>`).join('')}</select><input id="sn" placeholder="Name"><input id="sa" type="number" min="0" placeholder="Amount"><select id="scy" aria-label="Repeats">${Object.entries(CYC).map(([k,v])=>`<option value="${k}" ${k==='28'?'selected':''}>${v}</option>`).join('')}</select><input id="sd" type="date" value="${today()}" aria-label="Next due date"><select id="sr" aria-label="Remind"><option value="1">Remind 1 day before</option><option value="3" selected>Remind 3 days before</option><option value="7">Remind 7 days before</option></select><select id="stg" aria-label="Worth it"><option value="useful">Useful</option><option value="unwanted">Unwanted</option></select><button id="addsub">Add</button></div>
  <p class="mute" style="margin:0"></p>${'Notification' in window&&Notification.permission==='default'?'<button class="g s" id="notif" style="margin-top:10px">Allow notifications</button>':''}</div>
  <div class="card"><div class="row"><h2 style="margin:0">Your plans</h2><span class="mute">about ${money(tot)} a month</span></div>${L.length?L.map((s,i)=>`<div class="item"><div class="chipic c${i%4+1}" style="font-weight:600">${esc(s.name[0]||'?').toUpperCase()}</div><div class="t"><b>${esc(s.name)}</b><div class="mute">${money(s.amount)} · ${s.left?s.left+' left · ':''}${CYC[s.cycle]} · next ${s.next}${s.tag==='unwanted'?' · Unwanted':''}</div></div><span class="pill ${daysLeft(s.next)<=s.remind?'dn':'up'}">${dueTxt(s)}</span><button class="s" data-pay="${s.id}">Paid</button><button class="s g" data-delsub="${s.id}" aria-label="Delete">✕</button></div>`).join(''):'<div class="empty">No plans yet. </div>'}</div>`},
-budget(){const m=month,B=S.budgets[m]||{total:0,cats:{}},tx=S.tx.filter(x=>x.date.startsWith(m)&&x.type==='dr'),by={};tx.forEach(x=>{const k=x.cat||'Other';by[k]=(by[k]||0)+x.amount});
- const sp=tx.reduce((a,x)=>a+x.amount,0),sub=S.subs.filter(s=>!s.noTx).reduce((a,s)=>a+perMonth(s),0),names=[...new Set([...Object.keys(B.cats),...Object.keys(by)])];
- return `<div class="card"><div class="row"><h2 style="margin:0">Monthly plan</h2>${monthPick()}</div><div class="form" style="margin-top:14px"><input id="bt" type="number" min="0" value="${B.total||''}" placeholder="Total budget for the month"><button id="savebt">Save plan</button></div>
- <div class="row"><b>${money(sp)} spent</b><span class="mute">${B.total?`${money(Math.abs(B.total-sp))} ${sp>B.total?'over':'left'} of ${money(B.total)}`:'Set a total to track it'}</span></div>${meter(sp,B.total)}
- <p class="mute" style="margin:12px 0 0">${B.total?` (${Math.round(sub/B.total*100)}% of your plan)`:''}.</p></div>
- <div class="card"><h2>Category limits</h2><div class="form"><input id="bc" placeholder="Category, e.g. Food"><input id="ba" type="number" min="0" placeholder="Limit"><button id="addcat">Set limit</button></div>
- ${names.length?names.map(k=>`<div class="item" style="display:block"><div class="row"><b>${esc(k)}</b><span class="mute">${money(by[k]||0)}${B.cats[k]?' of '+money(B.cats[k]):''}</span>${B.cats[k]!==undefined?`<button class="s g" data-delcat="${esc(k)}" aria-label="Remove">✕</button>`:''}</div>${B.cats[k]?meter(by[k]||0,B.cats[k]):''}</div>`).join(''):'<div class="empty">Set a limit to start planning.</div>'}</div>`},
 review(){const m=month,ds=dm(m),g=S.goals,tx=S.tx.filter(x=>x.date.startsWith(m)),dr=tx.filter(x=>x.type==='dr'),cr=tx.filter(x=>x.type==='cr').reduce((a,x)=>a+x.amount,0),
- sp=dr.reduce((a,x)=>a+x.amount,0),bad=dr.filter(x=>x.tag==='unwanted').sort((a,b)=>b.amount-a.amount),badT=bad.reduce((a,x)=>a+x.amount,0),B=S.budgets[m]||{},
+ sp=dr.reduce((a,x)=>a+x.amount,0),bad=dr.filter(x=>x.tag==='unwanted').sort((a,b)=>b.amount-a.amount),badT=bad.reduce((a,x)=>a+x.amount,0),
  data=ds.filter(hasData),avg=data.length?data.reduce((a,d)=>a+peek(d).steps,0)/data.length:0,hit=ds.filter(d=>peek(d).steps>=g.steps).length,lazy=data.filter(d=>peek(d).steps<g.steps*.3).length,ratio=data.length?hit/data.length:0,
- tk=S.tasks.filter(t=>t.date.startsWith(m)),dn=tk.filter(t=>t.done),ft=tk.reduce((a,t)=>a+secs(t),0),
  vS=!sp?'No spending':badT/sp<.1?'Disciplined':badT/sp<.25?'Fair':'Needs attention',vA=!data.length?'No data':ratio>=.6?'Active':ratio>=.3?'Balanced':'Lazy',
- vT=!tk.length?'No tasks':dn.length/tk.length>=.8?'Productive':dn.length/tk.length>=.5?'Steady':'Behind',F=[],uw=S.subs.filter(s=>s.tag==='unwanted'&&!s.noTx);
+ F=[],uw=S.subs.filter(s=>s.tag==='unwanted'&&!s.noTx);
  if(sp)F.push(`You spent ${money(sp)}: ${money(sp-badT)} (${Math.round((sp-badT)/sp*100)}%) was useful and ${money(badT)} was unwanted.`);
  if(bad.length)F.push(`Your biggest unwanted spend was ${esc(bad[0].cat||'Other')} at ${money(bad[0].amount)} on ${bad[0].date}. Cutting that alone saves it every month.`);
  if(uw.length)F.push(`You pay about ${money(uw.reduce((a,s)=>a+perMonth(s),0))} a month for plans marked unwanted (${uw.map(s=>esc(s.name)).join(', ')}). Consider cancelling.`);
- if(B.total)F.push(sp>B.total?`You went ${money(sp-B.total)} over your ${money(B.total)} plan.`:`You stayed ${money(B.total-sp)} under your ${money(B.total)} plan.`);
  if(cr)F.push(cr>=sp?`You saved ${money(cr-sp)} against your credits.`:`You spent ${money(sp-cr)} more than you received.`);
  if(data.length)F.push(`You averaged ${Math.round(avg).toLocaleString()} steps a day and met your goal on ${hit} of ${data.length} tracked days. ${lazy} days were very low (under 30% of goal).`);
- if(tk.length)F.push(`You finished ${dn.length} of ${tk.length} tasks and focused for ${fmt(ft)}${dn.length?`, about ${fmt(dn.reduce((a,t)=>a+secs(t),0)/dn.length)} per completed task`:''}.`);
- const st=t=>t.done?['Done','up']:secs(t)>0?['In progress','']:['Not started','dn'];
  return `<div class="card row"><h2 style="margin:0">Monthly review</h2>${monthPick()}</div>
- <div class="three"><div class="card"><div class="lbl">Spending</div><div class="num">${vS}</div><div class="sub">${money(badT)} unwanted of ${money(sp)}</div></div><div class="card"><div class="lbl">Activity</div><div class="num">${vA}</div><div class="sub">${Math.round(avg).toLocaleString()} steps a day, ${act_(ds)} active min</div></div><div class="card"><div class="lbl">Productivity</div><div class="num">${vT}</div><div class="sub">${dn.length}/${tk.length} tasks, ${fmt(ft)} focused</div></div></div>
+ <div class="three" style="grid-template-columns:repeat(auto-fit,minmax(200px,1fr))"><div class="card"><div class="lbl">Spending</div><div class="num">${vS}</div><div class="sub">${money(badT)} unwanted of ${money(sp)}</div></div><div class="card"><div class="lbl">Activity</div><div class="num">${vA}</div><div class="sub">${Math.round(avg).toLocaleString()} steps a day, ${act_(ds)} active min</div></div></div>
  <div class="card"><h2>Feedback</h2>${F.length?F.map(x=>`<p class="ins">${x}</p>`).join(''):'<div class="empty">Log some days and this fills in.</div>'}</div>
- ${bad.length?`<div class="card"><h2>Unwanted spends</h2>${bad.slice(0,6).map(x=>`<div class="item"><div class="t"><b>${esc(x.cat||'Other')}</b><div class="mute">${x.date}${x.note?' · '+esc(x.note):''}</div></div><b class="dr">${money(x.amount)}</b></div>`).join('')}</div>`:''}
- <div class="card"><h2>Task progress and time taken</h2>${tk.length?[...tk].sort((a,b)=>secs(b)-secs(a)).slice(0,20).map(t=>`<div class="item"><div class="t"><b>${esc(t.title)}</b></div><span class="pill ${st(t)[1]}">${st(t)[0]}</span><span class="mute" style="min-width:64px;text-align:right">${fmt(secs(t))}</span></div>`).join(''):'<div class="empty">No tasks this month.</div>'}</div>`},
+ ${bad.length?`<div class="card"><h2>Unwanted spends</h2>${bad.slice(0,6).map(x=>`<div class="item"><div class="t"><b>${esc(x.cat||'Other')}</b><div class="mute">${x.date}${x.note?' · '+esc(x.note):''}</div></div><b class="dr">${money(x.amount)}</b></div>`).join('')}</div>`:''}`},
 bible(){const b=bstat(),st=bstats(),[fb,fc]=fromGi(R.f),[tb,tc]=fromGi(R.t),n=R.t-R.f+1,pct=st.ch/TOT*100,
  G=S.bgoals.map(g=>{const t=g.t-g.f+1;let d=0;for(let i=g.f;i<=g.t;i++){const[x,y]=fromGi(i);if(rcv(x,y)>g.base)d++}const left=t-d,dl=Math.max(1,dayDiff(today(),g.end)+1),span=Math.max(1,dayDiff(g.start,g.end)+1),el=Math.min(span,Math.max(0,dayDiff(g.start,today())+1));return{g,t,d,left,pd:Math.ceil(left/dl),diff:d-t*el/span}}),
  opt=(sel)=>BIB.map((x,i)=>`<option value="${i}" ${i===sel?'selected':''}>${x[0]}</option>`).join(''),chs=(bk,sel)=>[...Array(BIB[bk][1])].map((_,i)=>`<option value="${i+1}" ${i===sel?'selected':''}>${i+1}</option>`).join(''),
@@ -216,9 +197,6 @@ document.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)r
  if(id==='addst')day(today()).steps+=Math.round(num('#st'));
  else if(id==='setst')day(today()).steps=Math.round(num('#st'));
  else if(id==='addac')day(today()).extra+=Math.round(num('#ac'));
- else if(id==='addt'){const v=$('#tt').value.trim();if(!v)return;S.tasks.push({id:uid(),title:v,date:today(),done:false,spent:0,run:null})}
- else if(D.tog){const t=S.tasks.find(x=>x.id===D.tog);if(t.run){t.spent=secs(t);t.run=null}else{S.tasks.forEach(x=>{if(x.run){x.spent=secs(x);x.run=null}});t.run=Date.now()}}
- else if(D.del)S.tasks=S.tasks.filter(x=>x.id!==D.del);
  else if(id==='addtx'){const a=num('#am');if(!a)return;const ty=$('#ty').value,pm=$('#pm')?$('#pm').value:'',on=ty==='dr'&&$('#ch')&&$('#ch').value==='online',cat=$('#ca').value.trim(),note=$('#no').value.trim(),tag=$('#tg')?$('#tg').value:'useful';
   wpage=1;S.tx.push({id:uid(),date:today(),type:ty,amount:a,cat,note,tag,pm,ch:on?'online':'offline',app:on?($('#ap').value.trim()||'Online'):''});
   if(ty==='dr'&&/later|in 3/i.test(pm)){const n=/in 3/i.test(pm)?3:1;S.subs.push({id:uid(),name:(note||cat||'Purchase')+(n>1?' (Pay in 3)':' (Pay later)'),amount:Math.round(a/n*100)/100,cycle:'monthly',next:nextDue(today(),'monthly'),remind:3,tag,cat:'Pay later dues',left:n,noTx:true})}}
@@ -230,9 +208,6 @@ document.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)r
  else if(D.pay){const x=S.subs.find(v=>v.id===D.pay);if(x.noTx){x.left--;if(x.left<=0)S.subs=S.subs.filter(v=>v!==x);else x.next=nextDue(x.next,'monthly')}else{S.tx.push({id:uid(),date:today(),type:'dr',amount:x.amount,cat:x.cat||'Subscriptions',note:x.name,tag:x.tag||'useful'});x.next=nextDue(isNaN(x.cycle)?x.next:today(),x.cycle)}}
  else if(D.delsub)S.subs=S.subs.filter(v=>v.id!==D.delsub);
  else if(id==='notif'){Notification.requestPermission().then(render);return}
- else if(id==='savebt'){(S.budgets[month]=S.budgets[month]||{total:0,cats:{}}).total=num('#bt')}
- else if(id==='addcat'){const k=$('#bc').value.trim();if(!k||!num('#ba'))return;(S.budgets[month]=S.budgets[month]||{total:0,cats:{}}).cats[k]=num('#ba')}
- else if(D.delcat)delete S.budgets[month].cats[D.delcat];
  else if(D.rev){month=D.rev;tab='review';return render(true)}
  else if(id==='addev'){const v=$('#ev').value.trim();if(!v)return;S.events.push({id:uid(),date:selD,time:$('#et').value,title:v,done:false})}
  else if(D.delev)S.events=S.events.filter(v=>v.id!==D.delev);
@@ -258,14 +233,12 @@ document.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)r
  else return;
  save();render()});
 document.addEventListener('change',e=>{const t=e.target;
- if(t.dataset.done){const k=S.tasks.find(x=>x.id===t.dataset.done);if(k.run){k.spent=secs(k);k.run=null}k.done=t.checked;k.date=today();save();render()}
  if(t.id==='sp'){const q=PRE[t.value];if(q){$('#sn').value=q[0];$('#scy').value=q[1]}}
  if(t.dataset.doneev){const x=S.events.find(v=>v.id===t.dataset.doneev);x.done=t.checked;save();render()}
  if(['fb','fc','tb','tc'].includes(t.id)){const fb=+$('#fb').value,tb=+$('#tb').value,f=t.id==='fb'?1:Math.min(+$('#fc').value,BIB[fb][1]),e=t.id==='tb'?BIB[tb][1]:Math.min(+$('#tc').value,BIB[tb][1]);R.f=gi(fb,f);R.t=Math.max(R.f,gi(tb,e));R.step=0;render()}
  if(t.id==='ty'||t.id==='ch'){const cr=$('#ty').value==='cr';$('#ch').hidden=cr;$('#tg').hidden=cr;$('#ap').hidden=cr||$('#ch').value!=='online'}
  if(t.id==='mo'){month=t.value||month;wpage=1;render()}
  if(t.id==='fi'){const r=new FileReader();r.onload=()=>{try{const d=JSON.parse(r.result);if(!d.days||!d.tasks||!d.tx)throw 0;d.uid=S.uid;S=d;save();location.reload()}catch{alert('Not a valid Daylog backup.')}};r.readAsText(t.files[0])}});
-setInterval(()=>{S.tasks.filter(t=>t.run).forEach(t=>{const e=$(`[data-tm="${t.id}"]`);if(e)e.textContent=fmt(secs(t))+' · focusing';const f=$('#fz');if(f)f.textContent=fmt(secs(t))})},1000);
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)syncHealth()});setInterval(syncHealth,3e5);
 if(S.motion&&!NATIVE&&!(window.DeviceMotionEvent&&DeviceMotionEvent.requestPermission)){addEventListener('devicemotion',onMotion);motionOn=true}
 render(true);syncHealth();checkDue();
