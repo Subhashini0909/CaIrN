@@ -1,63 +1,27 @@
-// Daylog v2: automatic steps (Health Connect / HealthKit on the mobile app, motion sensor in the browser)
+// Daylog v2
 const KEY='daylog.v2',$=(s,r=document)=>r.querySelector(s);
 const iso=d=>{const x=new Date(d);return new Date(x-x.getTimezoneOffset()*6e4).toISOString().slice(0,10)};
 const today=()=>iso(Date.now()),uid=()=>Math.random().toString(36).slice(2,9);
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 let S=JSON.parse(localStorage.getItem(KEY)||localStorage.getItem('daylog.v1')||'null')||{days:{},tasks:[],tx:[]};
-S.days=S.days||{};S.tasks=S.tasks||[];S.tx=S.tx||[];S.goals=Object.assign({steps:8000,active:60,budget:1000},S.goals);S.cur=S.cur||'₹';S.events=S.events||[];S.bible=S.bible||null;S.rc=S.rc||{};S.bgoals=S.bgoals||[];S.pm=S.pm||['ICICI RuPay Credit','ICICI Amazon Pay Credit','SBI Debit','ICICI Debit','Pay Later','Pay in 3','UPI','Cash'];
+S.days=S.days||{};S.tasks=S.tasks||[];S.tx=S.tx||[];S.goals=Object.assign({budget:1000},S.goals);S.cur=S.cur||'₹';S.events=S.events||[];S.bible=S.bible||null;S.rc=S.rc||{};S.bgoals=S.bgoals||[];S.pm=S.pm||['ICICI RuPay Credit','ICICI Amazon Pay Credit','SBI Debit','ICICI Debit','Pay Later','Pay in 3','UPI','Cash'];
 const save=()=>{S.mod=Date.now();localStorage.setItem(KEY,JSON.stringify(S));window.Cloud&&Cloud.queue()};
-const peek=d=>S.days[d]||{steps:0,extra:0};
-const day=d=>{const x=S.days[d]||(S.days[d]={steps:0,extra:0});if(x.extra===undefined)x.extra=x.active||0;return x};
-const act=d=>Math.round(peek(d).steps/100)+(peek(d).extra||0); // ~100 steps/min brisk cadence
 const money=n=>S.cur+Number(n).toLocaleString(undefined,{maximumFractionDigits:2});
 const last=n=>[...Array(n)].map((_,i)=>{const d=new Date();d.setDate(d.getDate()-(n-1-i));return iso(d)});
 const spend=d=>S.tx.filter(t=>t.date===d&&t.type==='dr').reduce((a,t)=>a+t.amount,0);
-const hasData=d=>peek(d).steps||S.tx.some(t=>t.date===d);
-const score=d=>{const g=S.goals,sp=spend(d);
- return Math.round((40*Math.min(1,peek(d).steps/g.steps)+25*Math.min(1,act(d)/g.active)+10*(sp<=g.budget?1:g.budget/sp))/75*100)};
 let tab='today',month=today().slice(0,7);
 const CATS=[['Giving and church',['Tithes and offerings','Church and ministry','Missions and charity','Bible and Christian books']],['Everyday',['Food and dining','Groceries','Transport','Fuel','Shopping','Bills and utilities','Recharge and subscriptions','Rent','Home and maintenance','Personal care','Family and kids','Pets']],['Health and learning',['Health and medical','Medicines','Insurance','Education','Books and stationery']],['Lifestyle',['Entertainment','Travel','Gifts','Eating out','Hobbies']],['Money',['EMI and loans','Investment','Savings','Taxes','Fees and charges']],['Income',['Salary','Business income','Interest','Refund','Gift received','Other income']],['Other',['Other']]];
 const catSel=()=>`<select id="ca" aria-label="Category"><option value="">Choose category</option>${CATS.map(([g,l])=>`<optgroup label="${g}">${l.map(c=>`<option>${c}</option>`).join('')}</optgroup>`).join('')}</select>`;
 let wpage=1;const WPS=10;
 
 
-// ---------- automatic step tracking ----------
 const NATIVE=!!(window.Capacitor&&Capacitor.isNativePlatform&&Capacitor.isNativePlatform());
-let motionOn=false,lastStep=0,run=0,tmr;
-function addSteps(n){day(today()).steps+=n;clearTimeout(tmr);tmr=setTimeout(()=>{save();const ae=document.activeElement;if(tab==='today'&&!(ae&&/INPUT|SELECT/.test(ae.tagName)))render()},1500)}
-let G=9.8,F=0,up=false;
-function onMotion(e){const a=e.accelerationIncludingGravity;if(!a)return;const m=Math.hypot(a.x||0,a.y||0,a.z||0),t=Date.now(),thr=S.thr||1.1;
- G=G*.98+m*.02;F=F*.6+(m-G)*.4; // slow gravity baseline, smoothed motion signal
- if(!up&&F>thr&&t-lastStep>300){up=true;run=t-lastStep>1500?1:run+1;lastStep=t;if(run===4)addSteps(4);else if(run>4)addSteps(1)} // 4 steps in a row start a walk
- else if(up&&F<thr*.4)up=false}
-async function enableMotion(){try{
- if(window.DeviceMotionEvent&&DeviceMotionEvent.requestPermission&&await DeviceMotionEvent.requestPermission()!=='granted')return alert('Motion permission was denied.');
- if(!motionOn){addEventListener('devicemotion',onMotion);motionOn=true}S.motion=1;try{await navigator.wakeLock.request('screen')}catch{}save();render()}catch{alert('Motion sensor is not available on this device.')}}
-async function syncHealth(){if(!NATIVE)return;try{const H=Capacitor.registerPlugin('Health');
- await H.requestAuthorization({read:['steps']});
- const s=new Date();s.setDate(s.getDate()-13);s.setHours(0,0,0,0);
- const r=await H.queryAggregated({dataType:'steps',startDate:s.toISOString(),endDate:new Date().toISOString(),bucket:'day',aggregation:'sum'});
- (r.samples||[]).forEach(x=>{const d=day(iso(x.startDate));d.steps=Math.max(d.steps,Math.round(x.value||0))});
- S.sync=Date.now();S.err='';save()}catch(e){S.err=String(e.message||e)}if(tab==='today')render()}
-const status=()=>NATIVE?(S.sync?`<span class="chip ok">Synced from Health · ${new Date(S.sync).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}</span>`:`<span class="chip">${esc(S.err||'Syncing with Health…')}</span>`)
- :motionOn?'<span class="chip ok">Counting steps live · keep this page open</span>':'<button class="g s" id="motion" style="margin-top:6px">Enable automatic step counting</button>';
 
 // ---------- visuals ----------
-function ring(v,g){const R=88,C=2*Math.PI*R;return `<svg viewBox="0 0 200 200" class="ring" role="img" aria-label="${v} of ${g} steps"><circle cx="100" cy="100" r="${R}" class="trk"/><circle cx="100" cy="100" r="${R}" class="val" stroke-dasharray="${C*Math.min(1,v/g)} ${C}" transform="rotate(-90 100 100)"/><text x="100" y="106" text-anchor="middle" class="rn">${v.toLocaleString()}</text><text x="100" y="128" text-anchor="middle" class="rl">of ${g.toLocaleString()} steps</text></svg>`}
-function bars(vals,labels){const w=320,h=110,mx=Math.max(...vals,1),bw=w/vals.length,n=vals.length;
- return `<svg viewBox="0 0 ${w} ${h+18}" width="100%">${vals.map((v,i)=>{const x=i*bw+bw*.18,ww=bw*.64,bh=Math.max(v?6:0,v/mx*h);return `<rect x="${x}" y="0" width="${ww}" height="${h}" rx="9" fill="var(--track)"/><rect x="${x}" y="${h-bh}" width="${ww}" height="${bh}" rx="9" fill="var(--acc)" opacity="${i===n-1?1:.4}"/><text x="${i*bw+bw/2}" y="${h+14}" text-anchor="middle">${labels[i]}</text>`}).join('')}</svg>`}
 const PAL=['#5B52D9','#F08A4B','#43B05C','#E8B40C','#B9B5F0'];
 function donut(en,tot){const R=60,C=2*Math.PI*R;let o=0;return `<svg viewBox="0 0 160 160" width="170"><g transform="rotate(-90 80 80)"><circle cx="80" cy="80" r="${R}" fill="none" stroke="var(--track)" stroke-width="18"/>${en.map(([k,v],i)=>{const l=v/tot*C,c=`<circle cx="80" cy="80" r="${R}" fill="none" stroke="${PAL[i%5]}" stroke-width="18" stroke-dasharray="${Math.max(l-2,1)} ${C}" stroke-dashoffset="${-o}"/>`;o+=l;return c}).join('')}</g><text x="80" y="76" text-anchor="middle">Spent this month</text><text x="80" y="96" text-anchor="middle" style="font-size:15px;font-weight:600;fill:var(--ink)">${money(tot)}</text></svg>`}
 const pill=(c,p,inv)=>{if(!p)return'';const r=Math.round((c-p)/p*100),up=r>=0;return `<span class="pill ${up!==!!inv?'up':'dn'}">${up?'+':''}${r}%</span>`};
 const stat=(cls,ic,l,v,pl,ft,x)=>`<div class="card stat"${x?' style="grid-column:1/-1"':''}><div class="row"><div class="chipic ${cls}"><svg viewBox="0 0 24 24">${P[ic]}</svg></div><span class="lbl2">${l}</span></div><div class="val2">${v} ${pl}</div><div class="foot2">${ft}</div></div>`;
-function heat(){return `<svg viewBox="0 0 288 168" width="100%">${last(84).map((d,i)=>`<rect x="${Math.floor(i/7)*24}" y="${i%7*24}" width="20" height="20" rx="5" fill="var(--acc)" opacity="${hasData(d)?.18+score(d)/100*.82:.06}"><title>${d}: ${hasData(d)?score(d):'no data'}</title></rect>`).join('')}</svg>`}
-function streak(){let n=0,d=new Date();if(peek(today()).steps<S.goals.steps)d.setDate(d.getDate()-1);while(peek(iso(d)).steps>=S.goals.steps){n++;d.setDate(d.getDate()-1)}return n}
-function insights(){const w=last(7),p=last(14).slice(0,7),sum=a=>a.reduce((s,d)=>s+peek(d).steps,0),a=sum(w)/7,b=sum(p)/7,o=[];
- if(a)o.push(`You average ${Math.round(a).toLocaleString()} steps a day this week${b?`, ${a>=b?'up':'down'} ${Math.abs(Math.round((a-b)/b*100))}% on last week`:''}.`);
- const best=Object.keys(S.days).sort((x,y)=>peek(y).steps-peek(x).steps)[0];if(best&&peek(best).steps)o.push(`Your best day was ${best}, with ${peek(best).steps.toLocaleString()} steps.`);
- const sp=w.reduce((s,d)=>s+spend(d),0);if(sp)o.push(`You spent ${money(sp)} this week, ${money(sp/7)} a day.`);
- return o.length?o.map(x=>`<p class="ins">${x}</p>`).join(''):'<div class="empty">Insights appear after a few days of data.</div>'}
-
 // ---------- views ----------
 const P={step:'<path d="M3 17l6-6 4 4 8-8M15 7h6v6"/>',act:'<path d="M13 2L4 14h7l-1 8 9-12h-7z"/>',wal:'<rect x="3" y="6" width="18" height="14" rx="3"/><path d="M3 10h18M16 15h2"/>',chk:'<circle cx="12" cy="12" r="9"/><path d="M8 12l3 3 5-6"/>',fire:'<path d="M12 3c1 4 5 5 5 10a5 5 0 0 1-10 0c0-2 1-3 2-4 0 2 1 3 2 3 0-3-1-6 1-9z"/>'};
 const tile=(i,l,v,sub,pc)=>`<div class="tile"><div class="ico"><svg viewBox="0 0 24 24">${P[i]}</svg></div><div class="lbl">${l}</div><div class="val">${v}</div><div class="sub">${sub}</div>${pc==null?'':`<div class="bar"><i style="width:${Math.min(100,pc)}%;${pc>100&&i==='wal'?'background:var(--rose)':''}"></i></div>`}</div>`;
@@ -71,8 +35,6 @@ const daysLeft=d=>Math.round((new Date(d+'T00:00')-new Date(today()+'T00:00'))/8
 const dueTxt=s=>{const n=daysLeft(s.next);return n<0?`overdue by ${-n} day${-n>1?'s':''}`:n===0?'due today':`due in ${n} day${n>1?'s':''}`};
 const nextDue=(d,cy)=>{const x=new Date(d+'T12:00');if(cy==='monthly')x.setMonth(x.getMonth()+1);else if(cy==='yearly')x.setFullYear(x.getFullYear()+1);else x.setDate(x.getDate()+Number(cy));return iso(x)};
 const perMonth=s=>s.cycle==='monthly'?s.amount:s.cycle==='yearly'?s.amount/12:s.amount*30/Number(s.cycle);
-const dm=m=>{const[y,mo]=m.split('-').map(Number),o=[];for(let i=1;i<=new Date(y,mo,0).getDate();i++){const d=`${m}-${String(i).padStart(2,'0')}`;if(d<=today())o.push(d)}return o};
-const act_=ds=>ds.reduce((a,d)=>a+act(d),0);
 const dueCard=()=>{const L=S.subs.filter(s=>daysLeft(s.next)<=s.remind).sort((a,b)=>a.next.localeCompare(b.next));
  return L.length?`<div class="card span3"><h2>Upcoming renewals</h2>${L.map(s=>`<div class="item"><div class="t"><b>${esc(s.name)}</b><div class="mute">${money(s.amount)} · ${dueTxt(s)}</div></div><button class="s" data-pay="${s.id}">Mark paid</button></div>`).join('')}</div>`:''};
 const revBanner=()=>{const n=new Date(),dom=n.getDate(),dim=new Date(n.getFullYear(),n.getMonth()+1,0).getDate();if(dom<dim-2&&dom>3)return'';
@@ -112,18 +74,14 @@ const grp=(tx,f)=>{const o={};tx.forEach(x=>{const k=f(x);if(k)o[k]=(o[k]||0)+x.
 const walletSummary=tx=>{const d=tx.filter(x=>x.type==='dr'),m=grp(d,x=>x.pm),a=grp(d.filter(x=>x.ch==='online'),x=>x.app),L=r=>r.map(([k,v])=>`<div class="row" style="padding:5px 0"><span>${esc(k)}</span><b>${money(v)}</b></div>`).join('');
  return m.length||a.length?`<div class="grid" style="margin-bottom:14px"><div class="card"><h2>By card or method</h2>${L(m)||'<div class="mute">No data</div>'}</div><div class="card"><h2>Online, by app</h2>${L(a)||'<div class="mute">No online spends</div>'}</div></div>`:''};
 const views={
-today(){const t=today(),y=last(2)[0],d=peek(t),g=S.goals,sp=spend(t),w=last(7),
+today(){const t=today(),y=last(2)[0],g=S.goals,sp=spend(t),
  mo=S.tx.filter(x=>x.date.startsWith(t.slice(0,7))&&x.type==='dr'),c={};mo.forEach(x=>c[x.cat||'Other']=(c[x.cat||'Other']||0)+x.amount);
  const en=Object.entries(c).sort((a,b)=>b[1]-a[1]).slice(0,5),tot=mo.reduce((a,x)=>a+x.amount,0),rec=[...S.tx].sort((a,b)=>b.date.localeCompare(a.date)).slice(0,6);
  return `<div class="dash">${bibleCard()}<div class="stats">
- ${stat('c1','step','Steps',d.steps.toLocaleString(),pill(d.steps,peek(y).steps),`${Math.round(Math.min(100,d.steps/g.steps*100))}% of ${g.steps.toLocaleString()} goal · ${streak()}-day streak<div style="margin-top:8px">${status()}</div>`)}
- ${stat('c2','act','Active time',`${Math.floor(act(t)/60)}h ${act(t)%60}m`,pill(act(t),act(y)),`Goal ${g.active} min a day`)}
  ${stat('c4','wal','Spent today',money(sp),pill(sp,spend(y),1),`Budget ${money(g.budget)} a day`,1)}</div>
- <div class="card quick"><h2>Quick add</h2><div class="form"><select id="ty"><option value="dr">Expense</option><option value="cr">Credit</option></select><input id="am" type="number" min="0" step="0.01" placeholder="Amount">${catSel()}<input id="no" placeholder="Note"><select id="tg" aria-label="Worth it"><option value="useful">Useful spend</option><option value="unwanted">Unwanted spend</option></select><select id="pm" aria-label="Paid with">${S.pm.map(p=>`<option>${esc(p)}</option>`).join("")}</select><select id="ch" aria-label="Where"><option value="offline">Offline</option><option value="online">Online</option></select><input id="ap" placeholder="App or site used (e.g. Amazon)" hidden></div><button class="send" id="addtx">Add entry</button>
- <details style="margin-top:14px"><summary>Adjust steps or minutes</summary><div class="form"><input id="st" type="number" min="0" placeholder="Steps"><button class="g" id="addst">Add steps</button><button class="g" id="setst">Set total</button><input id="ac" type="number" min="0" placeholder="Minutes"><button class="g" id="addac">Add minutes</button></div></details></div>
+ <div class="card quick"><h2>Quick add</h2><div class="form"><select id="ty"><option value="dr">Expense</option><option value="cr">Credit</option></select><input id="am" type="number" min="0" step="0.01" placeholder="Amount">${catSel()}<input id="no" placeholder="Note"><select id="tg" aria-label="Worth it"><option value="useful">Useful spend</option><option value="unwanted">Unwanted spend</option></select><select id="pm" aria-label="Paid with">${S.pm.map(p=>`<option>${esc(p)}</option>`).join("")}</select><select id="ch" aria-label="Where"><option value="offline">Offline</option><option value="online">Online</option></select><input id="ap" placeholder="App or site used (e.g. Amazon)" hidden></div><button class="send" id="addtx">Add entry</button></div>
  ${schedCard()}${dueCard()}${revBanner()}
- <div class="card span2"><h2>Steps overview</h2>${bars(w.map(x=>peek(x).steps),w.map(x=>new Date(x+'T12:00').toLocaleDateString(undefined,{weekday:'short'})))}</div>
- <div class="card"><h2>Spending overview</h2>${tot?`<div style="text-align:center">${donut(en,tot)}</div><div class="legend">${en.map(([k,v],i)=>`<span><i style="background:${PAL[i%5]}"></i>${esc(k)}</span>`).join('')}</div>`:'<div class="empty">No expenses this month.</div>'}</div>
+ <div class="card span3"><h2>Spending overview</h2>${tot?`<div style="display:flex;gap:28px;align-items:center;justify-content:center;flex-wrap:wrap"><div>${donut(en,tot)}</div><div class="legend">${en.map(([k,v],i)=>`<span><i style="background:${PAL[i%5]}"></i>${esc(k)}</span>`).join('')}</div></div>`:'<div class="empty">No expenses this month.</div>'}</div>
  <div class="card span3"><h2>Recent transactions</h2><div class="tbl"><div class="r h"><span>Transaction</span><span>Date</span><span>Category</span><span>Amount</span><span>Type</span></div>
  ${rec.length?rec.map((x,i)=>`<div class="r"><div class="n"><div class="chipic c${i%4+1}" style="font-weight:600">${esc((x.note||x.cat||'?')[0].toUpperCase())}</div><span>${esc(x.note||x.cat||'Entry')}</span></div><span class="mute">${x.date}</span><span>${esc(x.cat||'Other')}</span><b>${money(x.amount)}</b><span><span class="pill ${x.type}">${x.type==='cr'?'Credit':'Expense'}</span></span></div>`).join(''):'<div class="empty">Add your first entry with Quick add.</div>'}</div></div></div>`},
 wallet(){const tx=S.tx.filter(t=>t.date.startsWith(month)).sort((a,b)=>b.date.localeCompare(a.date)),pages=Math.max(1,Math.ceil(tx.length/WPS)),pg=wpage=Math.min(Math.max(1,wpage),pages),pageTx=tx.slice((pg-1)*WPS,pg*WPS),cr=tx.filter(t=>t.type==='cr').reduce((a,t)=>a+t.amount,0),dr=tx.filter(t=>t.type==='dr').reduce((a,t)=>a+t.amount,0),c={};
@@ -136,19 +94,17 @@ subs(){const tot=S.subs.filter(s=>!s.noTx).reduce((a,s)=>a+perMonth(s),0),L=[...
  return `<div class="card"><h2>Add a recharge or subscription</h2><div class="form"><select id="sp" aria-label="Type"><option value="" selected>Choose type</option>${Object.entries(PRN).map(([k,v])=>`<option value="${k}">${v}</option>`).join('')}</select><input id="sn" placeholder="Name"><input id="sa" type="number" min="0" placeholder="Amount"><select id="scy" aria-label="Repeats">${Object.entries(CYC).map(([k,v])=>`<option value="${k}" ${k==='28'?'selected':''}>${v}</option>`).join('')}</select><input id="sd" type="date" value="${today()}" aria-label="Next due date"><select id="sr" aria-label="Remind"><option value="1">Remind 1 day before</option><option value="3" selected>Remind 3 days before</option><option value="7">Remind 7 days before</option></select><select id="stg" aria-label="Worth it"><option value="useful">Useful</option><option value="unwanted">Unwanted</option></select><button id="addsub">Add</button></div>
  <p class="mute" style="margin:0"></p>${'Notification' in window&&Notification.permission==='default'?'<button class="g s" id="notif" style="margin-top:10px">Allow notifications</button>':''}</div>
  <div class="card"><div class="row"><h2 style="margin:0">Your plans</h2><span class="mute">about ${money(tot)} a month</span></div>${L.length?L.map((s,i)=>`<div class="item"><div class="chipic c${i%4+1}" style="font-weight:600">${esc(s.name[0]||'?').toUpperCase()}</div><div class="t"><b>${esc(s.name)}</b><div class="mute">${money(s.amount)} · ${s.left?s.left+' left · ':''}${CYC[s.cycle]} · next ${s.next}${s.tag==='unwanted'?' · Unwanted':''}</div></div><span class="pill ${daysLeft(s.next)<=s.remind?'dn':'up'}">${dueTxt(s)}</span><button class="s" data-pay="${s.id}">Paid</button><button class="s g" data-delsub="${s.id}" aria-label="Delete">✕</button></div>`).join(''):'<div class="empty">No plans yet. </div>'}</div>`},
-review(){const m=month,ds=dm(m),g=S.goals,tx=S.tx.filter(x=>x.date.startsWith(m)),dr=tx.filter(x=>x.type==='dr'),cr=tx.filter(x=>x.type==='cr').reduce((a,x)=>a+x.amount,0),
+review(){const m=month,tx=S.tx.filter(x=>x.date.startsWith(m)),dr=tx.filter(x=>x.type==='dr'),cr=tx.filter(x=>x.type==='cr').reduce((a,x)=>a+x.amount,0),
  sp=dr.reduce((a,x)=>a+x.amount,0),bad=dr.filter(x=>x.tag==='unwanted').sort((a,b)=>b.amount-a.amount),badT=bad.reduce((a,x)=>a+x.amount,0),
- data=ds.filter(hasData),avg=data.length?data.reduce((a,d)=>a+peek(d).steps,0)/data.length:0,hit=ds.filter(d=>peek(d).steps>=g.steps).length,lazy=data.filter(d=>peek(d).steps<g.steps*.3).length,ratio=data.length?hit/data.length:0,
- vS=!sp?'No spending':badT/sp<.1?'Disciplined':badT/sp<.25?'Fair':'Needs attention',vA=!data.length?'No data':ratio>=.6?'Active':ratio>=.3?'Balanced':'Lazy',
+ vS=!sp?'No spending':badT/sp<.1?'Disciplined':badT/sp<.25?'Fair':'Needs attention',
  F=[],uw=S.subs.filter(s=>s.tag==='unwanted'&&!s.noTx);
  if(sp)F.push(`You spent ${money(sp)}: ${money(sp-badT)} (${Math.round((sp-badT)/sp*100)}%) was useful and ${money(badT)} was unwanted.`);
  if(bad.length)F.push(`Your biggest unwanted spend was ${esc(bad[0].cat||'Other')} at ${money(bad[0].amount)} on ${bad[0].date}. Cutting that alone saves it every month.`);
  if(uw.length)F.push(`You pay about ${money(uw.reduce((a,s)=>a+perMonth(s),0))} a month for plans marked unwanted (${uw.map(s=>esc(s.name)).join(', ')}). Consider cancelling.`);
  if(cr)F.push(cr>=sp?`You saved ${money(cr-sp)} against your credits.`:`You spent ${money(sp-cr)} more than you received.`);
- if(data.length)F.push(`You averaged ${Math.round(avg).toLocaleString()} steps a day and met your goal on ${hit} of ${data.length} tracked days. ${lazy} days were very low (under 30% of goal).`);
  return `<div class="card row"><h2 style="margin:0">Monthly review</h2>${monthPick()}</div>
- <div class="three" style="grid-template-columns:repeat(auto-fit,minmax(200px,1fr))"><div class="card"><div class="lbl">Spending</div><div class="num">${vS}</div><div class="sub">${money(badT)} unwanted of ${money(sp)}</div></div><div class="card"><div class="lbl">Activity</div><div class="num">${vA}</div><div class="sub">${Math.round(avg).toLocaleString()} steps a day, ${act_(ds)} active min</div></div></div>
- <div class="card"><h2>Feedback</h2>${F.length?F.map(x=>`<p class="ins">${x}</p>`).join(''):'<div class="empty">Log some days and this fills in.</div>'}</div>
+ <div class="three" style="grid-template-columns:repeat(auto-fit,minmax(200px,1fr))"><div class="card"><div class="lbl">Spending</div><div class="num">${vS}</div><div class="sub">${money(badT)} unwanted of ${money(sp)}</div></div></div>
+ <div class="card"><h2>Feedback</h2>${F.length?F.map(x=>`<p class="ins">${x}</p>`).join(''):'<div class="empty">Add some spending and this fills in.</div>'}</div>
  ${bad.length?`<div class="card"><h2>Unwanted spends</h2>${bad.slice(0,6).map(x=>`<div class="item"><div class="t"><b>${esc(x.cat||'Other')}</b><div class="mute">${x.date}${x.note?' · '+esc(x.note):''}</div></div><b class="dr">${money(x.amount)}</b></div>`).join('')}</div>`:''}`},
 bible(){const b=bstat(),st=bstats(),[fb,fc]=fromGi(R.f),[tb,tc]=fromGi(R.t),n=R.t-R.f+1,pct=st.ch/TOT*100,
  G=S.bgoals.map(g=>{const t=g.t-g.f+1;let d=0;for(let i=g.f;i<=g.t;i++){const[x,y]=fromGi(i);if(rcv(x,y)>g.base)d++}const left=t-d,dl=Math.max(1,dayDiff(today(),g.end)+1),span=Math.max(1,dayDiff(g.start,g.end)+1),el=Math.min(span,Math.max(0,dayDiff(g.start,today())+1));return{g,t,d,left,pd:Math.ceil(left/dl),diff:d-t*el/span}}),
@@ -188,21 +144,16 @@ function animate(v,on){if(!on||(window.matchMedia&&matchMedia('(prefers-reduced-
  v.querySelectorAll('.card').forEach((e,i)=>e.style.setProperty('--i',Math.min(i,12)));v.querySelectorAll('.chap,.bk,.day').forEach((e,i)=>e.style.setProperty('--i',Math.min(i,40)));
  v.classList.add('enter');clearTimeout(animate.t);animate.t=setTimeout(()=>v.classList.remove('enter'),1500)}
 function render(anim){const v=$('#view');v.innerHTML=views[tab]();animate(v,anim);$('#dl').textContent=new Date().toLocaleDateString(undefined,{weekday:'short',day:'numeric',month:'short'});
- const h=new Date().getHours();$('#gr').textContent=(h<12?'Good morning':h<18?'Good afternoon':'Good evening')+'!';$('#score').textContent=`Day score ${score(today())}`;document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.tab===tab))}
+ const h=new Date().getHours();$('#gr').textContent=(h<12?'Good morning':h<18?'Good afternoon':'Good evening')+'!';document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.tab===tab))}
 const num=id=>Math.max(0,parseFloat($(id).value)||0);
 
 document.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;const D=b.dataset,id=b.id;
  if(D.tab){tab=D.tab;scrollTo&&scrollTo({top:0});return render(true)}
- if(id==='motion')return enableMotion();
- if(id==='addst')day(today()).steps+=Math.round(num('#st'));
- else if(id==='setst')day(today()).steps=Math.round(num('#st'));
- else if(id==='addac')day(today()).extra+=Math.round(num('#ac'));
- else if(id==='addtx'){const a=num('#am');if(!a)return;const ty=$('#ty').value,pm=$('#pm')?$('#pm').value:'',on=ty==='dr'&&$('#ch')&&$('#ch').value==='online',cat=$('#ca').value.trim(),note=$('#no').value.trim(),tag=$('#tg')?$('#tg').value:'useful';
+  if(id==='addtx'){const a=num('#am');if(!a)return;const ty=$('#ty').value,pm=$('#pm')?$('#pm').value:'',on=ty==='dr'&&$('#ch')&&$('#ch').value==='online',cat=$('#ca').value.trim(),note=$('#no').value.trim(),tag=$('#tg')?$('#tg').value:'useful';
   wpage=1;S.tx.push({id:uid(),date:today(),type:ty,amount:a,cat,note,tag,pm,ch:on?'online':'offline',app:on?($('#ap').value.trim()||'Online'):''});
   if(ty==='dr'&&/later|in 3/i.test(pm)){const n=/in 3/i.test(pm)?3:1;S.subs.push({id:uid(),name:(note||cat||'Purchase')+(n>1?' (Pay in 3)':' (Pay later)'),amount:Math.round(a/n*100)/100,cycle:'monthly',next:nextDue(today(),'monthly'),remind:3,tag,cat:'Pay later dues',left:n,noTx:true})}}
  else if(D.wpg){wpage+=Number(D.wpg);return render()}
  else if(D.deltx)S.tx=S.tx.filter(x=>x.id!==D.deltx);
- else if(id==='sg'){S.goals={steps:num('#gs')||8000,active:num('#ga')||60,budget:num('#gb')||1000};S.cur=$('#cu').value||'₹';S.pm=$('#pms').value.split(',').map(x=>x.trim()).filter(Boolean);if(!S.pm.length)S.pm=['Cash'];S.thr=parseFloat($('#sens').value)||1.1}
  else if(id==='addsub'){const n=$('#sn').value.trim(),a=num('#sa'),d=$('#sd').value;if(!n||!a||!d)return alert('Add a name, amount and next due date.');
   S.subs.push({id:uid(),name:n,amount:a,cycle:$('#scy').value,next:d,remind:+$('#sr').value,tag:$('#stg').value,cat:(PRE[$('#sp').value]||PRE.other)[2]})}
  else if(D.pay){const x=S.subs.find(v=>v.id===D.pay);if(x.noTx){x.left--;if(x.left<=0)S.subs=S.subs.filter(v=>v!==x);else x.next=nextDue(x.next,'monthly')}else{S.tx.push({id:uid(),date:today(),type:'dr',amount:x.amount,cat:x.cat||'Subscriptions',note:x.name,tag:x.tag||'useful'});x.next=nextDue(isNaN(x.cycle)?x.next:today(),x.cycle)}}
@@ -239,7 +190,5 @@ document.addEventListener('change',e=>{const t=e.target;
  if(t.id==='ty'||t.id==='ch'){const cr=$('#ty').value==='cr';$('#ch').hidden=cr;$('#tg').hidden=cr;$('#ap').hidden=cr||$('#ch').value!=='online'}
  if(t.id==='mo'){month=t.value||month;wpage=1;render()}
  if(t.id==='fi'){const r=new FileReader();r.onload=()=>{try{const d=JSON.parse(r.result);if(!d.days||!d.tasks||!d.tx)throw 0;d.uid=S.uid;S=d;save();location.reload()}catch{alert('Not a valid Daylog backup.')}};r.readAsText(t.files[0])}});
-document.addEventListener('visibilitychange',()=>{if(!document.hidden)syncHealth()});setInterval(syncHealth,3e5);
-if(S.motion&&!NATIVE&&!(window.DeviceMotionEvent&&DeviceMotionEvent.requestPermission)){addEventListener('devicemotion',onMotion);motionOn=true}
-render(true);syncHealth();checkDue();
+render(true);checkDue();
 if('serviceWorker' in navigator&&!NATIVE)navigator.serviceWorker.register('sw.js');
