@@ -1,4 +1,4 @@
-// Study: Bible reader (KJV offline, NLT live, NIV and Tamil via links) + notes library + My notes
+// Study: Bible reader (KJV offline, NLT live, NIV and Tamil via links) + notes library (your own notes live here too)
 (()=>{
 const ST=S.st=Object.assign({ver:'KJV',bk:10,ch:1,fs:21,hl:{},my:[],ov:{}},S.st),U={sub:'read',nid:null,edit:null,q:'',tq:'',msg:'',sel:null,selId:null};
 ST.ov=ST.ov||{};ST.an=ST.an||{};ST.del=ST.del||{};ST.tool=ST.tool||'h';Object.keys(ST.hl).forEach(k=>{if(ST.hl[k]===1||ST.hl[k]===true)ST.hl[k]='h'});ST.my=ST.my.map(m=>m.secs?m:{id:m.id,title:m.title||'Untitled',sum:[m.passage,m.tag].filter(Boolean).join(' · '),ico:'📝',secs:[{t:'Notes',h:'<p>'+esc(m.body||'').replace(/\n/g,'<br>')+'</p>',hd:1}],ts:m.ts});
@@ -69,7 +69,7 @@ const secEd=(s,i,n)=>`<div class="ed-sec" data-oi="${s.oi==null?'':s.oi}"><div c
 const editor=()=>{const e=U.edit;return `<div class="card ed"><h2>${e.id?'Edit note':'New note'}</h2><div class="icos">${ICOS.map(x=>`<button class="ic${x===e.ico?' on':''}" data-sx="ico:${x}" aria-label="Icon ${x}">${x}</button>`).join('')}</div><input id="sxet" class="edt" placeholder="Note title" value="${esc(e.title)}"><input id="sxes" placeholder="One-line summary shown on the card" value="${esc(e.sum)}"><div class="tb" role="toolbar" aria-label="Formatting"><button data-sx="fmt:bold"><b>B</b></button><button data-sx="fmt:italic"><i>I</i></button><button data-sx="fmt:h2">Heading</button><button data-sx="fmt:p">Text</button><button data-sx="fmt:list">• List</button><button data-sx="fmt:mark">Highlight</button><button data-sx="fmt:u"><u>Underline</u></button><button data-sx="fmt:imp">Important</button><button data-sx="fmt:clear">Clear</button></div>${e.secs.map((s,i)=>secEd(s,i,e.secs.length)).join('')}<button class="g addsec" data-sx="addsec">＋ Add section</button><div class="edbar"><button data-sx="esave">Save note</button><button class="g" data-sx="ecancel">Cancel</button></div></div>`};
 const pull=()=>{const e=U.edit;if(!e||!$('#sxet'))return;e.title=$('#sxet').value;e.sum=$('#sxes').value;e.secs=[...document.querySelectorAll('.ed-sec')].map(x=>({t:x.querySelector('.sxst').value,h:x.querySelector('.rte').innerHTML,oi:x.dataset.oi===''?undefined:+x.dataset.oi}))};
 const blank=(t)=>({title:t||'',sum:'',ico:'📝',secs:[{t:'Key points',h:'<p><br></p>'}]});
-views.study=()=>{const mc=ST.my.slice().sort((a,b)=>b.ts-a.ts),n=U.nid&&getN(U.nid);return `<div class="seg main">${[['read','Read Bible'],['notes','Study notes'],['mine',`My notes${ST.my.length?' · '+ST.my.length:''}`]].map(([k,l])=>`<button class="${U.sub===k?'on':''}" data-sx="sub:${k}">${l}</button>`).join('')}</div>${U.sub==='read'&&!U.edit?read():U.edit?editor():n?view():U.sub==='mine'?lib(mc,1):lib(all().filter(x=>x.orig))}`};
+views.study=()=>{const mc=all().filter(x=>x.mine).sort((a,b)=>b.ts-a.ts),n=U.nid&&getN(U.nid);return `<div class="seg main">${[['read','Read Bible'],['notes','Study notes']].map(([k,l])=>`<button class="${U.sub===k?'on':''}" data-sx="sub:${k}">${l}</button>`).join('')}</div>${U.sub==='read'&&!U.edit?read():U.edit?editor():n?view():lib([...mc,...all().filter(x=>x.orig)],0)}`};
 const go=()=>render();
 document.addEventListener('mousedown',e=>{if(e.target.closest('.tb button,.rtools button'))e.preventDefault()});
 document.addEventListener('pointerdown',e=>{if(!e.target.closest('.rtools'))U.sel=null});
@@ -88,7 +88,7 @@ document.addEventListener('click',e=>{const t=e.target.closest('[data-sx]');if(!
  else if(a==='vs'){const k=`${ST.bk}:${ST.ch}:${x}`;if(ST.tool==='x')delete ST.hl[k];else{const f=tog(ST.hl[k],ST.tool);if(f)ST.hl[k]=f;else delete ST.hl[k]}}
  else if(a==='tool'){ST.tool=x;if(U.nid&&!U.edit&&U.sel&&U.sel.length&&U.selId===U.nid){markSel(U.nid,x);U.sel=null;const g=getSelection();g&&g.removeAllRanges&&g.removeAllRanges()}}
  else if(a==='mark'){rcs(ST.bk,ST.ch-1,1);U.msg=`${esc(ref())} marked as read.`}
- else if(a==='note'){U.sub='mine';U.nid=null;U.edit={...blank('Notes on '+ref()),sum:'Reading notes',secs:[{t:ref(),h:'<p><br></p>'}]};top=1}
+ else if(a==='note'){U.sub='notes';U.nid=null;U.edit={...blank('Notes on '+ref()),sum:'Reading notes',secs:[{t:ref(),h:'<p><br></p>'}]};top=1}
  else if(a==='open'){U.nid=x;top=1}else if(a==='back'){U.nid=null;top=1}
  else if(a==='ref'){ST.bk=+x;ST.ch=+y;U.sub='read';U.nid=null;U.edit=null;top=1}
  else if(a==='newn'){U.edit=blank();top=1}
