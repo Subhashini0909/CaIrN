@@ -50,26 +50,7 @@ function body(){const k=`${ST.bk}:${ST.ch}`,r=encodeURIComponent(ref()),v=ST.ver
   if(NC[k]===0)return ext('NLT',`https://www.biblegateway.com/passage/?search=${r}&version=NLT`,'The live NLT feed is unavailable right now (it needs internet).');
   NC[k]=null;fetch(`https://api.nlt.to/api/passages?ref=${r}&key=TEST`).then(x=>x.text()).then(h=>{const d=new DOMParser().parseFromString(h,'text/html');d.querySelectorAll('script,style,link,iframe').forEach(e=>e.remove());d.querySelectorAll('*').forEach(e=>[...e.attributes].forEach(a=>/^on/i.test(a.name)&&e.removeAttribute(a.name)));
    NC[k]=d.body.innerHTML.trim()||0;if(tab==='study'&&U.sub==='read')render()}).catch(()=>{NC[k]=0;if(tab==='study'&&U.sub==='read')render()});return '<div class="skel"></div><div class="skel"></div><div class="skel"></div>'}
- return niv(r)}
-// ---- NIV: copyrighted, so it loads live from API.Bible with the reader's own free key (kept on this device only) ----
-const NK='daylog.nivkey',NI='daylog.nivid',NVC={};
-const USFM=['GEN','EXO','LEV','NUM','DEU','JOS','JDG','RUT','1SA','2SA','1KI','2KI','1CH','2CH','EZR','NEH','EST','JOB','PSA','PRO','ECC','SNG','ISA','JER','LAM','EZK','DAN','HOS','JOL','AMO','OBA','JON','MIC','NAM','HAB','ZEP','HAG','ZEC','MAL','MAT','MRK','LUK','JHN','ACT','ROM','1CO','2CO','GAL','EPH','PHP','COL','1TH','2TH','1TI','2TI','TIT','PHM','HEB','JAS','1PE','2PE','1JN','2JN','3JN','JUD','REV'];
-const lsg=k=>{try{return localStorage.getItem(k)||''}catch{return''}},lss=(k,v)=>{try{v?localStorage.setItem(k,v):localStorage.removeItem(k)}catch{}};
-const cleanApi=h=>{const d=new DOMParser().parseFromString('<body>'+h+'</body>','text/html');d.querySelectorAll('script,style,iframe,object,embed,link,meta,form,img').forEach(e=>e.remove());d.body.querySelectorAll('*').forEach(e=>{const c=e.className&&typeof e.className==='string'?e.className:'';[...e.attributes].forEach(a=>e.removeAttribute(a.name));if(c)e.className=c});return d.body.innerHTML};
-async function nivLoad(k,bk,ch){const H={'api-key':lsg(NK)};try{let id=lsg(NI);
- if(!id){const r=await fetch('https://rest.api.bible/v1/bibles?language=eng&abbreviation=NIV',{headers:H});if(r.status===401||r.status===403)throw new Error('API.Bible rejected this key. Check it and try again.');if(!r.ok)throw new Error('Could not reach API.Bible.');
-  const j=await r.json(),b=(j.data||[]).find(x=>/^NIV$/i.test(x.abbreviation||''));if(!b)throw new Error('The NIV is not available for this API key.');id=b.id;lss(NI,id)}
- const r=await fetch(`https://rest.api.bible/v1/bibles/${id}/chapters/${USFM[bk]}.${ch}?content-type=html&include-notes=false&include-titles=true&include-chapter-numbers=false&include-verse-numbers=true&include-verse-spans=false`,{headers:H});
- if(r.status===401||r.status===403)throw new Error('This API key cannot read the NIV.');if(!r.ok)throw new Error('Could not load this chapter from API.Bible.');
- const d=(await r.json()).data||{};NVC[k]={html:cleanApi(d.content||''),copy:d.copyright||'NIV, Copyright Biblica, Inc.'}}
- catch(e){NVC[k]={err:/Failed to fetch|NetworkError|Load failed/i.test(e.message)?'The NIV needs an internet connection.':e.message}}
- if(tab==='study'&&U.sub==='read'&&ST.ver==='NIV')render()}
-const niv=r=>{const key=lsg(NK),gw=`https://www.biblegateway.com/passage/?search=${r}&version=NIV`,ck=`${ST.bk}:${ST.ch}`,c=NVC[ck];
- if(!key)return `<div class="extc"><div class="big2" style="font-family:var(--serif)">NIV · ${esc(ref())}</div><p class="mute">The NIV is copyrighted, so it loads live from API.Bible using your own free key (non-commercial use). Get a key at scripture.api.bible, paste it here, and it stays on this device only.</p><input id="nivk" placeholder="Paste your API.Bible key" autocomplete="off"><div class="form" style="margin-top:10px"><button data-sx="nivkey">Save key</button><a class="btn" href="${gw}" target="_blank" rel="noopener">Open in BibleGateway ↗</a></div></div>`;
- if(c&&c.html)return `<div class="scr niv" style="font-size:${ST.fs}px">${c.html}</div><p class="mute" style="margin:14px 0 0">${esc(c.copy)}</p><p><button class="g s" data-sx="nivclear">Change API key</button></p>`;
- if(c&&c.err)return `<div class="extc"><div class="big2" style="font-family:var(--serif)">NIV · ${esc(ref())}</div><p class="mute">${esc(c.err)}</p><div class="form"><a class="btn" href="${gw}" target="_blank" rel="noopener">Open in BibleGateway ↗</a><button class="g" data-sx="nivclear">Change API key</button></div></div>`;
- if(c===undefined){NVC[ck]=null;nivLoad(ck,ST.bk,ST.ch)}
- return '<div class="skel"></div><div class="skel"></div><div class="skel"></div>'};
+ return ext('NIV',`https://www.biblegateway.com/passage/?search=${r}&version=NIV`,'The NIV is licensed text, so it opens in BibleGateway in a new tab.')}
 const ext=(v,u,t)=>`<div class="extc"><div class="big2" style="font-family:var(--serif)">${VER[v]} · ${esc(ref())}</div><p class="mute">${t}</p><a class="btn" href="${u}" target="_blank" rel="noopener">Open ${VER[v]} · ${esc(ref())} ↗</a><p class="mute" style="margin-top:14px">Tip: switch to KJV above to read the same chapter in-app, then compare.</p></div>`;
 const read=()=>`<div class="seg" role="tablist">${Object.entries(VER).map(([k,l])=>`<button class="${ST.ver===k?'on':''}" data-sx="ver:${k}">${l}</button>`).join('')}</div>
 <div class="card rd"><div class="rdh">${sel()}<div class="tools"><button class="g s" data-sx="fs:-1" aria-label="Smaller text">A−</button><button class="g s" data-sx="fs:1" aria-label="Larger text">A+</button></div></div>
@@ -105,8 +86,6 @@ document.addEventListener('click',e=>{const t=e.target.closest('[data-sx]');if(!
  if(a==='sub'){if(E&&!confirm('Discard this unsaved note?'))return;U.sub=x;U.edit=null;U.nid=null;top=1}
  else if(a==='ver')ST.ver=x;else if(a==='nav'){step(+x);top=1}else if(a==='fs')ST.fs=Math.max(15,Math.min(32,ST.fs+(+x)*2));
  else if(a==='vs'){const k=`${ST.bk}:${ST.ch}:${x}`;if(ST.tool==='x')delete ST.hl[k];else{const f=tog(ST.hl[k],ST.tool);if(f)ST.hl[k]=f;else delete ST.hl[k]}}
- else if(a==='nivkey'){const v=($('#nivk')||{}).value;if(v&&v.trim()){lss(NK,v.trim());lss(NI,'');Object.keys(NVC).forEach(z=>delete NVC[z])}}
- else if(a==='nivclear'){lss(NK,'');lss(NI,'');Object.keys(NVC).forEach(z=>delete NVC[z])}
  else if(a==='tool'){ST.tool=x;if(U.nid&&!U.edit&&U.sel&&U.sel.length&&U.selId===U.nid){markSel(U.nid,x);U.sel=null;const g=getSelection();g&&g.removeAllRanges&&g.removeAllRanges()}}
  else if(a==='mark'){rcs(ST.bk,ST.ch-1,1);U.msg=`${esc(ref())} marked as read.`}
  else if(a==='note'){U.sub='mine';U.nid=null;U.edit={...blank('Notes on '+ref()),sum:'Reading notes',secs:[{t:ref(),h:'<p><br></p>'}]};top=1}

@@ -56,5 +56,3 @@ mark{background:linear-gradient(transparent 50%,#E3C77A99 50%);color:inherit;pad
 .scr .vs.ul sup{text-decoration:none}
 /* Tamil and NIV in the reader */
 .scr.tam{font-family:'Noto Serif Tamil','Latha','Nirmala UI',var(--serif);line-height:2.05;max-width:760px}
-.scr.niv p{margin:0 0 .8em}.scr.niv .v{font:600 11px Inter;color:var(--gold);vertical-align:super;margin-right:3px}.scr.niv .s1,.scr.niv .s,.scr.niv .s2{font:600 18px var(--serif);color:var(--acc);margin:1em 0 .3em}
-.extc input{margin-top:6px}
