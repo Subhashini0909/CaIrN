@@ -81,3 +81,4 @@ mark{background:linear-gradient(transparent 50%,#E3C77A99 50%);color:inherit;pad
 #nmcard .lx{margin:2px 0}#nmcard .ld{font-size:12px;color:var(--mute)}#nmcard .rl{display:inline-block;margin:2px 8px 2px 0;font-size:12.5px}#nmcard .src{margin:8px 0 0;font-size:10.5px;color:var(--mute)}
 .scr sup.evm{cursor:help;color:var(--acc);background:#b8913f2e;border-radius:5px;padding:0 3px}.scr sup.evm:after{content:' ⓘ';font-size:9px}
 #nmcard details.ev{border-top:1px solid var(--line);padding:6px 0}#nmcard details.ev summary{cursor:pointer;font-size:14px;list-style:none}#nmcard details.ev summary::-webkit-details-marker{display:none}#nmcard details.ev .nr{border-top:0;padding:5px 0 5px 4px}
+#nmcard .mn div{font:600 20px var(--serif);color:var(--ink)}#nmcard .al{color:var(--mute);font-size:11.5px}

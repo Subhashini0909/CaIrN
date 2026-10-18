@@ -7,14 +7,15 @@ let EV=null,VM=null;
 fetch('events.json').then(r=>r.json()).then(j=>{EV=j.e;VM=j.v;if(typeof tab!=='undefined'&&tab==='study')render()}).catch(()=>{});
 window.NM={ev:(b,c,v)=>{const k=b+'.'+c+'.'+v;return VM&&VM[k]?` class="evm" data-ev="${k}" title="Tap for what is happening in this verse"`:''},mark:(h,b,c,v)=>{const it=V&&V[b+'.'+c+'.'+v];if(!it)return h;let o='',p=0;for(const[s,i]of it){const j=h.indexOf(s,p);if(j<0)continue;o+=h.slice(p,j)+`<span class="nm" data-nm="${i}" tabindex="0">${s}</span>`;p=j+s.length}return o+h.slice(p)}};
 const row=(l,v)=>v?`<div class="nr"><b>${l}</b><div>${v}</div></div>`:'';
-const L=(a,l)=>(a||[]).map(x=>`<div class="lx"><span class="wd" lang="${l}"${l==='he'||l==='ar'?' dir="rtl"':''}>${x.w}</span> <i>${x.x}</i>${x.d?`<div class="ld">${x.d}</div>`:''}</div>`).join('');
-const roots=e=>{const r=[];if(e.rt)r.push(e.rt);[...(e.he||[]),...(e.ar||[]),...(e.gr||[])].forEach(x=>(x.r||[]).forEach(y=>r.some(z=>z[0]===y[0])||r.push(y)));
- return r.slice(0,4).map(y=>`<div class="lx"><span class="wd" lang="he" dir="rtl">${y[0]}</span> <i>${y[1]}</i>${y[2]?' · '+y[2]:''}</div>`).join('')};
+const rt=y=>`<span class="wd" lang="he" dir="rtl">${y[0]}</span> <i>${y[1]}</i>${y[2]?` = ${y[2]}`:''}`;
+const L=(a,l)=>(a||[]).map(x=>`<div class="lx">${x.a?`<small class="al">also called ${x.a}: </small>`:''}<span class="wd" lang="${l}"${l==='he'||l==='ar'?' dir="rtl"':''}>${x.w}</span> <i>${x.x}</i>${x.m?` = <b>${x.m}</b>`:''}</div>`).join('');
+const roots=e=>{const r=[];if(e.rt)r.push(e.rt);[...(e.he||[]),...(e.ar||[]),...(e.gr||[])].filter(x=>!x.a).forEach(x=>(x.r||[]).forEach(y=>r.some(z=>z[0]===y[0])||r.push(y)));
+ return r.slice(0,4).map(y=>`<div class="lx">${rt(y)}</div>`).join('')};
 const vl=r=>`<a class="xr" data-sx="ref:${r[0]}:${r[1]}" href="#">${BIB[r[0]][0]} ${r[1]}:${r[2]}</a>`;
 const html=e=>{const rel=(e.rel||[]).map(([l,n])=>`<span class="rl">${l}: ${BY[n]!=null?`<button class="g s chip" data-nm="${BY[n]}">${n}</button>`:n}</span>`).join(' ');
  const map=e.ll?`<a class="xr" target="_blank" rel="noopener" href="https://www.openstreetmap.org/?mlat=${e.ll[0]}&mlon=${e.ll[1]}#map=9/${e.ll[0]}/${e.ll[1]}">${e.ll[0]}, ${e.ll[1]} ↗</a>`:'';
  return `<div class="nh"><div><h3>${e.n}${e.al?` <small>(also ${e.al})</small>`:''}</h3><span class="tg">${e.t==='l'?'📍 Place'+(e.ft?' · '+e.ft:''):'👤 Person'}${e.yr?' · '+e.yr:''}</span></div><button class="g s" data-nx="1" aria-label="Close">✕</button></div>`
- +row('Meaning',e.m)+row('Root word',roots(e))+row('Hebrew',L(e.he,'he'))+row('Aramaic',L(e.ar,'ar'))+row('Greek',L(e.gr,'el'))
+ +(e.m?`<div class="nr mn"><b>Meaning</b><div>${e.m}</div></div>`:'')+row('Root word',roots(e))+row('Hebrew',L(e.he,'he'))+row('Aramaic',L(e.ar,'ar'))+row('Greek',L(e.gr,'el'))
  +(e.nt?`<p class="nn">${e.nt}</p>`:'')+row('Overview',e.sum)+row('Background',e.bg)+row('Location',(e.md?e.md+' · ':'')+map)+row('Related',rel)
  +row('Linked verses',(e.vs||[]).map(vl).join(' · '))+`<p class="src">Sources: Easton’s Bible Dictionary and Strong’s lexicon (public domain); verse tagging and relations from Theographic (CC BY-SA 4.0); coordinates from OpenBible.info.</p>`};
 const RE=new RegExp('\\b('+BIB.map(x=>x[0]).sort((a,b)=>b.length-a.length).join('|')+') (\\d+):(\\d+)(?:[–-]\\d+)?','g');
