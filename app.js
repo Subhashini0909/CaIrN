@@ -4,7 +4,7 @@ const iso=d=>{const x=new Date(d);return new Date(x-x.getTimezoneOffset()*6e4).t
 const today=()=>iso(Date.now()),uid=()=>Math.random().toString(36).slice(2,9);
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 let S=JSON.parse(localStorage.getItem(KEY)||localStorage.getItem('daylog.v1')||'null')||{days:{},tasks:[],tx:[]};
-S.days=S.days||{};S.tasks=S.tasks||[];S.tx=S.tx||[];S.goals=Object.assign({steps:8000,active:60,budget:1000},S.goals);S.cur=S.cur||'₹';S.events=S.events||[];S.bible=S.bible||null;S.pm=S.pm||['ICICI RuPay Credit','ICICI Amazon Pay Credit','SBI Debit','ICICI Debit','Pay Later','Pay in 3','UPI','Cash'];
+S.days=S.days||{};S.tasks=S.tasks||[];S.tx=S.tx||[];S.goals=Object.assign({steps:8000,active:60,budget:1000},S.goals);S.cur=S.cur||'₹';S.events=S.events||[];S.bible=S.bible||null;S.rc=S.rc||{};S.bgoals=S.bgoals||[];S.pm=S.pm||['ICICI RuPay Credit','ICICI Amazon Pay Credit','SBI Debit','ICICI Debit','Pay Later','Pay in 3','UPI','Cash'];
 const save=()=>{S.mod=Date.now();localStorage.setItem(KEY,JSON.stringify(S));window.Cloud&&Cloud.queue()};
 const peek=d=>S.days[d]||{steps:0,extra:0};
 const day=d=>{const x=S.days[d]||(S.days[d]={steps:0,extra:0});if(x.extra===undefined)x.extra=x.active||0;return x};
@@ -83,6 +83,15 @@ const monthPick=()=>`<input type="month" id="mo" value="${month}" style="width:a
 // ---------- Bible reading plan and calendar ----------
 const BIB=[['Genesis',50],['Exodus',40],['Leviticus',27],['Numbers',36],['Deuteronomy',34],['Joshua',24],['Judges',21],['Ruth',4],['1 Samuel',31],['2 Samuel',24],['1 Kings',22],['2 Kings',25],['1 Chronicles',29],['2 Chronicles',36],['Ezra',10],['Nehemiah',13],['Esther',10],['Job',42],['Psalms',150],['Proverbs',31],['Ecclesiastes',12],['Song of Solomon',8],['Isaiah',66],['Jeremiah',52],['Lamentations',5],['Ezekiel',48],['Daniel',12],['Hosea',14],['Joel',3],['Amos',9],['Obadiah',1],['Jonah',4],['Micah',7],['Nahum',3],['Habakkuk',3],['Zephaniah',3],['Haggai',2],['Zechariah',14],['Malachi',4],['Matthew',28],['Mark',16],['Luke',24],['John',21],['Acts',28],['Romans',16],['1 Corinthians',16],['2 Corinthians',13],['Galatians',6],['Ephesians',6],['Philippians',4],['Colossians',4],['1 Thessalonians',5],['2 Thessalonians',3],['1 Timothy',6],['2 Timothy',4],['Titus',3],['Philemon',1],['Hebrews',13],['James',5],['1 Peter',5],['2 Peter',3],['1 John',5],['2 John',1],['3 John',1],['Jude',1],['Revelation',22]];
 const TOT=1189; // chapters in one reading
+const OFF=BIB.map((_,i)=>BIB.slice(0,i).reduce((a,x)=>a+x[1],0));
+const gi=(b,c)=>OFF[b]+c-1; // book index + chapter (1-based) -> global chapter index
+const fromGi=g=>{g=((g%TOT)+TOT)%TOT;let b=BIB.length-1;while(OFF[b]>g)b--;return[b,g-OFF[b]]}; // -> [book index, chapter index 0-based]
+const rcv=(b,c)=>(S.rc[b]||[])[c]||0;
+const rcs=(b,c,d)=>{const a=S.rc[b]||(S.rc[b]=Array(BIB[b][1]).fill(0));a[c]=Math.max(0,(a[c]||0)+d)};
+const bump=(g,n,d)=>{for(let i=0;i<n;i++){const[b,c]=fromGi(g+i);rcs(b,c,d)}};
+const bprog=b=>(S.rc[b]||[]).filter(v=>v>0).length;
+function bstats(){let bd=0,ot=0,nt=0,ch=0,full=Infinity;BIB.forEach(([n,c],b)=>{const a=S.rc[b]||[];let ok=true,mn=Infinity;for(let i=0;i<c;i++){const v=a[i]||0;if(v>0)ch++;else ok=false;mn=Math.min(mn,v)}if(ok){bd++;b<39?ot++:nt++}full=Math.min(full,mn)});return{bd,ot,nt,ch,full:isFinite(full)?full:0}}
+let R={f:0,t:9,step:0},bsel=0;
 const bp=p=>{p=((p%TOT)+TOT)%TOT;for(const[n,c]of BIB){if(p<c)return[n,p+1];p-=c}};
 const bpos=p=>bp(p).join(' ');
 const brange=(p,n)=>{if(n<=0)return'—';const a=bp(p),b=bp(p+n-1);return n===1?bpos(p):a[0]===b[0]?`${a[0]} ${a[1]} to ${b[1]}`:`${bpos(p)} to ${bpos(p+n-1)}`};
@@ -90,7 +99,8 @@ const dayDiff=(a,b)=>Math.round((new Date(b+'T12:00')-new Date(a+'T12:00'))/864e
 function bstat(){const B=S.bible;if(!B)return null;const t=today(),total=B.rounds*TOT,rt=B.log[t]||0,p0=B.pos-rt,left=total-p0,dl=Math.max(1,dayDiff(t,B.end)+1),span=Math.max(1,dayDiff(B.start,B.end)+1),el=Math.min(span,Math.max(0,dayDiff(B.start,t)+1));
  const started=t>=B.start,done=B.pos>=total;
  return{B,total,rt,p0,left,done,started,target:done||!started?0:Math.ceil(left/dl),diff:started?B.pos-total*el/span:0,round:Math.min(B.rounds,Math.floor(B.pos/TOT)+1),inRound:done?TOT:B.pos%TOT,pct:B.pos/total*100}}
-const bread=n=>{const B=S.bible,t=today();n=Math.max(0,Math.min(Math.round(n)||0,B.rounds*TOT-B.pos));B.pos+=n;B.log[t]=(B.log[t]||0)+n};
+const bread=n=>{const B=S.bible,t=today();n=Math.max(0,Math.min(Math.round(n)||0,B.rounds*TOT-B.pos));bump(B.pos,n,1);B.pos+=n;B.log[t]=(B.log[t]||0)+n};
+if(!S.rcInit){if(S.bible)bump(0,S.bible.pos,1);S.rcInit=1}
 const bstreak=()=>{const L=S.bible.log;let n=0,d=new Date();if(!L[today()])d.setDate(d.getDate()-1);while(L[iso(d)]>0){n++;d.setDate(d.getDate()-1)}return n};
 let calM=today().slice(0,7),selD=today();
 const evSort=(a,b)=>(a.time||'').localeCompare(b.time||'');
@@ -161,19 +171,27 @@ review(){const m=month,ds=dm(m),g=S.goals,tx=S.tx.filter(x=>x.date.startsWith(m)
  <div class="card"><h2>Feedback</h2>${F.length?F.map(x=>`<p class="ins">${x}</p>`).join(''):'<div class="empty">Log some days and this fills in.</div>'}</div>
  ${bad.length?`<div class="card"><h2>Unwanted spends</h2>${bad.slice(0,6).map(x=>`<div class="item"><div class="t"><b>${esc(x.cat||'Other')}</b><div class="mute">${x.date}${x.note?' · '+esc(x.note):''}</div></div><b class="dr">${money(x.amount)}</b></div>`).join('')}</div>`:''}
  <div class="card"><h2>Task progress and time taken</h2>${tk.length?[...tk].sort((a,b)=>secs(b)-secs(a)).slice(0,20).map(t=>`<div class="item"><div class="t"><b>${esc(t.title)}</b></div><span class="pill ${st(t)[1]}">${st(t)[0]}</span><span class="mute" style="min-width:64px;text-align:right">${fmt(secs(t))}</span></div>`).join(''):'<div class="empty">No tasks this month.</div>'}</div>`},
-bible(){const b=bstat();
- if(!b){const t=today(),e=iso(Date.now()+364*864e5);return `<div class="card"><h2>Start your Bible reading plan</h2><p class="mute" style="margin-top:0">Reading the whole Bible 3 times in a year is 3,567 chapters, about 10 chapters a day (1,189 chapters in one reading). Daylog works out each day's passage in order from Genesis to Revelation and adjusts if you fall behind.</p><div class="form"><label class="mute" style="flex:1 1 100%">Start date<input id="bs" type="date" value="${t}"></label><label class="mute" style="flex:1 1 100%">End date<input id="be" type="date" value="${e}"></label><label class="mute" style="flex:1 1 100%">Times to read the Bible<input id="br" type="number" min="1" max="10" value="3"></label><button id="bstart" style="flex:1 1 100%">Start plan</button></div></div>`}
- const B=b.B,w=last(14),rd=[...Array(B.rounds)].map((_,i)=>Math.max(0,Math.min(1,(B.pos-i*TOT)/TOT)));
- return `<div class="card"><div class="row"><h2 style="margin:0">Today's reading</h2><span class="pill ${b.diff>=0?'up':'dn'}">${!b.started?'Starts '+B.start:b.done?'Plan complete':b.diff>=0?'Ahead by '+Math.round(b.diff)+' chapters':'Behind by '+Math.round(-b.diff)+' chapters'}</span></div>
- <div class="big2">${b.done?'All readings complete':!b.started?'Not started yet':brange(b.p0,b.target)}</div><div class="mute">${b.target} chapter${b.target===1?'':'s'} today · ${b.rt} read</div>${meter(b.rt,b.target||1)}
- <div class="form" style="margin:14px 0 0">${b.rt<b.target?'<button id="bdone">Mark today done</button>':''}<input id="bn" type="number" min="1" placeholder="Chapters read"><button class="g" id="badd">Add chapters</button><button class="g" id="bundo">Undo today</button></div></div>
- <div class="grid" style="margin-bottom:14px"><div class="card"><div class="lbl">Overall progress</div><div class="num">${b.pct.toFixed(1)}%</div><div class="sub">${B.pos.toLocaleString()} of ${b.total.toLocaleString()} chapters</div></div>
- <div class="card"><div class="lbl">Current reading</div><div class="num">${b.done?B.rounds:b.round} of ${B.rounds}</div><div class="sub">${Math.round(b.inRound/TOT*100)}% of this one</div></div>
- <div class="card"><div class="lbl">Up next</div><div class="num" style="font-size:20px">${b.done?'—':bpos(B.pos)}</div><div class="sub">where you continue</div></div>
- <div class="card"><div class="lbl">Streak</div><div class="num">${bstreak()} days</div><div class="sub">${last(7).reduce((a,d)=>a+(B.log[d]||0),0)} chapters this week</div></div></div>
- <div class="card"><h2>Each reading</h2>${rd.map((v,i)=>`<div class="row" style="margin-top:${i?12:0}px"><span>Reading ${i+1}</span><span class="mute">${Math.round(v*100)}%</span></div>${meter(v,1)}`).join('')}</div>
- <div class="card"><h2>Chapters read, last 14 days</h2>${bars(w.map(d=>B.log[d]||0),w.map(d=>d.slice(8)))}</div>
- <div class="card row"><span class="mute">Plan: ${B.start} to ${B.end}</span><button class="g s" id="breset">Restart plan</button></div>`},
+bible(){const b=bstat(),st=bstats(),[fb,fc]=fromGi(R.f),[tb,tc]=fromGi(R.t),n=R.t-R.f+1,pct=st.ch/TOT*100,
+ G=S.bgoals.map(g=>{const t=g.t-g.f+1;let d=0;for(let i=g.f;i<=g.t;i++){const[x,y]=fromGi(i);if(rcv(x,y)>g.base)d++}const left=t-d,dl=Math.max(1,dayDiff(today(),g.end)+1),span=Math.max(1,dayDiff(g.start,g.end)+1),el=Math.min(span,Math.max(0,dayDiff(g.start,today())+1));return{g,t,d,left,pd:Math.ceil(left/dl),diff:d-t*el/span}}),
+ opt=(sel)=>BIB.map((x,i)=>`<option value="${i}" ${i===sel?'selected':''}>${x[0]}</option>`).join(''),chs=(bk,sel)=>[...Array(BIB[bk][1])].map((_,i)=>`<option value="${i+1}" ${i===sel?'selected':''}>${i+1}</option>`).join(''),
+ shelf=(a,z,l)=>`<h2 style="margin:14px 0 8px">${l} · ${BIB.slice(a,z).filter((_,i)=>bprog(a+i)===BIB[a+i][1]).length} of ${z-a} books complete</h2><div class="bks">${BIB.slice(a,z).map(([nm,c],j)=>{const i=a+j,p=bprog(i);return `<button class="bk${p===c?' ok':''}${i===bsel?' on':''}" style="--p:${p/c*100}%" data-bk="${i}"><span>${nm}</span><small>${p}/${c}</small></button>`}).join('')}</div>`;
+ return `<div class="card hero2"><div class="bring"><svg viewBox="0 0 120 120" role="img" aria-label="${Math.round(pct)}% of the Bible read"><circle cx="60" cy="60" r="46" class="btrk"/><circle cx="60" cy="60" r="46" class="bval rv" stroke-dasharray="${289*pct/100} 289" transform="rotate(-90 60 60)"/><text x="60" y="62" text-anchor="middle" style="font-size:22px;font-weight:600;fill:var(--ink)">${Math.round(pct)}%</text><text x="60" y="78" text-anchor="middle">of the Bible</text></svg></div>
+ <div class="bstats"><div><div class="lbl">Books completed</div><div class="num">${st.bd} <span class="mute">of 66</span></div></div><div><div class="lbl">Books pending</div><div class="num">${66-st.bd}</div></div><div><div class="lbl">Chapters read</div><div class="num">${st.ch}<span class="mute"> / 1,189</span></div></div><div><div class="lbl">Old Testament</div><div class="num">${st.ot}<span class="mute"> / 39</span></div></div><div><div class="lbl">New Testament</div><div class="num">${st.nt}<span class="mute"> / 27</span></div></div><div><div class="lbl">Full readings</div><div class="num">${st.full}</div></div></div></div>
+ ${b?`<div class="card"><div class="row"><h2 style="margin:0">Daily plan: ${b.B.rounds} readings in a year</h2><span class="pill ${b.diff>=0?'up':'dn'}">${!b.started?'Starts '+b.B.start:b.done?'Plan complete':b.diff>=0?'Ahead by '+Math.round(b.diff):'Behind by '+Math.round(-b.diff)}</span></div>
+ <div class="big2">${b.done?'All readings complete':!b.started?'Not started yet':brange(b.p0,b.target)}</div><div class="mute">${b.target} chapters today · ${b.rt} read · ${bstreak()}-day streak</div>${meter(b.rt,b.target||1)}
+ <div class="form" style="margin:14px 0 0">${b.rt<b.target?'<button id="bdone">Mark today done</button>':''}<input id="bn" type="number" min="1" placeholder="Chapters read"><button class="g" id="badd">Add chapters</button><button class="g" id="bundo">Undo today</button></div>
+ <div class="row" style="margin-top:6px"><span class="mute">${b.B.start} to ${b.B.end}</span><button class="g s" id="breset">Restart plan</button></div></div>`
+ :`<div class="card"><h2>Daily plan: read the Bible 3 times in a year</h2><p class="mute" style="margin-top:0">That is 3,567 chapters, about 10 a day. Daylog works out each day's passage and adjusts if you fall behind.</p><div class="form"><label class="mute" style="flex:1 1 100%">Start date<input id="bs" type="date" value="${today()}"></label><label class="mute" style="flex:1 1 100%">End date<input id="be" type="date" value="${iso(Date.now()+364*864e5)}"></label><label class="mute" style="flex:1 1 100%">Times to read the Bible<input id="br" type="number" min="1" max="10" value="3"></label><button id="bstart" style="flex:1 1 100%">Start plan</button></div></div>`}
+ ${G.map(({g,t,d,left,pd,diff})=>`<div class="card"><div class="row"><b>${esc(g.name)}</b><button class="s g" data-gdel="${g.id}" aria-label="Delete goal">✕</button></div><div class="mute">${brange(g.f,t)} · finish by ${g.end}</div>${meter(d,t)}<div class="row" style="margin-top:8px"><span class="mute">${d} of ${t} chapters${left&&diff<-.5?' · behind':''}</span><span class="pill ${left?(diff<-.5?'dn':'up'):'up'}">${left?pd+' a day':'Complete'}</span></div>${left?`<button class="s" data-gread="${g.id}" style="margin-top:10px">Mark today's ${pd}</button>`:''}</div>`).join('')}
+ <div class="card"><h2>Choose chapters</h2><div class="mute" style="margin-bottom:6px">From</div><div class="form"><select id="fb" aria-label="From book">${opt(fb)}</select><select id="fc" aria-label="From chapter" style="flex:0 1 90px">${chs(fb,fc)}</select></div>
+ <div class="mute" style="margin-bottom:6px">To</div><div class="form"><select id="tb" aria-label="To book">${opt(tb)}</select><select id="tc" aria-label="To chapter" style="flex:0 1 90px">${chs(tb,tc)}</select></div>
+ <p style="margin:0 0 12px"><b>${brange(R.f,n)}</b> <span class="mute">· ${n} chapter${n>1?'s':''}</span></p>
+ <div class="form"><button id="rmark">Mark as read</button><button class="g" id="runmark">Unmark</button></div>
+ <div class="mute" style="margin:4px 0 6px">Or set it as a goal with a deadline</div><div class="form"><input id="gn" placeholder="Goal name (optional)"><input id="ge" type="date" value="${iso(Date.now()+29*864e5)}" aria-label="Finish by"><button class="g" id="gcreate">Create goal</button></div></div>
+ <div class="card"><h2>Books of the Bible</h2><div class="mute">Tap a book to pick it, then tap chapters to choose a start and an end.</div>${shelf(0,39,'Old Testament')}${shelf(39,66,'New Testament')}</div>
+ <div class="card"><div class="row"><h2 style="margin:0">${BIB[bsel][0]}</h2><span class="mute">${bprog(bsel)} of ${BIB[bsel][1]} chapters read</span></div>
+ <div class="chaps" style="margin-top:12px">${[...Array(BIB[bsel][1])].map((_,i)=>{const c=rcv(bsel,i),g=gi(bsel,i+1);return `<button class="chap c${Math.min(2,c)}${g>=R.f&&g<=R.t?' in':''}" data-ch="${bsel}:${i+1}" aria-label="${BIB[bsel][0]} ${i+1}">${i+1}</button>`}).join('')}</div>
+ <div class="legend2"><span><i class="c0"></i>Not read</span><span><i class="c1"></i>Read</span><span><i class="c2"></i>Read 2+ times</span><span><i class="in"></i>Selected</span></div></div>`},
 calendar(){const[y,mo]=calM.split('-').map(Number),first=new Date(y,mo-1,1).getDay(),n=new Date(y,mo,0).getDate(),evs=d=>S.events.filter(e=>e.date===d),dues=d=>S.subs.filter(s=>s.next===d);
  let cells='';for(let i=0;i<first;i++)cells+='<span></span>';
  for(let i=1;i<=n;i++){const d=`${calM}-${String(i).padStart(2,'0')}`;cells+=`<button class="day${d===today()?' tod':''}${d===selD?' sel':''}" data-sel="${d}" aria-label="${d}">${i}${evs(d).length||dues(d).length?'<i></i>':''}</button>`}
@@ -188,12 +206,15 @@ calendar(){const[y,mo]=calM.split('-').map(Number),first=new Date(y,mo-1,1).getD
 settings(){return `${window.Cloud?Cloud.card():''}<div class="card"><h2>Goals and data</h2><div class="form"><input id="gs" type="number" value="${S.goals.steps}" aria-label="Step goal"><input id="ga" type="number" value="${S.goals.active}" aria-label="Active minutes goal"><input id="gb" type="number" value="${S.goals.budget}" aria-label="Daily budget"><input id="cu" value="${esc(S.cur)}" style="max-width:70px" aria-label="Currency"><input id="pms" value="${esc(S.pm.join(', '))}" aria-label="Payment methods, comma separated" style="flex:1 1 100%"><select id="sens" aria-label="Step sensitivity" style="flex:1 1 100%"><option value="0.7" ${S.thr===0.7?'selected':''}>Step sensitivity: High (counts light steps)</option><option value="1.1" ${!S.thr||S.thr===1.1?'selected':''}>Step sensitivity: Normal</option><option value="1.6" ${S.thr===1.6?'selected':''}>Step sensitivity: Low (ignores small movement)</option></select><button id="sg">Save</button></div>
  <div class="form"><button class="g" id="ex">Export backup</button><button class="g" id="im">Import backup</button><input type="file" id="fi" accept=".json" hidden></div></div>`}};
 
-function render(){$('#view').innerHTML=views[tab]();$('#dl').textContent=new Date().toLocaleDateString(undefined,{weekday:'short',day:'numeric',month:'short'});
+function animate(v,on){if(!on||(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches))return;v.classList.remove('enter');void v.offsetWidth;
+ v.querySelectorAll('.card').forEach((e,i)=>e.style.setProperty('--i',Math.min(i,12)));v.querySelectorAll('.chap,.bk,.day').forEach((e,i)=>e.style.setProperty('--i',Math.min(i,40)));
+ v.classList.add('enter');clearTimeout(animate.t);animate.t=setTimeout(()=>v.classList.remove('enter'),1500)}
+function render(anim){const v=$('#view');v.innerHTML=views[tab]();animate(v,anim);$('#dl').textContent=new Date().toLocaleDateString(undefined,{weekday:'short',day:'numeric',month:'short'});
  const h=new Date().getHours();$('#gr').textContent=(h<12?'Good morning':h<18?'Good afternoon':'Good evening')+'!';$('#score').textContent=`Day score ${score(today())}`;document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.tab===tab))}
 const num=id=>Math.max(0,parseFloat($(id).value)||0);
 
 document.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;const D=b.dataset,id=b.id;
- if(D.tab){tab=D.tab;return render()}
+ if(D.tab){tab=D.tab;scrollTo&&scrollTo({top:0});return render(true)}
  if(id==='motion')return enableMotion();
  if(id==='addst')day(today()).steps+=Math.round(num('#st'));
  else if(id==='setst')day(today()).steps=Math.round(num('#st'));
@@ -214,17 +235,26 @@ document.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)r
  else if(id==='savebt'){(S.budgets[month]=S.budgets[month]||{total:0,cats:{}}).total=num('#bt')}
  else if(id==='addcat'){const k=$('#bc').value.trim();if(!k||!num('#ba'))return;(S.budgets[month]=S.budgets[month]||{total:0,cats:{}}).cats[k]=num('#ba')}
  else if(D.delcat)delete S.budgets[month].cats[D.delcat];
- else if(D.rev){month=D.rev;tab='review';return render()}
+ else if(D.rev){month=D.rev;tab='review';return render(true)}
  else if(id==='addev'){const v=$('#ev').value.trim();if(!v)return;S.events.push({id:uid(),date:selD,time:$('#et').value,title:v,done:false})}
  else if(D.delev)S.events=S.events.filter(v=>v.id!==D.delev);
  else if(D.sel){selD=D.sel;return render()}
- else if(D.cal){const[y,m]=calM.split('-').map(Number);calM=iso(new Date(y,m-1+Number(D.cal),1)).slice(0,7);return render()}
+ else if(D.cal){const[y,m]=calM.split('-').map(Number);calM=iso(new Date(y,m-1+Number(D.cal),1)).slice(0,7);return render(true)}
  else if(id==='caltoday'){calM=today().slice(0,7);selD=today();return render()}
  else if(id==='bstart'){const st=$('#bs').value||today(),en=$('#be').value;if(!en||en<st)return alert('Choose an end date after the start date.');S.bible={start:st,end:en,rounds:Math.max(1,Math.round(num('#br'))||3),pos:0,log:{}}}
  else if(id==='bdone'||D.bdone){const b=bstat();bread(b.target-b.rt)}
  else if(id==='badd')bread(num('#bn'));
- else if(id==='bundo'){const B=S.bible;B.pos-=B.log[today()]||0;B.log[today()]=0}
+ else if(id==='bundo'){const B=S.bible,r=B.log[today()]||0;bump(B.pos-r,r,-1);B.pos-=r;B.log[today()]=0}
  else if(id==='breset'){if(!confirm('Restart the plan? Your reading progress will be cleared.'))return;S.bible=null}
+ else if(D.ch){const[x,y]=D.ch.split(':').map(Number),g=gi(x,y);bsel=x;if(!R.step){R.f=R.t=g;R.step=1}else{if(g<R.f){R.t=R.f;R.f=g}else R.t=g;R.step=0}return render()}
+ else if(D.bk){bsel=+D.bk;R.f=gi(bsel,1);R.t=gi(bsel,BIB[bsel][1]);R.step=0;return render()}
+ else if(id==='rmark')bump(R.f,R.t-R.f+1,1);
+ else if(id==='runmark')bump(R.f,R.t-R.f+1,-1);
+ else if(id==='gcreate'){const e=$('#ge').value;if(!e||e<today())return alert('Choose a finish date that is today or later.');let mn=Infinity;for(let i=R.f;i<=R.t;i++){const[x,y]=fromGi(i);mn=Math.min(mn,rcv(x,y))}
+  S.bgoals.push({id:uid(),name:$('#gn').value.trim()||brange(R.f,R.t-R.f+1),f:R.f,t:R.t,start:today(),end:e,base:mn})}
+ else if(D.gdel)S.bgoals=S.bgoals.filter(v=>v.id!==D.gdel);
+ else if(D.gread){const g=S.bgoals.find(v=>v.id===D.gread);let left=0;for(let i=g.f;i<=g.t;i++){const[x,y]=fromGi(i);if(rcv(x,y)<=g.base)left++}
+  let n=Math.ceil(left/Math.max(1,dayDiff(today(),g.end)+1));for(let i=g.f;i<=g.t&&n>0;i++){const[x,y]=fromGi(i);if(rcv(x,y)<=g.base){rcs(x,y,1);n--}}}
  else if(id==='ex'){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(S)],{type:'application/json'}));a.download=`daylog-${today()}.json`;return a.click()}
  else if(id==='im')return $('#fi').click();
  else return;
@@ -233,11 +263,12 @@ document.addEventListener('change',e=>{const t=e.target;
  if(t.dataset.done){const k=S.tasks.find(x=>x.id===t.dataset.done);if(k.run){k.spent=secs(k);k.run=null}k.done=t.checked;k.date=today();save();render()}
  if(t.id==='sp'){const q=PRE[t.value];$('#sn').value=q[0];$('#scy').value=q[1]}
  if(t.dataset.doneev){const x=S.events.find(v=>v.id===t.dataset.doneev);x.done=t.checked;save();render()}
+ if(['fb','fc','tb','tc'].includes(t.id)){const fb=+$('#fb').value,tb=+$('#tb').value,f=t.id==='fb'?1:Math.min(+$('#fc').value,BIB[fb][1]),e=t.id==='tb'?BIB[tb][1]:Math.min(+$('#tc').value,BIB[tb][1]);R.f=gi(fb,f);R.t=Math.max(R.f,gi(tb,e));R.step=0;render()}
  if(t.id==='ty'||t.id==='ch'){const cr=$('#ty').value==='cr';$('#ch').hidden=cr;$('#tg').hidden=cr;$('#ap').hidden=cr||$('#ch').value!=='online'}
  if(t.id==='mo'){month=t.value||month;render()}
  if(t.id==='fi'){const r=new FileReader();r.onload=()=>{try{const d=JSON.parse(r.result);if(!d.days||!d.tasks||!d.tx)throw 0;d.uid=S.uid;S=d;save();location.reload()}catch{alert('Not a valid Daylog backup.')}};r.readAsText(t.files[0])}});
 setInterval(()=>{S.tasks.filter(t=>t.run).forEach(t=>{const e=$(`[data-tm="${t.id}"]`);if(e)e.textContent=fmt(secs(t))+' · focusing';const f=$('#fz');if(f)f.textContent=fmt(secs(t))})},1000);
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)syncHealth()});setInterval(syncHealth,3e5);
 if(S.motion&&!NATIVE&&!(window.DeviceMotionEvent&&DeviceMotionEvent.requestPermission)){addEventListener('devicemotion',onMotion);motionOn=true}
-render();syncHealth();checkDue();
+render(true);syncHealth();checkDue();
 if('serviceWorker' in navigator&&!NATIVE)navigator.serviceWorker.register('sw.js');
