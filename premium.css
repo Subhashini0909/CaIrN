@@ -58,3 +58,15 @@ mark{background:linear-gradient(transparent 50%,#E3C77A99 50%);color:inherit;pad
 .scr.tam{font-family:'Noto Serif Tamil','Latha','Nirmala UI',var(--serif);line-height:2.05;max-width:760px}
 
 .deln{margin-top:22px;background:#fff;border:1px solid var(--line);border-radius:16px;padding:14px 18px}.deln summary{font-weight:600;color:var(--ink);margin:0}.deln[open] summary{margin-bottom:6px}
+/* progress bars (Bible plan, daily budget) */
+.bar{height:8px;background:var(--track);border-radius:99px;overflow:hidden;margin-top:10px}.bar i{display:block;height:100%;border-radius:99px}
+/* dashboard layout */
+.stats{grid-column:1/-1;grid-template-columns:repeat(3,1fr)}
+.dash>.quick{grid-column:1/-1}
+.quick .form{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.quick .form>*{flex:none;min-width:0}
+.quick .send{display:block;width:100%;max-width:300px;margin-left:auto}
+.so{display:flex;gap:44px;align-items:center;justify-content:center;flex-wrap:wrap;padding:6px 0 4px}
+.cats{flex:1 1 320px;max-width:560px}.catr{display:grid;grid-template-columns:1fr auto 96px;gap:14px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line)}.catr:last-child{border-bottom:0}
+.catr i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:10px}.catr b{text-align:right}
+@media(max-width:1000px){.stats{grid-template-columns:repeat(3,1fr)}.quick .form{grid-template-columns:1fr 1fr}}
+@media(max-width:700px){.stats{grid-template-columns:1fr}.quick .form{grid-template-columns:1fr}.quick .send{max-width:none}.so{gap:18px}}
