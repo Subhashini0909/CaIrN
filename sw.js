@@ -1,3 +1,3 @@
-const C='daylog-v6',F=['./','index.html','style.css','app.js','config.js','cloud.js','manifest.json','icon.svg','premium.css','study.js','notes-data.js','notes-extra.js','kjv.json'];
+const C='daylog-v7',F=['./','index.html','style.css','app.js','config.js','cloud.js','manifest.json','icon.svg','premium.css','study.js','notes-data.js','notes-extra.js','kjv.json'];
 self.addEventListener('install',e=>e.waitUntil(caches.open(C).then(c=>c.addAll(F))));
 self.addEventListener('fetch',e=>e.respondWith(fetch(e.request).then(r=>{if(r.ok&&e.request.url.startsWith(location.origin)){const c=r.clone();caches.open(C).then(x=>x.put(e.request,c))}return r}).catch(()=>caches.match(e.request))));

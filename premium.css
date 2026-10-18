@@ -32,3 +32,13 @@ input,select,textarea{transition:border .2s,box-shadow .2s}input:focus,select:fo
 a.xr{color:var(--acc);text-decoration:none;border-bottom:1px dashed var(--gold);font-weight:500}a.xr:hover{background:#b8913f22}
 .ta{width:100%;min-height:240px;border:1px solid var(--line);border-radius:14px;padding:14px;font:16px/1.7 var(--serif);resize:vertical}
 .mn .mbody{margin:10px 0;line-height:1.7;font-family:var(--serif);font-size:17px}
+/* Note editor */
+.nc{position:relative}.nc.add{border:2px dashed var(--gold2);background:linear-gradient(135deg,#FFFBF0,#fff);align-items:center;text-align:center;justify-content:center}.nc.add .ni{font-size:34px;color:var(--gold)}.tag{position:absolute;top:14px;right:14px;font:600 11px Inter;color:#7a5a1a;background:#F6EBC8;border-radius:99px;padding:3px 10px}.acts{display:flex;gap:8px}
+.ed{padding:22px}.icos{display:flex;gap:6px;flex-wrap:wrap;margin:12px 0}.ic{background:var(--track);box-shadow:none;font-size:20px;padding:8px 11px;border-radius:12px}.ic.on{background:#fff;outline:2px solid var(--gold)}
+.edt{font:600 26px var(--serif);margin-bottom:10px}.ed input{margin-bottom:10px}
+.tb{display:flex;gap:6px;flex-wrap:wrap;position:sticky;top:0;z-index:4;background:#fffffff2;padding:8px 0;margin-bottom:6px;backdrop-filter:blur(6px);border-bottom:1px solid var(--line)}.tb button{background:var(--tint);color:var(--acc);box-shadow:none;padding:8px 13px}
+.ed-sec{border:1px solid var(--line);border-radius:16px;padding:14px;margin:12px 0;background:#FDFBF6}.sxst{font-weight:600;margin:8px 0}
+.rte{min-height:130px;border:1px solid var(--line);border-radius:12px;padding:12px 14px;background:#fff;font:17px/1.7 var(--serif);outline:0}.rte:focus{border-color:var(--gold);box-shadow:0 0 0 3px #b8913f26}.rte:empty:before{content:attr(data-ph);color:var(--mute)}.rte h2{font-size:22px;color:var(--acc);margin:10px 0 4px}.rte ul{padding-left:22px}
+mark{background:linear-gradient(transparent 50%,#E3C77A99 50%);color:inherit;padding:0 1px}
+.edbar{position:sticky;bottom:78px;display:flex;gap:8px;margin-top:16px;padding:12px;background:#fffffff2;border:1px solid var(--line);border-radius:16px;box-shadow:0 8px 24px #1d27571a}.edbar button{flex:1}
+@media(min-width:861px){.edbar{bottom:16px}}
