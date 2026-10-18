@@ -56,3 +56,5 @@ mark{background:linear-gradient(transparent 50%,#E3C77A99 50%);color:inherit;pad
 .scr .vs.ul sup{text-decoration:none}
 /* Tamil and NIV in the reader */
 .scr.tam{font-family:'Noto Serif Tamil','Latha','Nirmala UI',var(--serif);line-height:2.05;max-width:760px}
+
+.deln{margin-top:22px;background:#fff;border:1px solid var(--line);border-radius:16px;padding:14px 18px}.deln summary{font-weight:600;color:var(--ink);margin:0}.deln[open] summary{margin-bottom:6px}
