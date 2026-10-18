@@ -60,3 +60,10 @@ svg text{fill:var(--mute);font:10px Inter}details summary{cursor:pointer;color:v
 .gate{position:fixed;inset:0;z-index:50;background:linear-gradient(135deg,#E3E5F6,#F2EDF8);display:grid;place-items:center;padding:20px;overflow:auto}
 .gate .box{background:#fff;border-radius:22px;padding:28px;width:100%;max-width:380px}
 .gate .box h1{font-size:26px}.gate .err{color:var(--rose);font-size:13px;min-height:22px;margin:8px 0}
+
+aside{overflow-y:auto}.big2{font-size:26px;font-weight:600;letter-spacing:-.02em;margin:12px 0 2px}
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}.cal .dow{text-align:center;color:var(--mute);font-size:12px}
+.day{position:relative;aspect-ratio:1;border-radius:12px;background:var(--track);color:var(--ink);font:500 14px Inter,sans-serif;padding:0}
+.day.tod{outline:2px solid var(--acc)}.day.sel{background:var(--acc);color:#fff}
+.day i{position:absolute;bottom:6px;left:50%;width:5px;height:5px;margin-left:-2.5px;border-radius:50%;background:var(--acc)}.day.sel i{background:#fff}
+label input{margin-top:4px}

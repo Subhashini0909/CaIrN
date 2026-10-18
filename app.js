@@ -4,7 +4,7 @@ const iso=d=>{const x=new Date(d);return new Date(x-x.getTimezoneOffset()*6e4).t
 const today=()=>iso(Date.now()),uid=()=>Math.random().toString(36).slice(2,9);
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 let S=JSON.parse(localStorage.getItem(KEY)||localStorage.getItem('daylog.v1')||'null')||{days:{},tasks:[],tx:[]};
-S.days=S.days||{};S.tasks=S.tasks||[];S.tx=S.tx||[];S.goals=Object.assign({steps:8000,active:60,budget:1000},S.goals);S.cur=S.cur||'₹';S.pm=S.pm||['ICICI RuPay Credit','ICICI Amazon Pay Credit','SBI Debit','ICICI Debit','Pay Later','Pay in 3','UPI','Cash'];
+S.days=S.days||{};S.tasks=S.tasks||[];S.tx=S.tx||[];S.goals=Object.assign({steps:8000,active:60,budget:1000},S.goals);S.cur=S.cur||'₹';S.events=S.events||[];S.bible=S.bible||null;S.pm=S.pm||['ICICI RuPay Credit','ICICI Amazon Pay Credit','SBI Debit','ICICI Debit','Pay Later','Pay in 3','UPI','Cash'];
 const save=()=>{S.mod=Date.now();localStorage.setItem(KEY,JSON.stringify(S));window.Cloud&&Cloud.queue()};
 const peek=d=>S.days[d]||{steps:0,extra:0};
 const day=d=>{const x=S.days[d]||(S.days[d]={steps:0,extra:0});if(x.extra===undefined)x.extra=x.active||0;return x};
@@ -80,6 +80,23 @@ const revBanner=()=>{const n=new Date(),dom=n.getDate(),dim=new Date(n.getFullYe
 function checkDue(){if(!('Notification' in window)||Notification.permission!=='granted')return;S.subs.forEach(s=>{if(daysLeft(s.next)<=s.remind&&s.notified!==today()){s.notified=today();try{new Notification('Daylog: '+s.name,{body:`${money(s.amount)} ${dueTxt(s)}`})}catch{}}});save()}
 const meter=(v,l)=>`<div class="bar"><i style="width:${l?Math.min(100,v/l*100):0}%;${l&&v>l?'background:var(--rose)':''}"></i></div>`;
 const monthPick=()=>`<input type="month" id="mo" value="${month}" style="width:auto" aria-label="Month">`;
+// ---------- Bible reading plan and calendar ----------
+const BIB=[['Genesis',50],['Exodus',40],['Leviticus',27],['Numbers',36],['Deuteronomy',34],['Joshua',24],['Judges',21],['Ruth',4],['1 Samuel',31],['2 Samuel',24],['1 Kings',22],['2 Kings',25],['1 Chronicles',29],['2 Chronicles',36],['Ezra',10],['Nehemiah',13],['Esther',10],['Job',42],['Psalms',150],['Proverbs',31],['Ecclesiastes',12],['Song of Solomon',8],['Isaiah',66],['Jeremiah',52],['Lamentations',5],['Ezekiel',48],['Daniel',12],['Hosea',14],['Joel',3],['Amos',9],['Obadiah',1],['Jonah',4],['Micah',7],['Nahum',3],['Habakkuk',3],['Zephaniah',3],['Haggai',2],['Zechariah',14],['Malachi',4],['Matthew',28],['Mark',16],['Luke',24],['John',21],['Acts',28],['Romans',16],['1 Corinthians',16],['2 Corinthians',13],['Galatians',6],['Ephesians',6],['Philippians',4],['Colossians',4],['1 Thessalonians',5],['2 Thessalonians',3],['1 Timothy',6],['2 Timothy',4],['Titus',3],['Philemon',1],['Hebrews',13],['James',5],['1 Peter',5],['2 Peter',3],['1 John',5],['2 John',1],['3 John',1],['Jude',1],['Revelation',22]];
+const TOT=1189; // chapters in one reading
+const bp=p=>{p=((p%TOT)+TOT)%TOT;for(const[n,c]of BIB){if(p<c)return[n,p+1];p-=c}};
+const bpos=p=>bp(p).join(' ');
+const brange=(p,n)=>{if(n<=0)return'—';const a=bp(p),b=bp(p+n-1);return n===1?bpos(p):a[0]===b[0]?`${a[0]} ${a[1]} to ${b[1]}`:`${bpos(p)} to ${bpos(p+n-1)}`};
+const dayDiff=(a,b)=>Math.round((new Date(b+'T12:00')-new Date(a+'T12:00'))/864e5);
+function bstat(){const B=S.bible;if(!B)return null;const t=today(),total=B.rounds*TOT,rt=B.log[t]||0,p0=B.pos-rt,left=total-p0,dl=Math.max(1,dayDiff(t,B.end)+1),span=Math.max(1,dayDiff(B.start,B.end)+1),el=Math.min(span,Math.max(0,dayDiff(B.start,t)+1));
+ const started=t>=B.start,done=B.pos>=total;
+ return{B,total,rt,p0,left,done,started,target:done||!started?0:Math.ceil(left/dl),diff:started?B.pos-total*el/span:0,round:Math.min(B.rounds,Math.floor(B.pos/TOT)+1),inRound:done?TOT:B.pos%TOT,pct:B.pos/total*100}}
+const bread=n=>{const B=S.bible,t=today();n=Math.max(0,Math.min(Math.round(n)||0,B.rounds*TOT-B.pos));B.pos+=n;B.log[t]=(B.log[t]||0)+n};
+const bstreak=()=>{const L=S.bible.log;let n=0,d=new Date();if(!L[today()])d.setDate(d.getDate()-1);while(L[iso(d)]>0){n++;d.setDate(d.getDate()-1)}return n};
+let calM=today().slice(0,7),selD=today();
+const evSort=(a,b)=>(a.time||'').localeCompare(b.time||'');
+const evRow=e=>`<div class="item ${e.done?'done':''}"><input type="checkbox" data-doneev="${e.id}" ${e.done?'checked':''} style="width:20px;height:20px;accent-color:var(--acc)" aria-label="Done"><div class="t"><b>${esc(e.title)}</b><div class="mute">${e.time||'All day'}</div></div><button class="s g" data-delev="${e.id}" aria-label="Delete">✕</button></div>`;
+const bibleCard=()=>{const b=bstat();if(!b||b.done||!b.started)return'';return `<div class="card span3 row"><div><h2 style="margin:0">Today's Bible reading</h2><div class="mute">${brange(b.p0,b.target)} · ${b.target} chapters</div></div>${b.rt>=b.target?'<span class="pill up">Done</span>':'<button data-bdone="1">Mark done</button>'}</div>`};
+const schedCard=()=>{const L=S.events.filter(e=>e.date===today()).sort(evSort);return L.length?`<div class="card span3"><h2>Today's schedule</h2>${L.map(evRow).join('')}</div>`:''};
 const grp=(tx,f)=>{const o={};tx.forEach(x=>{const k=f(x);if(k)o[k]=(o[k]||0)+x.amount});return Object.entries(o).sort((a,b)=>b[1]-a[1])};
 const walletSummary=tx=>{const d=tx.filter(x=>x.type==='dr'),m=grp(d,x=>x.pm),a=grp(d.filter(x=>x.ch==='online'),x=>x.app),L=r=>r.map(([k,v])=>`<div class="row" style="padding:5px 0"><span>${esc(k)}</span><b>${money(v)}</b></div>`).join('');
  return m.length||a.length?`<div class="grid" style="margin-bottom:14px"><div class="card"><h2>By card or method</h2>${L(m)||'<div class="mute">No data</div>'}</div><div class="card"><h2>Online, by app</h2>${L(a)||'<div class="mute">No online spends</div>'}</div></div>`:''};
@@ -94,7 +111,7 @@ today(){const t=today(),y=last(2)[0],d=peek(t),g=S.goals,tt=S.tasks.filter(x=>x.
  ${stat('c3','chk','Tasks',`${dn} of ${tt.length}`,'',`${streak()}-day step streak`)}</div>
  <div class="card quick"><h2>Quick add</h2><div class="form"><select id="ty"><option value="dr">Expense</option><option value="cr">Credit</option></select><input id="am" type="number" min="0" step="0.01" placeholder="Amount"><input id="ca" placeholder="Category"><input id="no" placeholder="Note"><select id="tg" aria-label="Worth it"><option value="useful">Useful spend</option><option value="unwanted">Unwanted spend</option></select><select id="pm" aria-label="Paid with">${S.pm.map(p=>`<option>${esc(p)}</option>`).join("")}</select><select id="ch" aria-label="Where"><option value="offline">Offline</option><option value="online">Online</option></select><input id="ap" placeholder="App or site used (e.g. Amazon)" hidden></div><button class="send" id="addtx">Add entry</button>
  <details style="margin-top:14px"><summary>Adjust steps or minutes</summary><div class="form"><input id="st" type="number" min="0" placeholder="Steps"><button class="g" id="addst">Add steps</button><button class="g" id="setst">Set total</button><input id="ac" type="number" min="0" placeholder="Minutes"><button class="g" id="addac">Add minutes</button></div></details></div>
- ${dueCard()}${revBanner()}${runT?`<div class="card live span3"><div class="lbl">In focus · ${esc(runT.title)}</div><div class="num" id="fz">${fmt(secs(runT))}</div></div>`:''}
+ ${schedCard()}${bibleCard()}${dueCard()}${revBanner()}${runT?`<div class="card live span3"><div class="lbl">In focus · ${esc(runT.title)}</div><div class="num" id="fz">${fmt(secs(runT))}</div></div>`:''}
  <div class="card span2"><h2>Steps overview</h2>${bars(w.map(x=>peek(x).steps),w.map(x=>new Date(x+'T12:00').toLocaleDateString(undefined,{weekday:'short'})))}</div>
  <div class="card"><h2>Spending overview</h2>${tot?`<div style="text-align:center">${donut(en,tot)}</div><div class="legend">${en.map(([k,v],i)=>`<span><i style="background:${PAL[i%5]}"></i>${esc(k)}</span>`).join('')}</div>`:'<div class="empty">No expenses this month.</div>'}</div>
  <div class="card span3"><h2>Recent transactions</h2><div class="tbl"><div class="r h"><span>Transaction</span><span>Date</span><span>Category</span><span>Amount</span><span>Type</span></div>
@@ -144,6 +161,30 @@ review(){const m=month,ds=dm(m),g=S.goals,tx=S.tx.filter(x=>x.date.startsWith(m)
  <div class="card"><h2>Feedback</h2>${F.length?F.map(x=>`<p class="ins">${x}</p>`).join(''):'<div class="empty">Log some days and this fills in.</div>'}</div>
  ${bad.length?`<div class="card"><h2>Unwanted spends</h2>${bad.slice(0,6).map(x=>`<div class="item"><div class="t"><b>${esc(x.cat||'Other')}</b><div class="mute">${x.date}${x.note?' · '+esc(x.note):''}</div></div><b class="dr">${money(x.amount)}</b></div>`).join('')}</div>`:''}
  <div class="card"><h2>Task progress and time taken</h2>${tk.length?[...tk].sort((a,b)=>secs(b)-secs(a)).slice(0,20).map(t=>`<div class="item"><div class="t"><b>${esc(t.title)}</b></div><span class="pill ${st(t)[1]}">${st(t)[0]}</span><span class="mute" style="min-width:64px;text-align:right">${fmt(secs(t))}</span></div>`).join(''):'<div class="empty">No tasks this month.</div>'}</div>`},
+bible(){const b=bstat();
+ if(!b){const t=today(),e=iso(Date.now()+364*864e5);return `<div class="card"><h2>Start your Bible reading plan</h2><p class="mute" style="margin-top:0">Reading the whole Bible 3 times in a year is 3,567 chapters, about 10 chapters a day (1,189 chapters in one reading). Daylog works out each day's passage in order from Genesis to Revelation and adjusts if you fall behind.</p><div class="form"><label class="mute" style="flex:1 1 100%">Start date<input id="bs" type="date" value="${t}"></label><label class="mute" style="flex:1 1 100%">End date<input id="be" type="date" value="${e}"></label><label class="mute" style="flex:1 1 100%">Times to read the Bible<input id="br" type="number" min="1" max="10" value="3"></label><button id="bstart" style="flex:1 1 100%">Start plan</button></div></div>`}
+ const B=b.B,w=last(14),rd=[...Array(B.rounds)].map((_,i)=>Math.max(0,Math.min(1,(B.pos-i*TOT)/TOT)));
+ return `<div class="card"><div class="row"><h2 style="margin:0">Today's reading</h2><span class="pill ${b.diff>=0?'up':'dn'}">${!b.started?'Starts '+B.start:b.done?'Plan complete':b.diff>=0?'Ahead by '+Math.round(b.diff)+' chapters':'Behind by '+Math.round(-b.diff)+' chapters'}</span></div>
+ <div class="big2">${b.done?'All readings complete':!b.started?'Not started yet':brange(b.p0,b.target)}</div><div class="mute">${b.target} chapter${b.target===1?'':'s'} today · ${b.rt} read</div>${meter(b.rt,b.target||1)}
+ <div class="form" style="margin:14px 0 0">${b.rt<b.target?'<button id="bdone">Mark today done</button>':''}<input id="bn" type="number" min="1" placeholder="Chapters read"><button class="g" id="badd">Add chapters</button><button class="g" id="bundo">Undo today</button></div></div>
+ <div class="grid" style="margin-bottom:14px"><div class="card"><div class="lbl">Overall progress</div><div class="num">${b.pct.toFixed(1)}%</div><div class="sub">${B.pos.toLocaleString()} of ${b.total.toLocaleString()} chapters</div></div>
+ <div class="card"><div class="lbl">Current reading</div><div class="num">${b.done?B.rounds:b.round} of ${B.rounds}</div><div class="sub">${Math.round(b.inRound/TOT*100)}% of this one</div></div>
+ <div class="card"><div class="lbl">Up next</div><div class="num" style="font-size:20px">${b.done?'—':bpos(B.pos)}</div><div class="sub">where you continue</div></div>
+ <div class="card"><div class="lbl">Streak</div><div class="num">${bstreak()} days</div><div class="sub">${last(7).reduce((a,d)=>a+(B.log[d]||0),0)} chapters this week</div></div></div>
+ <div class="card"><h2>Each reading</h2>${rd.map((v,i)=>`<div class="row" style="margin-top:${i?12:0}px"><span>Reading ${i+1}</span><span class="mute">${Math.round(v*100)}%</span></div>${meter(v,1)}`).join('')}</div>
+ <div class="card"><h2>Chapters read, last 14 days</h2>${bars(w.map(d=>B.log[d]||0),w.map(d=>d.slice(8)))}</div>
+ <div class="card row"><span class="mute">Plan: ${B.start} to ${B.end}</span><button class="g s" id="breset">Restart plan</button></div>`},
+calendar(){const[y,mo]=calM.split('-').map(Number),first=new Date(y,mo-1,1).getDay(),n=new Date(y,mo,0).getDate(),evs=d=>S.events.filter(e=>e.date===d),dues=d=>S.subs.filter(s=>s.next===d);
+ let cells='';for(let i=0;i<first;i++)cells+='<span></span>';
+ for(let i=1;i<=n;i++){const d=`${calM}-${String(i).padStart(2,'0')}`;cells+=`<button class="day${d===today()?' tod':''}${d===selD?' sel':''}" data-sel="${d}" aria-label="${d}">${i}${evs(d).length||dues(d).length?'<i></i>':''}</button>`}
+ const E=evs(selD).sort(evSort),Dd=dues(selD),end=iso(Date.now()+7*864e5),up=S.events.filter(e=>e.date>=today()&&e.date<=end&&!e.done).sort((a,b)=>a.date.localeCompare(b.date)||evSort(a,b));
+ return `<div class="card"><div class="row"><button class="g s" data-cal="-1" aria-label="Previous month">‹</button><b>${new Date(y,mo-1,1).toLocaleDateString(undefined,{month:'long',year:'numeric'})}</b><span><button class="g s" id="caltoday">Today</button> <button class="g s" data-cal="1" aria-label="Next month">›</button></span></div>
+ <div class="cal" style="margin-top:14px">${['S','M','T','W','T','F','S'].map(x=>`<span class="dow">${x}</span>`).join('')}${cells}</div></div>
+ <div class="card"><h2>${new Date(selD+'T12:00').toLocaleDateString(undefined,{weekday:'long',day:'numeric',month:'long'})}</h2>
+ <div class="form"><input id="ev" placeholder="Add a schedule, e.g. Church meeting" aria-label="Title"><input id="et" type="time" aria-label="Time" style="flex:0 1 130px"><button id="addev">Add</button></div>
+ ${E.map(evRow).join('')}${Dd.map(s=>`<div class="item"><div class="chipic c4">₹</div><div class="t"><b>${esc(s.name)}</b><div class="mute">Payment due · ${money(s.amount)}</div></div></div>`).join('')}
+ ${E.length||Dd.length?'':'<div class="empty">Nothing planned for this day.</div>'}</div>
+ ${up.length?`<div class="card"><h2>Next 7 days</h2>${up.map(e=>`<div class="item"><div class="t"><b>${esc(e.title)}</b><div class="mute">${e.date}${e.time?' · '+e.time:''}</div></div></div>`).join('')}</div>`:''}`},
 settings(){return `${window.Cloud?Cloud.card():''}<div class="card"><h2>Goals and data</h2><div class="form"><input id="gs" type="number" value="${S.goals.steps}" aria-label="Step goal"><input id="ga" type="number" value="${S.goals.active}" aria-label="Active minutes goal"><input id="gb" type="number" value="${S.goals.budget}" aria-label="Daily budget"><input id="cu" value="${esc(S.cur)}" style="max-width:70px" aria-label="Currency"><input id="pms" value="${esc(S.pm.join(', '))}" aria-label="Payment methods, comma separated" style="flex:1 1 100%"><select id="sens" aria-label="Step sensitivity" style="flex:1 1 100%"><option value="0.7" ${S.thr===0.7?'selected':''}>Step sensitivity: High (counts light steps)</option><option value="1.1" ${!S.thr||S.thr===1.1?'selected':''}>Step sensitivity: Normal</option><option value="1.6" ${S.thr===1.6?'selected':''}>Step sensitivity: Low (ignores small movement)</option></select><button id="sg">Save</button></div>
  <div class="form"><button class="g" id="ex">Export backup</button><button class="g" id="im">Import backup</button><input type="file" id="fi" accept=".json" hidden></div></div>`}};
 
@@ -174,6 +215,16 @@ document.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)r
  else if(id==='addcat'){const k=$('#bc').value.trim();if(!k||!num('#ba'))return;(S.budgets[month]=S.budgets[month]||{total:0,cats:{}}).cats[k]=num('#ba')}
  else if(D.delcat)delete S.budgets[month].cats[D.delcat];
  else if(D.rev){month=D.rev;tab='review';return render()}
+ else if(id==='addev'){const v=$('#ev').value.trim();if(!v)return;S.events.push({id:uid(),date:selD,time:$('#et').value,title:v,done:false})}
+ else if(D.delev)S.events=S.events.filter(v=>v.id!==D.delev);
+ else if(D.sel){selD=D.sel;return render()}
+ else if(D.cal){const[y,m]=calM.split('-').map(Number);calM=iso(new Date(y,m-1+Number(D.cal),1)).slice(0,7);return render()}
+ else if(id==='caltoday'){calM=today().slice(0,7);selD=today();return render()}
+ else if(id==='bstart'){const st=$('#bs').value||today(),en=$('#be').value;if(!en||en<st)return alert('Choose an end date after the start date.');S.bible={start:st,end:en,rounds:Math.max(1,Math.round(num('#br'))||3),pos:0,log:{}}}
+ else if(id==='bdone'||D.bdone){const b=bstat();bread(b.target-b.rt)}
+ else if(id==='badd')bread(num('#bn'));
+ else if(id==='bundo'){const B=S.bible;B.pos-=B.log[today()]||0;B.log[today()]=0}
+ else if(id==='breset'){if(!confirm('Restart the plan? Your reading progress will be cleared.'))return;S.bible=null}
  else if(id==='ex'){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(S)],{type:'application/json'}));a.download=`daylog-${today()}.json`;return a.click()}
  else if(id==='im')return $('#fi').click();
  else return;
@@ -181,6 +232,7 @@ document.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)r
 document.addEventListener('change',e=>{const t=e.target;
  if(t.dataset.done){const k=S.tasks.find(x=>x.id===t.dataset.done);if(k.run){k.spent=secs(k);k.run=null}k.done=t.checked;k.date=today();save();render()}
  if(t.id==='sp'){const q=PRE[t.value];$('#sn').value=q[0];$('#scy').value=q[1]}
+ if(t.dataset.doneev){const x=S.events.find(v=>v.id===t.dataset.doneev);x.done=t.checked;save();render()}
  if(t.id==='ty'||t.id==='ch'){const cr=$('#ty').value==='cr';$('#ch').hidden=cr;$('#tg').hidden=cr;$('#ap').hidden=cr||$('#ch').value!=='online'}
  if(t.id==='mo'){month=t.value||month;render()}
  if(t.id==='fi'){const r=new FileReader();r.onload=()=>{try{const d=JSON.parse(r.result);if(!d.days||!d.tasks||!d.tx)throw 0;d.uid=S.uid;S=d;save();location.reload()}catch{alert('Not a valid Daylog backup.')}};r.readAsText(t.files[0])}});
