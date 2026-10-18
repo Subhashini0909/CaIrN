@@ -54,3 +54,7 @@ mark{background:linear-gradient(transparent 50%,#E3C77A99 50%);color:inherit;pad
 .a-i,.imp,.scr .vs.imp{background:#FBE1E1;color:#7A1D28;font-weight:600;border-radius:3px;padding:0 2px;-webkit-box-decoration-break:clone;box-decoration-break:clone}
 .scr .vs.imp sup:before{content:'★ ';color:var(--rose)}
 .scr .vs.ul sup{text-decoration:none}
+/* Tamil and NIV in the reader */
+.scr.tam{font-family:'Noto Serif Tamil','Latha','Nirmala UI',var(--serif);line-height:2.05;max-width:760px}
+.scr.niv p{margin:0 0 .8em}.scr.niv .v{font:600 11px Inter;color:var(--gold);vertical-align:super;margin-right:3px}.scr.niv .s1,.scr.niv .s,.scr.niv .s2{font:600 18px var(--serif);color:var(--acc);margin:1em 0 .3em}
+.extc input{margin-top:6px}
