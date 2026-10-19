@@ -1,12 +1,18 @@
 // Study: Bible reader (KJV and Tamil offline, NLT live, NIV via link) + notes library (your own notes live here too)
 (()=>{
-const ST=S.st=Object.assign({ver:'KJV',bk:10,ch:1,fs:21,hl:{},my:[],ov:{}},S.st),U={sub:'read',nid:null,edit:null,q:'',tq:'',msg:'',sel:null,selId:null};
+const ST=S.st=Object.assign({ver:'KJV',bk:10,ch:1,fs:21,hl:{},my:[],ov:{},nm:true},S.st),U={sub:'read',nid:null,edit:null,q:'',tq:'',msg:'',sel:null,selId:null};
 ST.ov=ST.ov||{};ST.an=ST.an||{};ST.del=ST.del||{};ST.tool=ST.tool||'h';Object.keys(ST.hl).forEach(k=>{if(ST.hl[k]===1||ST.hl[k]===true)ST.hl[k]='h'});ST.my=ST.my.map(m=>m.secs?m:{id:m.id,title:m.title||'Untitled',sum:[m.passage,m.tag].filter(Boolean).join(' · '),ico:'📝',secs:[{t:'Notes',h:'<p>'+esc(m.body||'').replace(/\n/g,'<br>')+'</p>',hd:1}],ts:m.ts});
 let KJV=null,ld=0;const NC={};
+const flash=()=>{const v=U.flash;if(!v)return;const el=document.querySelector(`.scr .vs[data-sx="vs:${v}"]`);if(!el)return;U.flash=0;el.scrollIntoView({block:'center'});el.classList.add('flash');setTimeout(()=>el.classList.remove('flash'),2600)};
+const rr=()=>{if(tab==='study'){render();flash()}};
 const VER={KJV:'KJV',NIV:'NIV',NLT:'NLT',TAM:'தமிழ்'};
-const load=()=>{if(KJV||ld)return;ld=1;fetch('kjv.json').then(r=>r.json()).then(j=>{KJV=j;ld=0;if(tab==='study')render()}).catch(()=>{ld=0;U.err=1;if(tab==='study')render()})};
-let TAM=null,ldT=0;const loadT=()=>{if(TAM||ldT)return;ldT=1;fetch('tamil.json').then(r=>r.json()).then(j=>{TAM=j;ldT=0;if(tab==='study')render()}).catch(()=>{ldT=0;U.errT=1;if(tab==='study')render()})};
+const load=()=>{if(KJV||ld)return;ld=1;fetch('kjv.json').then(r=>r.json()).then(j=>{KJV=j;ld=0;rr()}).catch(()=>{ld=0;U.err=1;if(tab==='study')render()})};
+let TAM=null,ldT=0;const loadT=()=>{if(TAM||ldT)return;ldT=1;fetch('tamil.json').then(r=>r.json()).then(j=>{TAM=j;ldT=0;rr()}).catch(()=>{ldT=0;U.errT=1;if(tab==='study')render()})};
 const ref=()=>`${BIB[ST.bk][0]} ${ST.ch}`;
+NM.cfg.refresh=()=>{if(tab==='study')render()};
+NM.cfg.text=(b,c,v)=>KJV&&KJV[b]&&KJV[b].chapters[c-1]?KJV[b].chapters[c-1][v-1]:null;
+NM.cfg.go=(b,c,v)=>{ST.bk=b;ST.ch=c;U.sub='read';U.nid=null;U.edit=null;U.flash=v;if(ST.ver!=='KJV'&&ST.ver!=='TAM')ST.ver='KJV';if(tab!=='study'){const t=document.querySelector('[data-tab=study]');t&&t.click()}save();go();if(!U.flash)return;scrollTo({top:0})};
+document.addEventListener('toggle',e=>{if(e.target.classList&&e.target.classList.contains('nmlist'))U.nmopen=e.target.open},true);
 // ---- reading tools: Highlight (h), Underline (u), Important (i), Clear (x) ----
 const TL=[['h','Highlight'],['u','Underline'],['i','Important'],['x','Clear']];
 const canon=f=>[...new Set(f)].sort().join('');
@@ -14,7 +20,7 @@ const tog=(f,t)=>{f=f||'';return f.includes(t)?f.replace(t,''):canon(f+t)};
 const vcls=f=>f?(f.includes('h')?' hl':'')+(f.includes('u')?' ul':'')+(f.includes('i')?' imp':''):'';
 const hash=t=>{let h=5381;for(let i=0;i<t.length;i++)h=((h<<5)+h+t.charCodeAt(i))|0;return h};
 const secTxt=x=>{const d=document.createElement('div');d.innerHTML=(x.hd?`<h1>${esc(x.t)}</h1>`:'')+x.h;return d.textContent};
-const tools=()=>`<div class="rtools" role="toolbar" aria-label="Reading tools">${TL.map(([k,l])=>`<button class="${ST.tool===k?'on':''}" data-sx="tool:${k}" aria-pressed="${ST.tool===k}"><span class="sw ${k==='x'?'':'a-'+k}">${k==='x'?'✕':'Aa'}</span>${l}</button>`).join('')}</div>`;
+const tools=nmb=>`<div class="rtools" role="toolbar" aria-label="Reading tools">${TL.map(([k,l])=>`<button class="${ST.tool===k?'on':''}" data-sx="tool:${k}" aria-pressed="${ST.tool===k}"><span class="sw ${k==='x'?'':'a-'+k}">${k==='x'?'✕':'Aa'}</span>${l}</button>`).join('')}${nmb?`<button class="nmtog ${ST.nm?'on':''}" data-sx="nmtog" aria-pressed="${!!ST.nm}" title="Show details when you hover over names and places"><span class="sw nmsw">Ab</span>Names</button>`:''}</div>`;
 // segments are [start,end,flags] over a section's text; toggling a flag already on every character removes it
 const paint=(list,s0,e0,t)=>{const out=[],mid=[];
  list.forEach(([a,b,f])=>{if(b<=s0||a>=e0){out.push([a,b,f]);return}if(a<s0)out.push([a,s0,f]);if(b>e0)out.push([e0,b,f]);mid.push([Math.max(a,s0),Math.min(b,e0),f])});
@@ -45,18 +51,21 @@ const step=d=>{let b=ST.bk,c=ST.ch+d;if(c<1){if(b===0)return;b--;c=BIB[b][1]}els
 const sel=()=>`<div class="pick"><select id="sxb" aria-label="Book"><optgroup label="Old Testament">${BIB.slice(0,39).map((x,i)=>`<option value="${i}" ${i===ST.bk?'selected':''}>${x[0]}</option>`).join('')}</optgroup><optgroup label="New Testament">${BIB.slice(39).map((x,i)=>`<option value="${i+39}" ${i+39===ST.bk?'selected':''}>${x[0]}</option>`).join('')}</optgroup></select><select id="sxc" aria-label="Chapter">${[...Array(BIB[ST.bk][1])].map((_,i)=>`<option ${i+1===ST.ch?'selected':''}>${i+1}</option>`).join('')}</select></div>`;
 function body(){const k=`${ST.bk}:${ST.ch}`,r=encodeURIComponent(ref()),v=ST.ver;
  if(v==='KJV'){load();if(!KJV)return U.err?'<div class="empty">Could not load the KJV text. Check that kjv.json is next to index.html.</div>':'<div class="skel"></div><div class="skel"></div><div class="skel"></div>';
-  return `<div class="scr" style="font-size:${ST.fs}px">${KJV[ST.bk].chapters[ST.ch-1].map((t,i)=>`<span class="vs${vcls(ST.hl[k+':'+(i+1)])}" data-sx="vs:${i+1}"><sup${NM.ev(ST.bk,ST.ch,i+1)}>${i+1}</sup>${NM.mark(esc(t),ST.bk,ST.ch,i+1)} </span>`).join('')}</div><p class="mute" style="margin:14px 0 0">Pick a tool above, then tap a verse to mark it. Tap it again to remove the mark. King James Version, public domain, works offline.</p>`}
+  return `<div class="scr" style="font-size:${ST.fs}px">${KJV[ST.bk].chapters[ST.ch-1].map((t,i)=>`<span class="vs${vcls(ST.hl[k+':'+(i+1)])}" data-sx="vs:${i+1}"><sup${NM.ev(ST.bk,ST.ch,i+1)}>${i+1}</sup>${ST.nm&&NM.ready()?NM.mark(ST.bk,ST.ch,i+1,t):esc(t)} </span>`).join('')}</div><p class="mute" style="margin:14px 0 0">Pick a tool above, then tap a verse to mark it. Tap it again to remove the mark.${ST.nm?' Underlined names and places show their meaning and original Hebrew, Aramaic or Greek when you hover over them (tap on a phone). Click one for the full details.':''} King James Version, public domain, works offline.</p>`}
  if(v==='TAM'){loadT();if(!TAM)return U.errT?'<div class="empty">Could not load the Tamil text. Check that tamil.json is next to index.html.</div>':'<div class="skel"></div><div class="skel"></div><div class="skel"></div>';
-  return `<div class="scr tam" style="font-size:${ST.fs}px">${TAM[ST.bk].chapters[ST.ch-1].map((t,i)=>`<span class="vs${vcls(ST.hl[k+':'+(i+1)])}" data-sx="vs:${i+1}"><sup>${i+1}</sup>${esc(t)} </span>`).join('')}</div><p class="mute" style="margin:14px 0 0">Tamil Bible, works offline. Pick a tool above, then tap a verse to mark it. Marks are shared with the KJV verse of the same number.</p>`}
+  return `<div class="scr tam" style="font-size:${ST.fs}px">${TAM[ST.bk].chapters[ST.ch-1].map((t,i)=>`<span class="vs${vcls(ST.hl[k+':'+(i+1)])}" data-sx="vs:${i+1}"><sup>${i+1}</sup>${esc(t)} </span>`).join('')}</div><p class="mute" style="margin:14px 0 0">Tamil Bible, works offline. Pick a tool above, then tap a verse to mark it. Marks are shared with the KJV verse of the same number. The people and places in this chapter are listed below; tap one for its details.</p>`}
  if(v==='NLT'){if(NC[k]){let h=NC[k];const a=ST.an['NLT:'+k]&&ST.an['NLT:'+k][0];if(a&&a.r.length&&a.h===hash(htmlTxt(h)))h=wrap(h,a.r);return `<div class="scr nlt" style="font-size:${ST.fs}px">${h}</div><p class="mute">New Living Translation, loaded live from api.nlt.to. To mark text, select it and tap Highlight, Underline or Important.</p>`};
   if(NC[k]===0)return ext('NLT',`https://www.biblegateway.com/passage/?search=${r}&version=NLT`,'The live NLT feed is unavailable right now (it needs internet).');
   NC[k]=null;fetch(`https://api.nlt.to/api/passages?ref=${r}&key=TEST`).then(x=>x.text()).then(h=>{const d=new DOMParser().parseFromString(h,'text/html');d.querySelectorAll('script,style,link,iframe').forEach(e=>e.remove());d.querySelectorAll('*').forEach(e=>[...e.attributes].forEach(a=>/^on/i.test(a.name)&&e.removeAttribute(a.name)));
    NC[k]=d.body.innerHTML.trim()||0;if(tab==='study'&&U.sub==='read')render()}).catch(()=>{NC[k]=0;if(tab==='study'&&U.sub==='read')render()});return '<div class="skel"></div><div class="skel"></div><div class="skel"></div>'}
  return ext('NIV',`https://www.biblegateway.com/passage/?search=${r}&version=NIV`,'The NIV is licensed text, so it opens in BibleGateway in a new tab.')}
 const ext=(v,u,t)=>`<div class="extc"><div class="big2" style="font-family:var(--serif)">${VER[v]} · ${esc(ref())}</div><p class="mute">${t}</p><a class="btn" href="${u}" target="_blank" rel="noopener">Open ${VER[v]} · ${esc(ref())} ↗</a><p class="mute" style="margin-top:14px">Tip: switch to KJV above to read the same chapter in-app, then compare.</p></div>`;
+const nmList=()=>{if(ST.ver==='NIV')return '';load();if(!NM.ready()){if(!U.nmReq){U.nmReq=1;NM.load(()=>{U.nmReq=0;rr()})}return NM.err?'':'<p class="mute" style="margin-top:14px">Loading names and places…</p>'}
+ const ch=(KJV||TAM)&&(KJV||TAM)[ST.bk].chapters[ST.ch-1],G=ch&&NM.chapter(ST.bk,ST.ch,ch.length);if(!G)return '';const tot=G.p.length+G.l.length+G.o.length;
+ return `<details class="nmlist" ${U.nmopen?'open':''}><summary>People and places in this chapter <span class="nmtag">${tot}</span></summary>${tot?[['p','People and groups'],['l','Places'],['o','Titles, festivals and other names']].filter(g=>G[g[0]].length).map(([k,l])=>`<div class="nmgrp"><b>${l}</b><div class="nmcs">${G[k].map(i=>NM.chip(i)).join('')}</div></div>`).join(''):'<p class="mute">No named people or places are recorded in this chapter.</p>'}</details>`};
 const read=()=>`<div class="seg" role="tablist">${Object.entries(VER).map(([k,l])=>`<button class="${ST.ver===k?'on':''}" data-sx="ver:${k}">${l}</button>`).join('')}</div>
 <div class="card rd"><div class="rdh">${sel()}<div class="tools"><button class="g s" data-sx="fs:-1" aria-label="Smaller text">A−</button><button class="g s" data-sx="fs:1" aria-label="Larger text">A+</button></div></div>
-${ST.ver==='KJV'||ST.ver==='TAM'||ST.ver==='NLT'?tools():''}<h2 class="ref">${esc(ref())}</h2>${body()}
+${ST.ver==='KJV'||ST.ver==='TAM'||ST.ver==='NLT'?tools(ST.ver==='KJV'):''}<h2 class="ref">${esc(ref())}</h2>${body()}${nmList()}
 <div class="rdf"><button class="g" data-sx="nav:-1">‹ Previous</button><button data-sx="mark">${rcv(ST.bk,ST.ch-1)?'✓ Read · mark again':'Mark chapter read'}</button><button class="g" data-sx="note">＋ Note</button><button class="g" data-sx="nav:1">Next ›</button></div>${U.msg?`<p class="mute" style="text-align:center">${U.msg}</p>`:''}</div>`;
 const clean=h=>{const d=new DOMParser().parseFromString('<body>'+h+'</body>','text/html');d.querySelectorAll('script,style,iframe,object,embed,link,meta,form').forEach(e=>e.remove());d.body.querySelectorAll('*').forEach(e=>{const c=/^(tw|b|imp)$/.test(e.className)?e.className:'';[...e.attributes].forEach(a=>e.removeAttribute(a.name));if(c)e.className=c});return d.body.innerHTML};
 const plain=h=>h.replace(/<[^>]+>/g,' ');
@@ -72,7 +81,7 @@ const editor=()=>{const e=U.edit;return `<div class="card ed"><h2>${e.id?'Edit n
 const pull=()=>{const e=U.edit;if(!e||!$('#sxet'))return;e.title=$('#sxet').value;e.sum=$('#sxes').value;e.secs=[...document.querySelectorAll('.ed-sec')].map(x=>({t:x.querySelector('.sxst').value,h:x.querySelector('.rte').innerHTML,oi:x.dataset.oi===''?undefined:+x.dataset.oi}))};
 const blank=(t)=>({title:t||'',sum:'',ico:'📝',secs:[{t:'Key points',h:'<p><br></p>'}]});
 views.study=()=>{const mc=all().filter(x=>x.mine).sort((a,b)=>b.ts-a.ts),n=U.nid&&getN(U.nid);return `<div class="seg main">${[['read','Read Bible'],['notes','Study notes']].map(([k,l])=>`<button class="${U.sub===k?'on':''}" data-sx="sub:${k}">${l}</button>`).join('')}</div>${U.sub==='read'&&!U.edit?read():U.edit?editor():n?view():lib([...mc,...all().filter(x=>x.orig)],0)}`};
-const go=()=>render();
+const go=()=>{render();flash()};
 document.addEventListener('mousedown',e=>{if(e.target.closest('.tb button,.rtools button'))e.preventDefault()});
 document.addEventListener('pointerdown',e=>{if(!e.target.closest('.rtools'))U.sel=null});
 const selCtx=()=>{if(tab!=='study')return null;if(U.sub==='read'&&ST.ver==='NLT')return{id:`NLT:${ST.bk}:${ST.ch}`,els:[...document.querySelectorAll('.scr.nlt')]};if(U.nid&&!U.edit)return{id:U.nid,els:[...document.querySelectorAll('.nb section[id^="sxs"]')]};return null};
@@ -87,7 +96,7 @@ document.addEventListener('click',e=>{const t=e.target.closest('[data-sx]');if(!
  if(a==='sec'){const el=document.getElementById('sxs'+x);el&&el.scrollIntoView({behavior:'smooth',block:'start'});return}
  pull();const E=U.edit;let top=0;
  if(a==='sub'){if(E&&!confirm('Discard this unsaved note?'))return;U.sub=x;U.edit=null;U.nid=null;top=1}
- else if(a==='ver')ST.ver=x;else if(a==='nav'){step(+x);top=1}else if(a==='fs')ST.fs=Math.max(15,Math.min(32,ST.fs+(+x)*2));
+ else if(a==='nmtog')ST.nm=!ST.nm;else if(a==='ver')ST.ver=x;else if(a==='nav'){step(+x);top=1}else if(a==='fs')ST.fs=Math.max(15,Math.min(32,ST.fs+(+x)*2));
  else if(a==='vs'){const k=`${ST.bk}:${ST.ch}:${x}`;if(ST.tool==='x')delete ST.hl[k];else{const f=tog(ST.hl[k],ST.tool);if(f)ST.hl[k]=f;else delete ST.hl[k]}}
  else if(a==='tool'){ST.tool=x;const cx=selCtx();if(cx&&U.sel&&U.sel.length&&U.selId===cx.id){markSel(cx.id,x);U.sel=null;const g=getSelection();g&&g.removeAllRanges&&g.removeAllRanges()}}
  else if(a==='mark'){rcs(ST.bk,ST.ch-1,1);U.msg=`${esc(ref())} marked as read.`}
