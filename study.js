@@ -88,7 +88,37 @@ const secEd=(s,i,n)=>`<div class="ed-sec" data-oi="${s.oi==null?'':s.oi}"><div c
 const editor=()=>{const e=U.edit;return `<div class="card ed"><h2>${e.id?'Edit note':'New note'}</h2><div class="icos">${ICOS.map(x=>`<button class="ic${x===e.ico?' on':''}" data-sx="ico:${x}" aria-label="Icon ${x}">${x}</button>`).join('')}</div><input id="sxet" class="edt" placeholder="Note title" value="${esc(e.title)}"><input id="sxes" placeholder="One-line summary shown on the card" value="${esc(e.sum)}"><div class="tb" role="toolbar" aria-label="Formatting"><button data-sx="fmt:bold"><b>B</b></button><button data-sx="fmt:italic"><i>I</i></button><button data-sx="fmt:h2">Heading</button><button data-sx="fmt:p">Text</button><button data-sx="fmt:list">• List</button><button data-sx="fmt:mark">Highlight</button><button data-sx="fmt:u"><u>Underline</u></button><button data-sx="fmt:imp">Important</button><button data-sx="fmt:clear">Clear</button></div>${e.secs.map((s,i)=>secEd(s,i,e.secs.length)).join('')}<button class="g addsec" data-sx="addsec">＋ Add section</button><div class="edbar"><button data-sx="esave">Save note</button><button class="g" data-sx="ecancel">Cancel</button></div></div>`};
 const pull=()=>{const e=U.edit;if(!e||!$('#sxet'))return;e.title=$('#sxet').value;e.sum=$('#sxes').value;e.secs=[...document.querySelectorAll('.ed-sec')].map(x=>({t:x.querySelector('.sxst').value,h:x.querySelector('.rte').innerHTML,oi:x.dataset.oi===''?undefined:+x.dataset.oi}))};
 const blank=(t)=>({title:t||'',sum:'',ico:'📝',secs:[{t:'Key points',h:'<p><br></p>'}]});
-views.study=()=>{const mc=all().filter(x=>x.mine).sort((a,b)=>b.ts-a.ts),n=U.nid&&getN(U.nid);return `<div class="seg main">${[['read','Read Bible'],['notes','Study notes']].map(([k,l])=>`<button class="${U.sub===k?'on':''}" data-sx="sub:${k}">${l}</button>`).join('')}</div>${U.sub==='read'&&!U.edit?read():U.edit?editor():n?view():lib([...mc,...all().filter(x=>x.orig)],0)}`};
+// ---- Search: whole Bible (King James or Tamil, works offline) and all notes ----
+const SQ={n:80,t:0},TRE={};
+const nrm=x=>String(x||'').toLowerCase().replace(/[^a-z0-9]/g,'');
+const ALIAS={jn:'John',mt:'Matthew',mk:'Mark',lk:'Luke',ps:'Psalms',pss:'Psalms',prov:'Proverbs',song:'Song of Solomon',sos:'Song of Solomon',rev:'Revelation',phil:'Philippians',phm:'Philemon',heb:'Hebrews',jas:'James',gen:'Genesis',ex:'Exodus',deut:'Deuteronomy',isa:'Isaiah',jer:'Jeremiah',eze:'Ezekiel',dan:'Daniel',rom:'Romans',gal:'Galatians',eph:'Ephesians',col:'Colossians'};
+const bookOf=t=>{const k=nrm(t);if(k.length<2)return -1;const nm=ALIAS[k]?nrm(ALIAS[k]):k;let i=BIB.findIndex(b=>nrm(b[0])===nm);if(i<0)i=BIB.findIndex(b=>nrm(b[0]).startsWith(nm));return i};
+const parseRef=q=>{const m=q.trim().match(/^((?:[1-3]\s*)?[A-Za-z][A-Za-z .]*?)\s*(\d+)(?:\s*[:.]\s*(\d+))?(?:\s*[-\u2013]\s*\d+)?$/);if(!m)return null;const b=bookOf(m[1]);if(b<0)return null;const c=+m[2];if(c<1||c>BIB[b][1])return null;return{b,c,v:m[3]?+m[3]:0}};
+const terms=q=>{const t=[];q.replace(/"([^"]+)"|(\S+)/g,(m,a,b)=>{const w=(a||b).trim().toLowerCase();if(w)t.push(w)});return t};
+const reEsc=w=>w.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+// a word matches at the start of a word (love finds loved and loveth, but not beloved); Tamil matches anywhere inside a word
+const tre=(w,b)=>{const k=(b?'1':'0')+w;return TRE[k]||(TRE[k]=new RegExp((b?'(^|[^\\p{L}\\p{N}])':'')+reEsc(w),'iu'))};
+const mk=(T,b)=>new RegExp((b?'(^|[^\\p{L}\\p{N}])':'()')+'('+T.map(reEsc).join('|')+')','giu');
+const hl=(text,re)=>{let o='',p=0,m;re.lastIndex=0;while((m=re.exec(text))){if(!m[2]){re.lastIndex++;continue}const st=m.index+m[1].length;o+=esc(text.slice(p,st))+'<mark class="sm">'+esc(m[2])+'</mark>';p=st+m[2].length}return o+esc(text.slice(p))};
+const bibSearch=(T,lang)=>{const D=lang==='TAM'?TAM:KJV,b=lang!=='TAM',R=T.map(w=>tre(w,b)),out=[];D.forEach((bk,bi)=>{if(U.gt==='OT'&&bi>=39||U.gt==='NT'&&bi<39)return;bk.chapters.forEach((ch,ci)=>ch.forEach((t,vi)=>{if(R.every(r=>r.test(t)))out.push([bi,ci+1,vi+1,t])}))});return out};
+const noteSearch=T=>{const R=T.map(w=>tre(w,1)),out=[];all().forEach(n=>{n.secs.forEach((s,i)=>{const body=plain(String(s.h||'').replace(/<figure[\s\S]*?<\/figure>/g,' ')).replace(/\s+/g,' ').trim(),full=n.title+' '+(n.sum||'')+' '+s.t+' '+body;if(R.every(r=>r.test(full))){const sc=T.reduce((a,w)=>a+(full.match(new RegExp(reEsc(w),'gi'))||[]).length,0)+T.reduce((a,w)=>a+(tre(w,1).test(n.title+' '+s.t)?8:0),0);out.push([n,i,body,sc])}})});return out.sort((a,b)=>b[3]-a[3])};
+const snip=(body,T)=>{let at=-1;for(const w of T){const m=tre(w,1).exec(body);if(m){at=m.index+m[1].length;break}}if(at<0)return body.slice(0,150);const a=Math.max(0,at-60);return(a?'\u2026':'')+body.slice(a,at+140)+(at+140<body.length?'\u2026':'')};
+const srRes=()=>{const q=(U.gq||'').trim(),sc=U.gsc||'all';
+ if(q.length<2)return '<p class="mute" style="margin-top:14px">Type at least two letters. Put quotes around an exact phrase, such as "living water". You can also type a reference like John 3:16 to jump straight to it.</p>';
+ const T=terms(q),R=parseRef(q);let h='';
+ if(R&&sc!=='notes')h+=`<button class="sr go" data-sx="gv:${R.b}.${R.c}.${R.v||1}"><b>Open ${esc(BIB[R.b][0])} ${R.c}${R.v?':'+R.v:''}</b><span>Go straight to this passage</span></button>`;
+ if(sc!=='notes'){const lang=U.gl||'KJV';if(lang==='TAM')loadT();else load();const D=lang==='TAM'?TAM:KJV;
+  if(!D)h+=(lang==='TAM'?U.errT:U.err)?'<p class="mute">The Bible text could not be loaded. Check that kjv.json and tamil.json are next to index.html.</p>':'<p class="mute" style="margin-top:12px">Loading the Bible text\u2026</p>';
+  else{const res=bibSearch(T,lang),re=mk(T,lang!=='TAM'),shown=res.slice(0,SQ.n),bks=new Set(res.map(x=>x[0])).size;
+   h+=`<h3 class="sh">${lang==='TAM'?'Tamil Bible':'King James Version'} <span class="nmtag">${res.length}</span>${res.length?`<small>${bks} book${bks===1?'':'s'}</small>`:''}</h3>`;
+   h+=res.length?shown.map(([b,c,v,t])=>`<button class="sr" data-sx="gv:${b}.${c}.${v}"><b>${esc(BIB[b][0])} ${c}:${v}</b><span>${hl(t,re)}</span></button>`).join('')+(res.length>shown.length?`<button class="g s sr-more" data-sx="gmore">Show ${Math.min(80,res.length-shown.length)} more of ${res.length-shown.length} remaining</button>`:''):'<p class="mute">No verses found. Try fewer or different words.</p>'}}
+ if(sc!=='bible'){const res=noteSearch(T),re=mk(T,1),shown=res.slice(0,40);
+  h+=`<h3 class="sh">Study notes <span class="nmtag">${res.length}</span></h3>`;
+  h+=res.length?shown.map(([n,i,body])=>`<button class="sr nr" data-sx="gn:${n.id}~${i}"><b>${esc(n.ico||'')} ${esc(n.title)} <i>\u203A ${esc(n.secs[i].t)}</i></b><span>${hl(snip(body,T),re)}</span></button>`).join('')+(res.length>shown.length?`<p class="mute">Showing the first ${shown.length} of ${res.length} sections. Add another word to narrow it down.</p>`:''):'<p class="mute">No notes found.</p>'}
+ return h};
+const srch=()=>{const sc=U.gsc||'all',ch=(a,k,v,l)=>`<button class="g s ${(a||'')===v?'on':''}" data-sx="${k}:${v}">${l}</button>`;
+ return `<input id="sxg" class="srch" type="search" placeholder="Search the Bible and your notes: love, \u201Cliving water\u201D, John 3:16" value="${esc(U.gq||'')}" autocomplete="off" enterkeyhint="search"><div class="catbar" role="toolbar" aria-label="Search options">${ch(sc,'gsc','all','Everything')}${ch(sc,'gsc','bible','Bible')}${ch(sc,'gsc','notes','Notes')}</div>${sc!=='notes'?`<div class="catbar">${ch(U.gl||'KJV','gl','KJV','King James')}${ch(U.gl||'KJV','gl','TAM','\u0BA4\u0BAE\u0BBF\u0BB4\u0BCD')}<span class="sep"></span>${ch(U.gt||'','gt','','All books')}${ch(U.gt||'','gt','OT','Old Testament')}${ch(U.gt||'','gt','NT','New Testament')}</div>`:''}<div id="sxr">${srRes()}</div><p class="mute" style="margin-top:16px">Searches the King James Version and the Tamil Bible offline. NIV and NLT are loaded live, so they are not searched.</p>`};
+views.study=()=>{const mc=all().filter(x=>x.mine).sort((a,b)=>b.ts-a.ts),n=U.nid&&getN(U.nid);return `<div class="seg main">${[['read','Read Bible'],['notes','Study notes'],['search','Search']].map(([k,l])=>`<button class="${U.sub===k?'on':''}" data-sx="sub:${k}">${l}</button>`).join('')}</div>${U.sub==='read'&&!U.edit?read():U.edit?editor():n?view():U.sub==='search'?srch():lib([...mc,...all().filter(x=>x.orig)],0)}`};
 const go=()=>{render();flash()};
 document.addEventListener('mousedown',e=>{if(e.target.closest('.tb button,.rtools button'))e.preventDefault()});
 document.addEventListener('pointerdown',e=>{if(!e.target.closest('.rtools'))U.sel=null});
@@ -103,13 +133,16 @@ document.addEventListener('click',e=>{const t=e.target.closest('[data-sx]');if(!
  if(a==='fmt'){const c=document.execCommand.bind(document);if(x==='bold')c('bold');else if(x==='italic')c('italic');else if(x==='h2')c('formatBlock',false,'H2');else if(x==='p')c('formatBlock',false,'P');else if(x==='list')c('insertUnorderedList');else if(x==='clear')c('removeFormat');else if(x==='mark'){const s=String(getSelection());if(s)c('insertHTML',false,'<mark>'+esc(s)+'</mark>')}else if(x==='u')c('underline');else if(x==='imp'){const s=String(getSelection());if(s)c('insertHTML',false,'<b class="imp">'+esc(s)+'</b>')}return}
  if(a==='sec'){const el=document.getElementById('sxs'+x);el&&el.scrollIntoView({behavior:'smooth',block:'start'});return}
  pull();const E=U.edit;let top=0;
- if(a==='sub'){if(E&&!confirm('Discard this unsaved note?'))return;U.sub=x;U.edit=null;U.nid=null;top=1}
+ if(a==='sub'){if(E&&!confirm('Discard this unsaved note?'))return;U.sub=x;U.edit=null;U.nid=null;U.from=0;top=1}
  else if(a==='cat')U.cat=x==='All'?'':x;else if(a==='nmtog')ST.nm=!ST.nm;else if(a==='ver')ST.ver=x;else if(a==='nav'){step(+x);top=1}else if(a==='fs')ST.fs=Math.max(15,Math.min(32,ST.fs+(+x)*2));
  else if(a==='vs'){const k=`${ST.bk}:${ST.ch}:${x}`;if(ST.tool==='x')delete ST.hl[k];else{const f=tog(ST.hl[k],ST.tool);if(f)ST.hl[k]=f;else delete ST.hl[k]}}
  else if(a==='tool'){ST.tool=x;const cx=selCtx();if(cx&&U.sel&&U.sel.length&&U.selId===cx.id){markSel(cx.id,x);U.sel=null;const g=getSelection();g&&g.removeAllRanges&&g.removeAllRanges()}}
  else if(a==='mark'){rcs(ST.bk,ST.ch-1,1);U.msg=`${esc(ref())} marked as read.`}
  else if(a==='note'){U.sub='notes';U.nid=null;U.edit={...blank('Notes on '+ref()),sum:'Reading notes',secs:[{t:ref(),h:'<p><br></p>'}]};top=1}
- else if(a==='open'){U.nid=x;top=1}else if(a==='back'){U.nid=null;top=1}
+ else if(a==='open'){U.nid=x;top=1}else if(a==='back'){U.nid=null;if(U.from){U.sub='search';U.from=0}top=1}
+ else if(a==='gsc'){U.gsc=x;SQ.n=80}else if(a==='gl'){U.gl=x;SQ.n=80}else if(a==='gt'){U.gt=x;SQ.n=80}else if(a==='gmore')SQ.n+=80
+ else if(a==='gv'){const[b,c,v]=x.split('.').map(Number);ST.bk=b;ST.ch=c;ST.ver=U.gl==='TAM'?'TAM':'KJV';U.sub='read';U.nid=null;U.edit=null;U.flash=v;U.from=0}
+ else if(a==='gn'){const[id,si]=x.split('~');U.nid=id;U.sub='notes';U.from='search';U.edit=null;save();go();setTimeout(()=>{const el=document.getElementById('sxs'+si);el&&el.scrollIntoView({block:'start'})},60);return}
  else if(a==='ref'){ST.bk=+x;ST.ch=+y;U.sub='read';U.nid=null;U.edit=null;top=1}
  else if(a==='newn'){U.edit=blank();top=1}
  else if(a==='edit'){const n=getN(U.nid);U.edit={id:n.id,orig:!!n.orig,title:n.title,sum:n.sum||'',ico:n.ico||'📝',secs:n.secs.map((s,i)=>({oi:i,t:s.t,h:s.h.replace(/^\s*<h[12][^>]*>[\s\S]*?<\/h[12]>/,'')||'<p><br></p>'}))};top=1}
@@ -129,5 +162,5 @@ document.addEventListener('click',e=>{const t=e.target.closest('[data-sx]');if(!
  else return;
  save();go();if(top)scrollTo({top:0})});
 document.addEventListener('change',e=>{const t=e.target;if(t.id==='sxb'){ST.bk=+t.value;ST.ch=1;save();go()}else if(t.id==='sxc'){ST.ch=+t.value;save();go()}});
-document.addEventListener('input',e=>{if(e.target.id!=='sxq')return;U.tq=e.target.value;const q=U.tq.toLowerCase();document.querySelectorAll('.nc[data-nid]').forEach(b=>{const n=getN(b.dataset.nid);b.hidden=!!n&&!vis(n,q)})});
+document.addEventListener('input',e=>{if(e.target.id==='sxg'){U.gq=e.target.value;SQ.n=80;clearTimeout(SQ.t);SQ.t=setTimeout(()=>{const r=document.getElementById('sxr');if(r)r.innerHTML=srRes()},220);return}if(e.target.id!=='sxq')return;U.tq=e.target.value;const q=U.tq.toLowerCase();document.querySelectorAll('.nc[data-nid]').forEach(b=>{const n=getN(b.dataset.nid);b.hidden=!!n&&!vis(n,q)})});
 })();
