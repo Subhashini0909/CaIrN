@@ -105,3 +105,17 @@ body.nmlock{overflow:hidden}
 /* Events: verse markers and event view */
 .scr sup.evm{cursor:help;color:var(--acc);background:#b8913f2e;border-radius:5px;padding:0 3px}.scr sup.evm:after{content:' ⓘ';font-size:9px}
 .nmev{border-top:1px solid var(--line);padding:6px 0}.nmev summary{cursor:pointer;font-size:15px;list-style:none}.nmev summary::-webkit-details-marker{display:none}.nmevr{padding:5px 0 5px 4px;font-size:14px;line-height:1.5}.nmevr>b{display:block;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--mute)}.nmevr .nmc{margin:2px 4px 2px 0}.nmin{display:inline;width:auto;padding:1px 6px;margin:1px 2px}.scr sup.evm{cursor:pointer}.nmea{margin:10px 0}.nmea summary{cursor:pointer;font-weight:600}
+/* ---- Study notes: categories, hint lists, maps and diagrams ---- */
+.catbar{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0 4px}.catbar button.on{background:var(--acc);color:#fff;border-color:var(--acc)}
+.nb h3{font-size:17px;margin:18px 0 6px;color:var(--acc)}
+.nb ul.hint{list-style:none;padding-left:0;margin:8px 0}.nb ul.hint li{position:relative;padding:7px 10px 7px 26px;margin:0;border-bottom:1px dashed var(--line)}.nb ul.hint li:before{content:'';position:absolute;left:9px;top:15px;width:7px;height:7px;border-radius:50%;background:var(--gold)}.nb ul.hint li b{font-weight:600}
+.nb .rf{display:inline-block;margin-left:4px;font-size:12.5px;color:var(--mute);white-space:nowrap}
+.nb .tw.sm table{min-width:0}.nb .tw.sm td:first-child{white-space:normal;min-width:96px}
+.nb ol.jr{margin:8px 0 14px;padding-left:22px}.nb ol.jr li{margin:5px 0;line-height:1.45}
+.nb figure.jm{margin:14px 0 8px;border:1px solid var(--line);border-radius:16px;overflow-x:auto;background:#fff}.nb figure.jm svg{display:block;width:100%;min-width:560px;height:auto}
+.nb figure.jm figcaption{padding:8px 14px 12px;font-size:12.5px;color:var(--mute);line-height:1.45}
+.jm text{font-family:Inter,system-ui,-apple-system,'Segoe UI',sans-serif}
+.jm .jl{font-size:12.5px;font-weight:600;fill:#2b2540;paint-order:stroke;stroke:#fff;stroke-width:3.2px;stroke-linejoin:round}
+.jm .jx{font-weight:500;fill:#6b6350}.jm .jx2{font-size:11px;fill:#5d5642}
+.jm .jn{font-size:10.5px;font-weight:700;fill:#fff}.jm .jg{font-size:12.5px;font-weight:600;fill:#2b2540}.jm .jt{font-size:13.5px;font-weight:700;fill:#2b2540}.jm .js{font-size:11.5px;font-style:italic;fill:#7d93b5;letter-spacing:.04em}
+.rte figure.jm{opacity:.85;pointer-events:none;user-select:none}
