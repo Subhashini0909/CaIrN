@@ -15,11 +15,11 @@ const MINS=[[0,'Every time I leave the app'],[1,'After 1 minute'],[5,'After 5 mi
 let locked=false,hiddenAt=0,idle=0,root;
 const shell=()=>document.querySelector('.shell');
 const el=()=>root||(root=Object.assign(document.createElement('div'),{id:'lockscreen',className:'gate lockscreen',hidden:true}));
-const LOGO='<span class="logo lk"><img src="logo-lockup.svg" alt="CaIrN, mark your path"></span>';
+const LOGO='<span class="logo"><svg viewBox="96 90 320 312" aria-hidden="true"><g stroke="#0D1230" stroke-width="9" stroke-linejoin="round"><path d="M256 120L116 372 256 296z" fill="#F0DA97"/><path d="M256 120L396 372 256 296z" fill="#A97F30"/><path d="M116 372H396L256 296z" fill="#D2AC58"/></g></svg></span>';
 function show(html){const r=el();if(!r.isConnected)document.body.appendChild(r);r.innerHTML=`<div class="box">${LOGO}${html}</div>`;r.hidden=false;r.removeAttribute('data-cover');if(shell())shell().inert=true}
 function cover(){const r=el();if(!r.isConnected)document.body.appendChild(r);r.innerHTML=`<div class="box">${LOGO}</div>`;r.setAttribute('data-cover','1');r.hidden=false}
 function hide(){const r=el();r.hidden=true;r.innerHTML='';if(shell())shell().inert=false}
-function lock(){if(!cfg())return;locked=true;show(`<h1 style="margin:4px 0 6px">Locked</h1><p class="mute" style="margin:0 0 14px">Enter your passcode to continue.</p><input id="lkpin" type="password" autocomplete="off" placeholder="Passcode" aria-label="Passcode"><div class="err" id="lkerr" role="alert"></div><button class="send" id="lkgo">Unlock</button><button class="send g" id="lkforgot" style="margin-top:8px">Forgot passcode?</button>`);setTimeout(()=>{const i=document.getElementById('lkpin');i&&i.focus()},30)}
+function lock(){if(!cfg())return;locked=true;show(`<h1 style="margin:14px 0 2px">CaIrN is locked</h1><p class="tagln">Mark your path</p><p class="mute" style="margin:0 0 14px">Enter your passcode to continue.</p><input id="lkpin" type="password" autocomplete="off" placeholder="Passcode" aria-label="Passcode"><div class="err" id="lkerr" role="alert"></div><button class="send" id="lkgo">Unlock</button><button class="send g" id="lkforgot" style="margin-top:8px">Forgot passcode?</button>`);setTimeout(()=>{const i=document.getElementById('lkpin');i&&i.focus()},30)}
 async function tryUnlock(){const i=document.getElementById('lkpin'),e=document.getElementById('lkerr');if(!i)return;const F=fails();
  if(F.until&&Date.now()<F.until)return e.textContent=`Too many tries. Wait ${Math.ceil((F.until-Date.now())/1000)} seconds.`;
  let ok=false;try{ok=await verify(i.value)}catch{}

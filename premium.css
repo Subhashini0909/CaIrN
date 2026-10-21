@@ -140,5 +140,4 @@ h3.sh{display:flex;align-items:center;gap:8px;margin:20px 0 4px;font-size:17px;c
 .lockscreen,.lkmodal{z-index:2000}.lockscreen[hidden]{display:none}.lockscreen .box{text-align:center}.lockscreen[data-cover] .box>*:not(.logo){display:none}.lockscreen[data-cover]{background:linear-gradient(135deg,#0F1533,#222a5c)}
 .lkmodal .box{text-align:left}.lkl{display:block;font-size:13px;color:var(--mute);margin:10px 0 4px}
 .brand .bt{display:flex;flex-direction:column;line-height:1.05}.brand .bt b{font-weight:600}.brand .bt small{font:600 8.5px Inter,sans-serif;letter-spacing:.3em;text-transform:uppercase;color:var(--gold2);margin-top:5px;white-space:nowrap}
-
-.gate .logo.lk,.lockscreen .logo.lk{width:min(220px,62vw);height:auto;border-radius:0;background:none;box-shadow:none;display:block;margin:0 auto 14px}.logo.lk img{width:100%;height:auto;display:block}
+.brand.brandlogo{padding:0 0 14px;display:block}.brandlogo img{display:block;width:100%;max-width:190px;height:auto;border-radius:16px;box-shadow:0 0 0 1px rgba(227,199,122,.25)}
