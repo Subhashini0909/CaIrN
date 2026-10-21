@@ -15,11 +15,11 @@ const MINS=[[0,'Every time I leave the app'],[1,'After 1 minute'],[5,'After 5 mi
 let locked=false,hiddenAt=0,idle=0,root;
 const shell=()=>document.querySelector('.shell');
 const el=()=>root||(root=Object.assign(document.createElement('div'),{id:'lockscreen',className:'gate lockscreen',hidden:true}));
-const LOGO='<span class="logo"><svg viewBox="0 0 24 24"><path d="M13 2L4 14h7l-1 8 9-12h-7z"/></svg></span>';
+const LOGO='<span class="logo lk"><img src="logo-lockup.svg" alt="CaIrN, mark your path"></span>';
 function show(html){const r=el();if(!r.isConnected)document.body.appendChild(r);r.innerHTML=`<div class="box">${LOGO}${html}</div>`;r.hidden=false;r.removeAttribute('data-cover');if(shell())shell().inert=true}
 function cover(){const r=el();if(!r.isConnected)document.body.appendChild(r);r.innerHTML=`<div class="box">${LOGO}</div>`;r.setAttribute('data-cover','1');r.hidden=false}
 function hide(){const r=el();r.hidden=true;r.innerHTML='';if(shell())shell().inert=false}
-function lock(){if(!cfg())return;locked=true;show(`<h1 style="margin:14px 0 4px">CaIrN is locked</h1><p class="mute" style="margin:0 0 14px">Enter your passcode to continue.</p><input id="lkpin" type="password" autocomplete="off" placeholder="Passcode" aria-label="Passcode"><div class="err" id="lkerr" role="alert"></div><button class="send" id="lkgo">Unlock</button><button class="send g" id="lkforgot" style="margin-top:8px">Forgot passcode?</button>`);setTimeout(()=>{const i=document.getElementById('lkpin');i&&i.focus()},30)}
+function lock(){if(!cfg())return;locked=true;show(`<h1 style="margin:4px 0 6px">Locked</h1><p class="mute" style="margin:0 0 14px">Enter your passcode to continue.</p><input id="lkpin" type="password" autocomplete="off" placeholder="Passcode" aria-label="Passcode"><div class="err" id="lkerr" role="alert"></div><button class="send" id="lkgo">Unlock</button><button class="send g" id="lkforgot" style="margin-top:8px">Forgot passcode?</button>`);setTimeout(()=>{const i=document.getElementById('lkpin');i&&i.focus()},30)}
 async function tryUnlock(){const i=document.getElementById('lkpin'),e=document.getElementById('lkerr');if(!i)return;const F=fails();
  if(F.until&&Date.now()<F.until)return e.textContent=`Too many tries. Wait ${Math.ceil((F.until-Date.now())/1000)} seconds.`;
  let ok=false;try{ok=await verify(i.value)}catch{}
