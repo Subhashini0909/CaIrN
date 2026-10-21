@@ -1,6 +1,8 @@
 <!doctype html>
 <html lang="en"><head>
 <meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' https://*.supabase.co https://api.nlt.to; object-src 'none'; base-uri 'self'; form-action 'none'; frame-src 'none'; worker-src 'self'; manifest-src 'self'">
+<meta name="referrer" content="no-referrer">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Daylog</title><meta name="theme-color" content="#0F1533">
 <link rel="manifest" href="manifest.json">
@@ -29,6 +31,7 @@
 </div>
 </div>
 <script src="config.js"></script>
+<script src="lock.js"></script>
 <script src="app.js"></script>
 <script src="notes-data.js"></script>
 <script src="notes-extra.js"></script>

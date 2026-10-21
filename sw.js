@@ -1,3 +1,5 @@
-const C='daylog-v15',F=['./','index.html','style.css','app.js','config.js','cloud.js','manifest.json','icon.svg','premium.css','study.js','names.js','names.json','events.json','notes-data.js','notes-extra.js','notes-journeys.js','notes-topics.js','notes-people.js','kjv.json','tamil.json'];
+const C='daylog-v16',F=['./','index.html','style.css','app.js','config.js','lock.js','cloud.js','manifest.json','icon.svg','premium.css','study.js','names.js','names.json','events.json','notes-data.js','notes-extra.js','notes-journeys.js','notes-topics.js','notes-people.js','kjv.json','tamil.json'];
 self.addEventListener('install',e=>e.waitUntil(caches.open(C).then(c=>c.addAll(F))));
-self.addEventListener('fetch',e=>e.respondWith(fetch(e.request).then(r=>{if(r.ok&&e.request.url.startsWith(location.origin)){const c=r.clone();caches.open(C).then(x=>x.put(e.request,c))}return r}).catch(()=>caches.match(e.request))));
+self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(k=>Promise.all(k.filter(x=>x!==C).map(x=>caches.delete(x))))));
+// Only our own files are handled here. Sign-in, sync and Bible API requests go straight to the network and are never cached.
+self.addEventListener('fetch',e=>{const q=e.request;if(q.method!=='GET'||new URL(q.url).origin!==location.origin)return;e.respondWith(fetch(q).then(r=>{if(r.ok&&r.type==='basic'){const c=r.clone();caches.open(C).then(x=>x.put(q,c))}return r}).catch(()=>caches.match(q)))});

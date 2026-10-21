@@ -135,3 +135,7 @@ h3.sh{display:flex;align-items:center;gap:8px;margin:20px 0 4px;font-size:17px;c
 .toast{position:fixed;left:50%;bottom:92px;transform:translateX(-50%);max-width:min(92vw,460px);background:#171a33;color:#fff;padding:11px 18px;border-radius:16px;font-size:14px;line-height:1.4;z-index:999;box-shadow:0 10px 30px #0004;text-align:center}.toast[hidden]{display:none}
 
 .bk{position:relative}.bk.cur{box-shadow:0 0 0 2px var(--gold)}.bk.cur small{color:var(--acc);font-weight:600}
+
+/* ---- App lock ---- */
+.lockscreen,.lkmodal{z-index:2000}.lockscreen[hidden]{display:none}.lockscreen .box{text-align:center}.lockscreen[data-cover] .box>*:not(.logo){display:none}.lockscreen[data-cover]{background:linear-gradient(135deg,#0F1533,#222a5c)}
+.lkmodal .box{text-align:left}.lkl{display:block;font-size:13px;color:var(--mute);margin:10px 0 4px}
