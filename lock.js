@@ -1,4 +1,4 @@
-// Cairn app lock: an optional passcode screen.
+// CaIrN app lock: an optional passcode screen.
 // It hides the app while the page is in the background, and asks for the passcode after the time you choose.
 // It keeps other people out of the app on this device. It does not encrypt the data saved in the browser.
 (()=>{
@@ -19,13 +19,13 @@ const LOGO='<span class="logo"><svg viewBox="0 0 24 24"><path d="M13 2L4 14h7l-1
 function show(html){const r=el();if(!r.isConnected)document.body.appendChild(r);r.innerHTML=`<div class="box">${LOGO}${html}</div>`;r.hidden=false;r.removeAttribute('data-cover');if(shell())shell().inert=true}
 function cover(){const r=el();if(!r.isConnected)document.body.appendChild(r);r.innerHTML=`<div class="box">${LOGO}</div>`;r.setAttribute('data-cover','1');r.hidden=false}
 function hide(){const r=el();r.hidden=true;r.innerHTML='';if(shell())shell().inert=false}
-function lock(){if(!cfg())return;locked=true;show(`<h1 style="margin:14px 0 4px">Cairn is locked</h1><p class="mute" style="margin:0 0 14px">Enter your passcode to continue.</p><input id="lkpin" type="password" autocomplete="off" placeholder="Passcode" aria-label="Passcode"><div class="err" id="lkerr" role="alert"></div><button class="send" id="lkgo">Unlock</button><button class="send g" id="lkforgot" style="margin-top:8px">Forgot passcode?</button>`);setTimeout(()=>{const i=document.getElementById('lkpin');i&&i.focus()},30)}
+function lock(){if(!cfg())return;locked=true;show(`<h1 style="margin:14px 0 4px">CaIrN is locked</h1><p class="mute" style="margin:0 0 14px">Enter your passcode to continue.</p><input id="lkpin" type="password" autocomplete="off" placeholder="Passcode" aria-label="Passcode"><div class="err" id="lkerr" role="alert"></div><button class="send" id="lkgo">Unlock</button><button class="send g" id="lkforgot" style="margin-top:8px">Forgot passcode?</button>`);setTimeout(()=>{const i=document.getElementById('lkpin');i&&i.focus()},30)}
 async function tryUnlock(){const i=document.getElementById('lkpin'),e=document.getElementById('lkerr');if(!i)return;const F=fails();
  if(F.until&&Date.now()<F.until)return e.textContent=`Too many tries. Wait ${Math.ceil((F.until-Date.now())/1000)} seconds.`;
  let ok=false;try{ok=await verify(i.value)}catch{}
  if(ok){localStorage.removeItem(FK);locked=false;hide();arm();return}
  const n=(F.n||0)+1;localStorage.setItem(FK,JSON.stringify({n,until:n>=3?Date.now()+Math.min(900,15*2**(n-3))*1e3:0}));i.value='';e.textContent=n>=3?'Wrong passcode. Please wait before trying again.':'Wrong passcode.';i.focus()}
-function forgot(){if(!confirm('Forgot your passcode?\n\nThe only way in is to sign out and erase the Cairn data stored on this device. If you use cloud sign-in, your cloud copy is not touched. Anything that exists only on this device will be lost.\n\nContinue?'))return;
+function forgot(){if(!confirm('Forgot your passcode?\n\nThe only way in is to sign out and erase the CaIrN data stored on this device. If you use cloud sign-in, your cloud copy is not touched. Anything that exists only on this device will be lost.\n\nContinue?'))return;
  if((prompt('Type ERASE to confirm.')||'').trim().toUpperCase()!=='ERASE')return;
  ['daylog.v2','daylog.v1','daylog.auth','daylog.authfail','daylog.corrupt',LK,FK].forEach(k=>localStorage.removeItem(k));location.reload()}
 // ---- when to lock ----
@@ -53,6 +53,6 @@ document.addEventListener('click',e=>{const t=e.target;if(t.id==='lkgo')return t
  if(k==='now')lock();else modal(k)});
 document.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.id==='lkpin')tryUnlock()});
 document.addEventListener('change',e=>{if(e.target.id!=='lkauto')return;const c=cfg();if(c){c.m=+e.target.value;localStorage.setItem(LK,JSON.stringify(c));arm();refresh()}});
-window.Lock={card(){const c=cfg();return `<div class="card"><h2>App lock</h2>${!subtle?'<p class="mute" style="margin:0">This browser cannot make a secure passcode here. Open Cairn over https in a current browser.</p>':c?`<div class="row"><div><b>On</b><div class="mute">Hides Cairn when you leave it.</div></div><button class="g" data-lk="now">Lock now</button></div><div style="margin:12px 0"><label class="lkl" for="lkauto">Ask for the passcode</label><select id="lkauto">${MINS.map(([m,l])=>`<option value="${m}"${c.m===m?' selected':''}>${l}</option>`).join('')}</select></div><div class="row" style="gap:8px;justify-content:flex-start"><button class="g" data-lk="change">Change passcode</button><button class="g" data-lk="off">Turn off</button></div>`:`<div class="row"><div><b>Off</b><div class="mute">Ask for a passcode when you open Cairn.</div></div><button class="g" data-lk="on">Turn on</button></div>`}</div>`}};
+window.Lock={card(){const c=cfg();return `<div class="card"><h2>App lock</h2>${!subtle?'<p class="mute" style="margin:0">This browser cannot make a secure passcode here. Open CaIrN over https in a current browser.</p>':c?`<div class="row"><div><b>On</b><div class="mute">Hides CaIrN when you leave it.</div></div><button class="g" data-lk="now">Lock now</button></div><div style="margin:12px 0"><label class="lkl" for="lkauto">Ask for the passcode</label><select id="lkauto">${MINS.map(([m,l])=>`<option value="${m}"${c.m===m?' selected':''}>${l}</option>`).join('')}</select></div><div class="row" style="gap:8px;justify-content:flex-start"><button class="g" data-lk="change">Change passcode</button><button class="g" data-lk="off">Turn off</button></div>`:`<div class="row"><div><b>Off</b><div class="mute">Ask for a passcode when you open CaIrN.</div></div><button class="g" data-lk="on">Turn on</button></div>`}</div>`}};
 if(cfg()&&subtle){lock()}
 })();

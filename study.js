@@ -137,7 +137,7 @@ const flagOK=v=>typeof v==='string'&&/^[hui]+$/.test(v);
 const cleanAn=o=>{const r={};Object.keys(o).forEach(i=>{const v=o[i];if(badKey(i)||!/^\d+$/.test(i)||!isO(v)||typeof v.h!=='number'||!Array.isArray(v.r))return;const q=v.r.filter(e=>Array.isArray(e)&&e.length>=3&&Number.isFinite(+e[0])&&Number.isFinite(+e[1])&&flagOK(String(e[2]))).slice(0,500).map(e=>[+e[0],+e[1],String(e[2])]);if(q.length)r[i]={h:v.h,r:q}});return r};
 const doImport=(txt,mode)=>{let d;try{d=JSON.parse(txt)}catch{return alert('That file is not a valid backup.')}
  if(isO(d)&&d.app==='daylog-note'){const n=cleanNote(d.note);if(!n)return alert('That note file is damaged.');n.id=uid();n.ts=Date.now();ST.my.push(n);save();U.nid=n.id;U.sub='notes';U.from=0;U.edit=null;go();return toast('Note added to your own notes.')}
- const s=isO(d)&&(d.app==='daylog-study'||d.days)?d.st:null;if(!isO(s))return alert('That file is not a Cairn study backup.');
+ const s=isO(d)&&(d.app==='daylog-study'||d.days)?d.st:null;if(!isO(s))return alert('That file is not a CaIrN study backup.');
  const hl={},ov={},an={},del={},rc={},my=(Array.isArray(s.my)?s.my:[]).map(m=>{const n=cleanNote(m);return n&&{...n,id:String(m.id||uid()).slice(0,60),ts:+m.ts||Date.now()}}).filter(Boolean);
  const H=isO(s.hl)?s.hl:{},O=isO(s.ov)?s.ov:{},A=isO(s.an)?s.an:{},D=isO(s.del)?s.del:{},R=isO(d.rc)?d.rc:{};
  Object.keys(H).forEach(k=>{if(!badKey(k)&&flagOK(H[k]))hl[k]=H[k]});
