@@ -137,7 +137,7 @@ const flagOK=v=>typeof v==='string'&&/^[hui]+$/.test(v);
 const cleanAn=o=>{const r={};Object.keys(o).forEach(i=>{const v=o[i];if(badKey(i)||!/^\d+$/.test(i)||!isO(v)||typeof v.h!=='number'||!Array.isArray(v.r))return;const q=v.r.filter(e=>Array.isArray(e)&&e.length>=3&&Number.isFinite(+e[0])&&Number.isFinite(+e[1])&&flagOK(String(e[2]))).slice(0,500).map(e=>[+e[0],+e[1],String(e[2])]);if(q.length)r[i]={h:v.h,r:q}});return r};
 const doImport=(txt,mode)=>{let d;try{d=JSON.parse(txt)}catch{return alert('That file is not a valid backup.')}
  if(isO(d)&&d.app==='daylog-note'){const n=cleanNote(d.note);if(!n)return alert('That note file is damaged.');n.id=uid();n.ts=Date.now();ST.my.push(n);save();U.nid=n.id;U.sub='notes';U.from=0;U.edit=null;go();return toast('Note added to your own notes.')}
- const s=isO(d)&&(d.app==='daylog-study'||d.days)?d.st:null;if(!isO(s))return alert('That file is not a CaIrN study backup.');
+ const s=isO(d)&&(d.app==='daylog-study'||d.days)?d.st:null;if(!isO(s))return alert('That file is not a Cairn study backup.');
  const hl={},ov={},an={},del={},rc={},my=(Array.isArray(s.my)?s.my:[]).map(m=>{const n=cleanNote(m);return n&&{...n,id:String(m.id||uid()).slice(0,60),ts:+m.ts||Date.now()}}).filter(Boolean);
  const H=isO(s.hl)?s.hl:{},O=isO(s.ov)?s.ov:{},A=isO(s.an)?s.an:{},D=isO(s.del)?s.del:{},R=isO(d.rc)?d.rc:{};
  Object.keys(H).forEach(k=>{if(!badKey(k)&&flagOK(H[k]))hl[k]=H[k]});
@@ -178,8 +178,8 @@ document.addEventListener('click',e=>{const t=e.target.closest('[data-sx]');if(!
  else if(a==='mark'){rcs(ST.bk,ST.ch-1,1);U.msg=`${esc(ref())} marked as read.`}
  else if(a==='note'){U.sub='notes';U.nid=null;U.edit={...blank('Notes on '+ref()),sum:'Reading notes',secs:[{t:ref(),h:'<p><br></p>'}]};top=1}
  else if(a==='open'){U.nid=x;top=1}else if(a==='back'){U.nid=null;if(U.from){U.sub='search';U.from=0}top=1}
- else if(a==='bkx'){ST.bkat=Date.now();save();dl(`daylog-study-backup-${dayStr()}.json`,JSON.stringify(bkData(),null,1));go();return toast('Backup saved to your downloads.')}
- else if(a==='bkmd'){const ns=all().filter(n=>n.mine||n.edited);if(!ns.length)return toast('You have no own or edited notes yet.');return dl(`daylog-my-notes-${dayStr()}.md`,ns.map(noteMd).join('\n\n---\n\n'),'text/markdown')}
+ else if(a==='bkx'){ST.bkat=Date.now();save();dl(`cairn-study-backup-${dayStr()}.json`,JSON.stringify(bkData(),null,1));go();return toast('Backup saved to your downloads.')}
+ else if(a==='bkmd'){const ns=all().filter(n=>n.mine||n.edited);if(!ns.length)return toast('You have no own or edited notes yet.');return dl(`cairn-my-notes-${dayStr()}.md`,ns.map(noteMd).join('\n\n---\n\n'),'text/markdown')}
  else if(a==='impick'){U.imode=x;U.bk=1;const f=fileIn();f.value='';f.click();return}
  else if(a==='shr'){const n=getN(U.nid);if(!n)return;const text=noteMd(n);if(navigator.share)navigator.share({title:n.title,text}).catch(()=>{});else if(navigator.clipboard)navigator.clipboard.writeText(text).then(()=>toast('Note copied. Paste it into a message or email.'),()=>dl(slug(n.title)+'.md',text,'text/markdown'));else dl(slug(n.title)+'.md',text,'text/markdown');return}
  else if(a==='sav'){const n=getN(U.nid);if(!n)return;dl(`${slug(n.title)}.daylog-note.json`,noteJson(n));return toast('Note file saved. Import it on another device from Study notes, Backup and sharing.')}
