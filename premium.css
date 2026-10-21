@@ -140,4 +140,5 @@ h3.sh{display:flex;align-items:center;gap:8px;margin:20px 0 4px;font-size:17px;c
 .lockscreen,.lkmodal{z-index:2000}.lockscreen[hidden]{display:none}.lockscreen .box{text-align:center}.lockscreen[data-cover] .box>*:not(.logo){display:none}.lockscreen[data-cover]{background:linear-gradient(135deg,#0F1533,#222a5c)}
 .lkmodal .box{text-align:left}.lkl{display:block;font-size:13px;color:var(--mute);margin:10px 0 4px}
 .brand .bt{display:flex;flex-direction:column;line-height:1.05}.brand .bt b{font-weight:600}.brand .bt small{font:600 8.5px Inter,sans-serif;letter-spacing:.3em;text-transform:uppercase;color:var(--gold2);margin-top:5px;white-space:nowrap}
-.brand.brandlogo{padding:0 0 14px;display:block}.brandlogo img{display:block;width:100%;max-width:190px;height:auto;border-radius:16px;box-shadow:0 0 0 1px rgba(227,199,122,.25)}
+.brand.brandlogo{display:block;padding:4px 0 18px}.brandlogo img{display:block;width:100%;max-width:140px;height:auto;margin:0 auto;border:0;border-radius:0;box-shadow:none;background:none}
+@media(max-width:860px){.brand.brandlogo{display:none!important}}
