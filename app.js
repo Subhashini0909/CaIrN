@@ -53,7 +53,7 @@ const dueCard=()=>{const L=S.subs.filter(s=>daysLeft(s.next)<=s.remind).sort((a,
 const revBanner=()=>{const n=new Date(),dom=n.getDate(),dim=new Date(n.getFullYear(),n.getMonth()+1,0).getDate();if(dom<dim-2&&dom>3)return'';
  const m=dom>3?today().slice(0,7):iso(new Date(n.getFullYear(),n.getMonth()-1,15)).slice(0,7);
  return `<div class="card span3 row"><div><h2 style="margin:0">Your ${m} review is ready</h2><div class="mute">Useful vs unwanted spends, activity and task progress.</div></div><button data-rev="${m}">Open review</button></div>`};
-function checkDue(){if(!('Notification' in window)||Notification.permission!=='granted')return;S.subs.forEach(s=>{if(daysLeft(s.next)<=s.remind&&s.notified!==today()){s.notified=today();try{new Notification('Daylog: '+s.name,{body:`${money(s.amount)} ${dueTxt(s)}`})}catch{}}});save()}
+function checkDue(){if(!('Notification' in window)||Notification.permission!=='granted')return;S.subs.forEach(s=>{if(daysLeft(s.next)<=s.remind&&s.notified!==today()){s.notified=today();try{new Notification('CaIrN: '+s.name,{body:`${money(s.amount)} ${dueTxt(s)}`})}catch{}}});save()}
 const meter=(v,l)=>`<div class="bar"><i style="width:${l?Math.min(100,v/l*100):0}%;${l&&v>l?'background:var(--rose)':''}"></i></div>`;
 const monthPick=()=>`<input type="month" id="mo" value="${month}" style="width:auto" aria-label="Month">`;
 // ---------- Bible reading plan and calendar ----------
@@ -206,6 +206,6 @@ document.addEventListener('change',e=>{const t=e.target;
  if(['fb','fc','tb','tc'].includes(t.id)){const fb=+$('#fb').value,tb=+$('#tb').value,f=t.id==='fb'?1:Math.min(+$('#fc').value,BIB[fb][1]),e=t.id==='tb'?BIB[tb][1]:Math.min(+$('#tc').value,BIB[tb][1]);R.f=gi(fb,f);R.t=Math.max(R.f,gi(tb,e));R.step=0;render()}
  if(t.id==='ty'||t.id==='ch'){const cr=$('#ty').value==='cr';$('#ch').hidden=cr;$('#tg').hidden=cr;$('#ap').hidden=cr||$('#ch').value!=='online'}
  if(t.id==='mo'){month=t.value||month;wpage=1;render()}
- if(t.id==='fi'){const r=new FileReader();r.onload=()=>{try{const d=JSON.parse(r.result);if(!d||typeof d!=='object'||Array.isArray(d)||typeof d.days!=='object'||!Array.isArray(d.tasks)||!Array.isArray(d.tx))throw 0;if(r.result.length>25e6)throw 0;const c=sanitizeState(d);c.uid=S.uid;S=c;save();location.reload()}catch{alert('Not a valid Daylog backup.')}};r.readAsText(t.files[0])}});
+ if(t.id==='fi'){const r=new FileReader();r.onload=()=>{try{const d=JSON.parse(r.result);if(!d||typeof d!=='object'||Array.isArray(d)||typeof d.days!=='object'||!Array.isArray(d.tasks)||!Array.isArray(d.tx))throw 0;if(r.result.length>25e6)throw 0;const c=sanitizeState(d);c.uid=S.uid;S=c;save();location.reload()}catch{alert('Not a valid CaIrN backup.')}};r.readAsText(t.files[0])}});
 render(true);checkDue();
 if('serviceWorker' in navigator&&!NATIVE)navigator.serviceWorker.register('sw.js');
