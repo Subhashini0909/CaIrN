@@ -142,3 +142,5 @@ h3.sh{display:flex;align-items:center;gap:8px;margin:20px 0 4px;font-size:17px;c
 .brand .bt{display:flex;flex-direction:column;line-height:1.05}.brand .bt b{font-weight:600}.brand .bt small{font:600 8.5px Inter,sans-serif;letter-spacing:.3em;text-transform:uppercase;color:var(--gold2);margin-top:5px;white-space:nowrap}
 .brand.brandlogo{display:block;padding:4px 0 18px}.brandlogo img{display:block;width:100%;max-width:140px;height:auto;margin:0 auto;border:0;border-radius:0;box-shadow:none;background:none}
 @media(max-width:860px){.brand.brandlogo{display:none!important}}
+.gate .box>.logo{margin:0 auto}.gate .box>h1,.gate .box>.tagln{text-align:center}.gate .box>.tagln{display:block}
+.nlock{display:flex;flex-direction:column;gap:10px;padding:18px;margin:0 0 16px;border:1px solid rgba(201,162,77,.45);border-radius:18px;background:#FFFCF3}.nlock b{font-family:var(--serif);font-size:20px}.nlock .nlk{display:flex;align-items:center;gap:8px;font-size:13px}.nlock .nlk input{width:auto}.nlock .nerr{color:var(--rose);font-size:13px}
