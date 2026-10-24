@@ -20,7 +20,7 @@ const tog=(f,t)=>{f=f||'';return f.includes(t)?f.replace(t,''):canon(f+t)};
 const vcls=f=>f?(f.includes('h')?' hl':'')+(f.includes('u')?' ul':'')+(f.includes('i')?' imp':''):'';
 const hash=t=>{let h=5381;for(let i=0;i<t.length;i++)h=((h<<5)+h+t.charCodeAt(i))|0;return h};
 const secTxt=x=>{const d=document.createElement('div');d.innerHTML=(x.hd?`<h1>${esc(x.t)}</h1>`:'')+x.h;return d.textContent};
-const tools=nmb=>`<div class="rtools" role="toolbar" aria-label="Reading tools">${TL.map(([k,l])=>`<button class="${ST.tool===k?'on':''}" data-sx="tool:${k}" aria-pressed="${ST.tool===k}"><span class="sw ${k==='x'?'':'a-'+k}">${k==='x'?'✕':'Aa'}</span>${l}</button>`).join('')}${nmb?`<button class="nmtog ${ST.nm?'on':''}" data-sx="nmtog" aria-pressed="${!!ST.nm}" title="Show details when you hover over names and places"><span class="sw nmsw">Ab</span>Names</button>`:''}</div>`;
+const tools=nmb=>`<div class="rtools" role="toolbar" aria-label="Reading tools">${TL.map(([k,l])=>`<button class="${ST.tool===k?'on':''}" data-sx="tool:${k}" aria-pressed="${ST.tool===k}"><span class="sw ${k==='x'?'':'a-'+k}">${k==='x'?'✕':'Aa'}</span>${l}</button>`).join('')}${nmb?`<button class="nmtog ${ST.nm?'on':''}" data-sx="nmtog" aria-pressed="${!!ST.nm}" title="Show details when you hover over names and places"><span class="sw nmsw">Ab</span>Names</button>`:''}<span class="rhint">Select words or a sentence, then tap a tool. Tap a verse number to mark the whole verse.</span></div>`;
 // segments are [start,end,flags] over a section's text; toggling a flag already on every character removes it
 const paint=(list,s0,e0,t)=>{const out=[],mid=[];
  list.forEach(([a,b,f])=>{if(b<=s0||a>=e0){out.push([a,b,f]);return}if(a<s0)out.push([a,s0,f]);if(b>e0)out.push([e0,b,f]);mid.push([Math.max(a,s0),Math.min(b,e0),f])});
@@ -34,6 +34,8 @@ const wrap=(html,segs)=>{const d=document.createElement('div');d.innerHTML=html;
   hit.forEach(([x,y,f])=>{const i=Math.max(x,a)-a,j=Math.min(y,b)-a;if(i>c)fr.append(tx.slice(c,i));const sp=document.createElement('span');sp.className='a '+[...f].map(k=>'a-'+k).join(' ');sp.textContent=tx.slice(i,j);fr.append(sp);c=j});
   if(c<tx.length)fr.append(tx.slice(c));n.replaceWith(fr)});return d.innerHTML};
 const htmlTxt=h=>{const d=document.createElement('div');d.innerHTML=h;return d.textContent};
+const anWrap=(id,html)=>{const a=ST.an[id]&&ST.an[id][0];return a&&a.r.length&&a.h===hash(htmlTxt(html))?wrap(html,a.r):html};
+const hasSel=()=>{const g=getSelection();return !!g&&!g.isCollapsed&&String(g).trim().length>0};
 // Names and places inside the live NLT text: find the verse each piece of text belongs to, then mark names the same way as in the KJV
 const nmNLT=(h,b,c)=>{const d=document.createElement('div');d.innerHTML=h;let v=0;const T=[],w=document.createTreeWalker(d,NodeFilter.SHOW_ELEMENT|NodeFilter.SHOW_TEXT);let n;
  while((n=w.nextNode())){if(n.nodeType===1){const a=n.getAttribute('vn');if(a&&/^\d+$/.test(a))v=+a;else if(n.classList.contains('vn')){const t=parseInt(n.textContent,10);if(t>0)v=t}}
@@ -41,7 +43,7 @@ const nmNLT=(h,b,c)=>{const d=document.createElement('div');d.innerHTML=h;let v=
  T.forEach(([n,v])=>{const x=NM.mark(b,c,v,n.data);if(x===esc(n.data))return;const t=document.createElement('template');t.innerHTML=x;n.replaceWith(t.content)});return d.innerHTML};
 const txtOf=(id,i)=>{if(id.startsWith('NLT:')){const h=NC[id.slice(4)];return typeof h==='string'?htmlTxt(h):null}const n=getN(id),x=n&&n.secs[i];return x?secTxt(x):null};
 const markSel=(id,t)=>{const A=ST.an[id]||(ST.an[id]={});
- U.sel.forEach(({i,s:a,e:b})=>{const tx=txtOf(id,i);if(tx==null)return;const h=hash(tx),cur=A[i]&&A[i].h===h?A[i].r:[],r=paint(cur,a,b,t);if(r.length)A[i]={h,r};else delete A[i]});
+ U.sel.forEach(({i,s:a,e:b,h:h0})=>{let h=h0;if(h===undefined){const tx=txtOf(id,i);if(tx==null)return;h=hash(tx)}const cur=A[i]&&A[i].h===h?A[i].r:[],r=paint(cur,a,b,t);if(r.length)A[i]={h,r};else delete A[i]});
  if(!Object.keys(A).length)delete ST.an[id]};
 // keep marks in place when a note's text is edited: marks before the change stay, marks after it shift, marks inside it are dropped
 const shift=(r,a,b)=>{if(a===b)return r;const m=Math.min(a.length,b.length);let p=0;while(p<m&&a[p]===b[p])p++;let q=0;while(q<m-p&&a[a.length-1-q]===b[b.length-1-q])q++;const d=b.length-a.length,cut=a.length-q;
@@ -57,9 +59,9 @@ const step=d=>{let b=ST.bk,c=ST.ch+d;if(c<1){if(b===0)return;b--;c=BIB[b][1]}els
 const sel=()=>`<div class="pick"><select id="sxb" aria-label="Book"><optgroup label="Old Testament">${BIB.slice(0,39).map((x,i)=>`<option value="${i}" ${i===ST.bk?'selected':''}>${x[0]}</option>`).join('')}</optgroup><optgroup label="New Testament">${BIB.slice(39).map((x,i)=>`<option value="${i+39}" ${i+39===ST.bk?'selected':''}>${x[0]}</option>`).join('')}</optgroup></select><select id="sxc" aria-label="Chapter">${[...Array(BIB[ST.bk][1])].map((_,i)=>`<option ${i+1===ST.ch?'selected':''}>${i+1}</option>`).join('')}</select></div>`;
 function body(){const k=`${ST.bk}:${ST.ch}`,r=encodeURIComponent(ref()),v=ST.ver;
  if(v==='KJV'){load();if(!KJV)return U.err?'<div class="empty">Could not load the KJV text. Check that kjv.json is next to index.html.</div>':'<div class="skel"></div><div class="skel"></div><div class="skel"></div>';
-  return `<div class="scr" style="font-size:${ST.fs}px">${KJV[ST.bk].chapters[ST.ch-1].map((t,i)=>`<span class="vs${vcls(ST.hl[k+':'+(i+1)])}" data-sx="vs:${i+1}"><sup${NM.ev(ST.bk,ST.ch,i+1)}>${i+1}</sup>${ST.nm&&NM.ready()?NM.mark(ST.bk,ST.ch,i+1,t):esc(t)} </span>`).join('')}</div>`}
+  return anWrap('KJV:'+k,`<div class="scr" style="font-size:${ST.fs}px">${KJV[ST.bk].chapters[ST.ch-1].map((t,i)=>`<span class="vs${vcls(ST.hl[k+':'+(i+1)])}" data-sx="vs:${i+1}"><sup${NM.ev(ST.bk,ST.ch,i+1)}>${i+1}</sup>${ST.nm&&NM.ready()?NM.mark(ST.bk,ST.ch,i+1,t):esc(t)} </span>`).join('')}</div>`)}
  if(v==='TAM'){loadT();if(!TAM)return U.errT?'<div class="empty">Could not load the Tamil text. Check that tamil.json is next to index.html.</div>':'<div class="skel"></div><div class="skel"></div><div class="skel"></div>';
-  return `<div class="scr tam" style="font-size:${ST.fs}px">${TAM[ST.bk].chapters[ST.ch-1].map((t,i)=>`<span class="vs${vcls(ST.hl[k+':'+(i+1)])}" data-sx="vs:${i+1}"><sup>${i+1}</sup>${esc(t)} </span>`).join('')}</div>`}
+  return anWrap('TAM:'+k,`<div class="scr tam" style="font-size:${ST.fs}px">${TAM[ST.bk].chapters[ST.ch-1].map((t,i)=>`<span class="vs${vcls(ST.hl[k+':'+(i+1)])}" data-sx="vs:${i+1}"><sup>${i+1}</sup>${esc(t)} </span>`).join('')}</div>`)}
  if(v==='NLT'){if(NC[k]){let h=NC[k];if(ST.nm&&NM.ready())h=nmNLT(h,ST.bk,ST.ch);const a=ST.an['NLT:'+k]&&ST.an['NLT:'+k][0];if(a&&a.r.length&&a.h===hash(htmlTxt(h)))h=wrap(h,a.r);return `<div class="scr nlt" style="font-size:${ST.fs}px">${h}</div>`};
   if(NC[k]===0)return ext('NLT',`https://www.biblegateway.com/passage/?search=${r}&version=NLT`,'The live NLT feed is unavailable right now (it needs internet).');
   if(NC[k]===null)return '<div class="skel"></div><div class="skel"></div><div class="skel"></div>';
@@ -240,11 +242,15 @@ views.study=()=>{const mc=all().filter(x=>x.mine).sort((a,b)=>b.ts-a.ts),n=U.nid
 const go=()=>{render();flash()};
 document.addEventListener('mousedown',e=>{if(e.target.closest('.tb button,.rtools button'))e.preventDefault()});
 document.addEventListener('pointerdown',e=>{if(!e.target.closest('.rtools'))U.sel=null});
-const selCtx=()=>{if(tab!=='study')return null;if(U.sub==='read'&&ST.ver==='NLT')return{id:`NLT:${ST.bk}:${ST.ch}`,els:[...document.querySelectorAll('.scr.nlt')]};if(U.nid&&!U.edit)return{id:U.nid,els:[...document.querySelectorAll('.nb section[id^="sxs"]')]};return null};
+const selCtx=()=>{if(tab!=='study')return null;if(U.sub==='read'&&(ST.ver==='KJV'||ST.ver==='TAM'))return{id:`${ST.ver}:${ST.bk}:${ST.ch}`,els:[...document.querySelectorAll('.scr')]};if(U.sub==='read'&&ST.ver==='NLT')return{id:`NLT:${ST.bk}:${ST.ch}`,els:[...document.querySelectorAll('.scr.nlt')]};if(U.nid&&!U.edit)return{id:U.nid,els:[...document.querySelectorAll('.nb section[id^="sxs"]')]};return null};
+document.addEventListener('click',e=>{const v=e.target.closest&&e.target.closest('.scr.nlt .vn');if(!v||tab!=='study'||U.sub!=='read'||ST.ver!=='NLT'||hasSel())return;const sc=v.closest('.scr.nlt'),ve=v.closest('verse_export'),r=document.createRange();
+ if(ve)r.selectNodeContents(ve);else{r.setStartBefore(v);const all=[...sc.querySelectorAll('.vn')],nx=all[all.indexOf(v)+1];nx?r.setEndBefore(nx):r.setEnd(sc,sc.childNodes.length)}
+ const pre=document.createRange();pre.selectNodeContents(sc);pre.setEnd(r.startContainer,r.startOffset);const a=pre.toString().length,b=a+r.toString().length;if(b<=a)return;
+ const id=`NLT:${ST.bk}:${ST.ch}`;U.sel=[{i:0,s:a,e:b,h:hash(sc.textContent)}];U.selId=id;markSel(id,ST.tool);U.sel=null;save();go()});
 document.addEventListener('selectionchange',()=>{const cx=selCtx();if(!cx)return;const g=getSelection();if(!g||!g.rangeCount||g.isCollapsed)return;const r=g.getRangeAt(0),out=[];
  cx.els.forEach(sc=>{if(!r.intersectsNode(sc))return;const sr=document.createRange();sr.selectNodeContents(sc);const c=r.cloneRange();
   if(c.compareBoundaryPoints(Range.START_TO_START,sr)<0)c.setStart(sr.startContainer,sr.startOffset);if(c.compareBoundaryPoints(Range.END_TO_END,sr)>0)c.setEnd(sr.endContainer,sr.endOffset);
-  const pre=document.createRange();pre.selectNodeContents(sc);pre.setEnd(c.startContainer,c.startOffset);const a=pre.toString().length,b=a+c.toString().length;if(b>a)out.push({i:sc.id&&sc.id.startsWith('sxs')?+sc.id.slice(3):0,s:a,e:b})});
+  const pre=document.createRange();pre.selectNodeContents(sc);pre.setEnd(c.startContainer,c.startOffset);const a=pre.toString().length,b=a+c.toString().length;if(b>a)out.push({i:sc.id&&sc.id.startsWith('sxs')?+sc.id.slice(3):0,s:a,e:b,h:/^(KJV|TAM|NLT):/.test(cx.id)?hash(sc.textContent):undefined})});
  if(out.length){U.sel=out;U.selId=cx.id}});
 document.addEventListener('paste',e=>{if(!e.target.closest||!e.target.closest('.rte'))return;e.preventDefault();document.execCommand('insertText',false,(e.clipboardData||window.clipboardData).getData('text/plain'))});
 document.addEventListener('click',e=>{const t=e.target.closest('[data-sx]');if(!t)return;e.preventDefault();const[a,x,y]=t.dataset.sx.split(':');U.msg='';
@@ -254,7 +260,7 @@ document.addEventListener('click',e=>{const t=e.target.closest('[data-sx]');if(!
  pull();const E=U.edit;let top=0;
  if(a==='sub'){if(E&&!confirm('Discard this unsaved note?'))return;U.sub=x;U.edit=null;U.nid=null;U.from=0;top=1}
  else if(a==='cat')U.cat=x==='All'?'':x;else if(a==='nmtog')ST.nm=!ST.nm;else if(a==='ver')ST.ver=x;else if(a==='nav'){step(+x);top=1}else if(a==='fs')ST.fs=Math.max(15,Math.min(32,ST.fs+(+x)*2));
- else if(a==='vs'){const k=`${ST.bk}:${ST.ch}:${x}`;if(ST.tool==='x')delete ST.hl[k];else{const f=tog(ST.hl[k],ST.tool);if(f)ST.hl[k]=f;else delete ST.hl[k]}}
+ else if(a==='vs'){if(hasSel()||!e.target.closest('sup'))return;const k=`${ST.bk}:${ST.ch}:${x}`;if(ST.tool==='x')delete ST.hl[k];else{const f=tog(ST.hl[k],ST.tool);if(f)ST.hl[k]=f;else delete ST.hl[k]}}
  else if(a==='tool'){ST.tool=x;const cx=selCtx();if(cx&&U.sel&&U.sel.length&&U.selId===cx.id){markSel(cx.id,x);U.sel=null;const g=getSelection();g&&g.removeAllRanges&&g.removeAllRanges()}}
  else if(a==='mark'){rcs(ST.bk,ST.ch-1,1);U.msg=`${esc(ref())} marked as read.`}
  else if(a==='note'){U.sub='notes';U.nid=null;U.edit={...blank('Notes on '+ref()),sum:'Reading notes',secs:[{t:ref(),h:'<p><br></p>'}]};top=1}
