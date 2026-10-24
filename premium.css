@@ -147,3 +147,8 @@ h3.sh{display:flex;align-items:center;gap:8px;margin:20px 0 4px;font-size:17px;c
 #printroot{display:none}@media print{body.pr>*:not(#printroot){display:none!important}body.pr{background:#fff!important}body.pr #printroot{display:block;color:#000;font:12pt/1.55 Georgia,'Times New Roman',serif}#printroot .pn{page-break-after:always}#printroot .pn:last-child{page-break-after:auto}#printroot h1{font-size:22pt;margin:0 0 6pt}#printroot h2{font-size:15pt;margin:16pt 0 6pt;color:#7a5a1f}#printroot .ps{font-style:italic;margin:0 0 10pt}#printroot p,#printroot li{orphans:3;widows:3}}
 .rhint{flex:0 0 100%;font-size:12px;color:var(--mute,#6b7090);margin-top:2px}.scr .vn,.scr.nlt .vn{cursor:pointer}
 .scr .vs sup{cursor:pointer;padding:3px 4px}
+.cmpsel{display:flex;flex-direction:column;gap:12px}.cmpick{display:flex;flex-wrap:wrap;gap:8px;align-items:center}.cmpnav{display:flex;gap:8px;flex-wrap:wrap}.cmpvers{margin:0}.cmpref{margin:18px 0 10px}
+.cmpgrid{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(280px,1fr))}.cmpc{display:flex;flex-direction:column;gap:10px}.cmph{display:flex;flex-direction:column;gap:2px}.cmph b{font-family:var(--serif);font-size:20px}
+.cmpt{font-size:19px;line-height:1.7}.cmpt p{margin:0 0 .6em}.cmpt sup{color:var(--gold);font:600 11px Inter;margin-right:2px}.cmpf{display:flex;gap:8px}
+.cmpmore{margin-top:14px;display:flex;flex-direction:column;gap:8px}.cmpl{display:flex;flex-wrap:wrap;gap:8px}.cmpl .btn{text-decoration:none}
+.cmpick select{width:auto;flex:1 1 110px}.cmpick #cmb{flex:2 1 200px}
