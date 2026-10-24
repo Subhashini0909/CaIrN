@@ -95,7 +95,7 @@ const compare=()=>{load();const C=ST.cmp;if(!BIB[C.b])C.b=0;const n=cvc(C.b,C.c)
    const q=`${BIB[C.b][0]} ${C.c}:${C.v}${C.e>C.v?'-'+C.e:''}`,m=esvGet(C,q,done);if(m===null||m===undefined)return card(k,t,s,sk);
    if(m==='key')return card(k,t,s,`<p class="mute">The ESV feed did not accept this key. Check it and save again.</p><input id="esvk" class="srch" type="password" autocomplete="off" placeholder="ESV API key"><div class="cmpf"><button class="s" data-sx="esvsave">Save key</button><button class="g s" data-sx="esvclear">Remove key</button>${lnk}</div>`);
    if(m===0)return card(k,t,s,`<p class="mute">The ESV feed is unavailable right now (it needs internet).</p>${lnk}`);
-   const ls=rows(m);return card(k,t,s+' · \u00A9 Crossway',vhtml(ls)+'<p class="mute small">ESV\u00AE Bible \u00A9 2001 by Crossway. Used by permission of the ESV API.</p>',plainOf(ls)+' (ESV)')}
+   const ls=rows(m);return card(k,t,s+' · \u00A9 Crossway',vhtml(ls)+'<p class="mute small"></p>',plainOf(ls)+' (ESV)')}
   const g=GB[k];if(!g)return '';const m=gbGet(k,C,done);if(m===null||m===undefined)return card(k,t,s,sk);
   if(m===0)return card(k,t,s,`<p class="mute">This version could not be loaded right now (it needs internet).</p>${g.g?`<a class="btn g s" href="${gw(g.g)}" target="_blank" rel="noopener">Open on BibleGateway \u2197</a>`:''}`);
   const ls=rows(m);return card(k,t,s,vhtml(ls),plainOf(ls))}).join('');
