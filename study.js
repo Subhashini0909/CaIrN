@@ -62,7 +62,7 @@ nltSafe=h=>{const d=new DOMParser().parseFromString(String(h),'text/html'),OK=ne
 nltGet=(r,n)=>fetch(`https://api.nlt.to/api/passages?ref=${r}${n?'':'&version=NLT'}&key=TEST${n?'&_='+Date.now():''}`,{headers:{'Accept-Language':'en'}}).then(x=>x.text()).then(h=>{const o=nltSafe(h);if(!o||nltLang(o))throw 0;return o});
 // ---- Compare: one verse in several versions ----
 ST.cmp=ST.cmp||{b:ST.bk,c:ST.ch,v:1,e:1,off:{}};ST.cmp.off=ST.cmp.off||{};
-const CMV=[['KJV','King James Version','Authorized Version, works offline'],['NLT','New Living Translation','Official NLT feed, needs internet'],['TAM','Tamil','தமிழ், works offline']],CMX=[['NIV','NIV'],['ESV','ESV'],['NKJV','NKJV'],['NASB','NASB'],['CSB','CSB'],['AMP','Amplified']];
+const CMV=[['KJV','King James Version'],['NLT','New Living Translation'],['TAM','Tamil']],CMX=[['NIV','NIV'],['ESV','ESV'],['NKJV','NKJV'],['NASB','NASB'],['CSB','CSB'],['AMP','Amplified']];
 const cvc=(b,c)=>{const k=KJV&&KJV[b]&&KJV[b].chapters[c-1],t=TAM&&TAM[b]&&TAM[b].chapters[c-1];return k?k.length:t?t.length:31};
 const nltVerses=(h,a,b)=>{const d=document.createElement('div');d.innerHTML=h;const out=[],vx=[...d.querySelectorAll('verse_export')],vns=[...d.querySelectorAll('.vn')];
  for(let v=a;v<=b;v++){let t='';const els=vx.filter(e=>e.getAttribute('vn')===String(v));
