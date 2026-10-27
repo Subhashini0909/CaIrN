@@ -159,3 +159,6 @@ h3.sh{display:flex;align-items:center;gap:8px;margin:20px 0 4px;font-size:17px;c
 .bkabout{margin:0 0 16px;background:#fbf7ee;border:1px solid var(--gold2,#e3d3a8);border-radius:14px;padding:10px 16px}.bkabout summary{cursor:pointer;font-weight:600;color:var(--acc)}
 .bkabout .bksum{margin:10px 0 8px;line-height:1.55}.bkabout dl{margin:0;display:grid;grid-template-columns:1fr;gap:6px}.bkabout dl div{display:flex;gap:10px;font-size:13.5px}.bkabout dt{flex:0 0 96px;color:#7a6a3a;font-weight:600}.bkabout dd{margin:0}
 @media(min-width:720px){.bkabout dl{grid-template-columns:1fr 1fr;column-gap:24px}}
+
+.chintro{margin:0 0 18px;background:#f4f6fc;border:1px solid #d6dcf0;border-radius:14px;padding:10px 16px}.chintro summary{cursor:pointer;font-weight:600;color:var(--acc)}
+.chintro .chs{margin:10px 0;line-height:1.6}.chintro h3{font-size:15px;margin:14px 0 6px;color:var(--acc)}.chintro .chc{margin:0 0 10px;padding-left:12px;border-left:3px solid var(--gold2,#e3d3a8)}.chintro .chc b{display:block;font-size:14px}.chintro .chc p{margin:2px 0 0;font-size:14px;line-height:1.55}
