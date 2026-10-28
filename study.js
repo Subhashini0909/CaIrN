@@ -137,9 +137,22 @@ const ext=(v,u,t)=>`<div class="extc"><div class="big2" style="font-family:var(-
 const nmList=()=>{if(ST.ver==='NIV')return '';load();if(!NM.ready()){if(!U.nmReq){U.nmReq=1;NM.load(()=>{U.nmReq=0;rr()})}return NM.err?'':'<p class="mute" style="margin-top:14px">Loading names and places…</p>'}
  const ch=(KJV||TAM)&&(KJV||TAM)[ST.bk].chapters[ST.ch-1],G=ch&&NM.chapter(ST.bk,ST.ch,ch.length);if(!G)return '';const tot=G.p.length+G.l.length+G.o.length;
  return `<details class="nmlist" ${U.nmopen?'open':''}><summary>People and places in this chapter <span class="nmtag">${tot}</span></summary>${tot?[['p','People and groups'],['l','Places'],['o','Titles, festivals and other names']].filter(g=>G[g[0]].length).map(([k,l])=>`<div class="nmgrp"><b>${l}</b><div class="nmcs">${G[k].map(i=>NM.chip(i)).join('')}</div></div>`).join(''):'<p class="mute">No named people or places are recorded in this chapter.</p>'}</details>`};
-const chapLoad={};const chapIntro=()=>{const bk=ST.bk,d=(window.CHAPINFO||{})[bk];if(!d){if(!chapLoad[bk]){chapLoad[bk]=1;const e=document.createElement('script');e.src='chapters/ch-'+String(bk).padStart(2,'0')+'.js';e.onload=()=>{if(U.sub==='read'&&ST.bk===bk&&typeof rr==='function')rr()};e.onerror=()=>{chapLoad[bk]=2};document.head.appendChild(e)}return ''}
- const c=d[ST.ch-1];if(!c)return '';return `<details class="chintro" ${U.chclosed?'':'open'}><summary>Chapter summary and character study</summary><p class="chs">${esc(c[0])}</p><h3>Character study</h3>${c[1].map(x=>`<div class="chc"><b>${esc(x[0])}</b><p>${esc(x[1])}</p></div>`).join('')}</details>`};
-document.addEventListener('toggle',e=>{if(e.target.classList&&e.target.classList.contains('chintro'))U.chclosed=!e.target.open},true);
+const chapLoad={},exEv={d:null,p:0};
+// "Explain this passage" helpers: first whole sentences up to ~m characters, a readable name list, and timeline events that cover a chapter.
+const exSent=(t,m)=>{t=String(t);const s=t.match(/[^.!?]+[.!?]+["”')]*(?=\s|$)/g)||[t];let o='';for(const x of s){if(o&&(o+x).length>m)break;o+=x}return o.trim()};
+const exList=a=>a.length<2?a.join(''):a.slice(0,-1).join(', ')+' and '+a[a.length-1];
+const exEvents=(bk,ch)=>{if(exEv.d===null){if(!exEv.p){exEv.p=1;fetch('events.json').then(r=>r.json()).then(j=>{exEv.d=j.e||[]}).catch(()=>{exEv.d=[]}).then(()=>{if(U.sub==='read'&&typeof rr==='function')rr()})}return null}
+ const k=(x,y)=>x*1000+y,p=k(bk,ch);return exEv.d.map(e=>{const r=e.r;if(!r||!r.length)return null;const a=r[0],z=r[1]&&r[1][0]===a[0]?r[1]:a,lo=k(a[0],a[1]),hi=k(z[0],z[1]);return p>=lo&&p<=hi?{e,s:hi-lo}:null}).filter(Boolean).sort((x,y)=>x.s-y.s).slice(0,2).map(x=>x.e)};
+const chapIntro=()=>{const bk=ST.bk,d=(window.CHAPINFO||{})[bk],again=()=>{if(U.sub==='read'&&ST.bk===bk&&typeof rr==='function')rr()};
+ if(!d&&chapLoad[bk]!==2){if(!chapLoad[bk]){chapLoad[bk]=1;const e=document.createElement('script');e.src='ch-'+String(bk).padStart(2,'0')+'.js';e.onload=()=>{if(!(window.CHAPINFO||{})[bk])chapLoad[bk]=2;again()};e.onerror=()=>{chapLoad[bk]=2;again()};document.head.appendChild(e)}return ''}
+ const c=d&&d[ST.ch-1];let a='',w='';
+ if(c){a=exSent(c[0],190);w=exList((c[1]||[]).map(x=>String(x[0]).replace(/\s*\([^)]*\)/g,'')).slice(0,3))}
+ else{const ev=exEvents(bk,ST.ch);if(ev===null)return '';if(ev.length){a='In this chapter: '+ev.map(e=>e.t).join('; ')+'.';w=exList([...new Set(ev.flatMap(e=>e.who||[]))].slice(0,4))}}
+ if(!a)return '';
+ const bi=(window.BOOKINFO||[])[bk],y=c&&typeof c[2]==='string'&&c[2]?c[2]:bi&&bi[4]?`It builds the book’s main theme — ${bi[4]}.`:'',row=(l,v)=>v?`<div><dt>${l}</dt><dd>${esc(v)}</dd></div>`:'';
+ const card=`<section class="exp" aria-label="Explain this passage"><h3>Explain this passage</h3><dl>${row('What is happening',a)}${row('Who is speaking',w)}${row('Why it matters',y)}</dl></section>`;
+ return card+(c?`<details class="chintro" ${U.chopen?'open':''}><summary>Chapter summary and character study</summary><p class="chs">${esc(c[0])}</p><h3>Character study</h3>${c[1].map(x=>`<div class="chc"><b>${esc(x[0])}</b><p>${esc(x[1])}</p></div>`).join('')}</details>`:'')};
+document.addEventListener('toggle',e=>{if(e.target.classList&&e.target.classList.contains('chintro'))U.chopen=e.target.open},true);
 const bkExtras=()=>{const X=window.BKX;if(!X)return{h:'',on:0};X.warm(()=>{typeof rr==='function'&&rr()});
  const mp=X.maps(ST.bk),tc=X.tlCount(ST.bk),k=U.bkx&&U.bkx.bk===ST.bk?U.bkx.k:null,btn=(a,ic,l)=>`<button class="g s ${k===a?'on':''}" data-sx="bkx:${a}" aria-pressed="${k===a}">${ic} ${l}</button>`;
  if(!mp.length&&tc<2)return{h:'',on:0};let p='';
