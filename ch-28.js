@@ -1,0 +1,6 @@
+/* Joel */
+(window.CHAPINFO=window.CHAPINFO||{})[28]=[
+[`A plague of locusts strips the land bare. Joel calls the priests, elders and all the people to mourn, fast and cry out to the LORD, because the day of the LORD is near.`,[[`Joel`,`Uses the locust disaster as a warning and a call to repentance.`],[`The priests and elders`,`Called to lead the people in fasting and prayer.`]],`Disaster can be a call to turn back to God.`],
+[`Joel calls on the people to return to the LORD with all their hearts, for he is gracious, compassionate and slow to anger. God promises to restore what the locusts ate and to pour out his Spirit on all people. Everyone who calls on the name of the LORD will be saved.`,[[`The LORD`,`Gracious and compassionate, ready to forgive and to restore.`],[`The people`,`Invited to tear their hearts, not just their clothes, and to rejoice.`]],`God offers mercy to those who return, and promises his Spirit to all.`],
+[`God will judge the nations that scattered his people, gathering them for judgement in the valley of Jehoshaphat. The LORD roars from Zion, and he is a refuge for his people. Judah will be lived in forever, and the LORD dwells in Zion.`,[[`The LORD`,`Judge of the nations and refuge for his people.`],[`The nations`,`Held to account for the harm they did to God's people.`]],`God will judge injustice and keep his people safe.`]
+];

@@ -1,0 +1,6 @@
+/* Nahum */
+(window.CHAPINFO=window.CHAPINFO||{})[33]=[
+[`The LORD is a jealous and avenging God, slow to anger but great in power, and also good, a refuge in times of trouble. He will bring an end to Nineveh, and good news of peace is announced for Judah.`,[[`Nahum`,`Announces God's judgement on Assyria's capital, bringing comfort to the people it oppressed.`],[`The LORD`,`Good and a refuge for those who trust him, but a destroyer of his enemies.`]],`God is both just and good, and he cares for those who trust him.`],
+[`Nineveh is attacked, its gates are flung open and the city is plundered. The lion's den, once a place of fear, has been emptied.`,[[`The attacker`,`Sent against Nineveh, bringing the destruction God promised.`],[`Nineveh`,`Once a lion that hunted other nations, now plundered herself.`]],`Powers that hurt others do not last forever.`],
+[`Woe to the city of blood, full of lies and plunder. Her fall is certain and no one will mourn her. Her fortresses and leaders will fall, and everyone who hears of her ruin will clap their hands.`,[[`Nineveh`,`Judged for cruelty, lies and greed.`],[`Nahum`,`Points to a city that thought it was safe, but was not.`]],`God holds cruel nations to account.`]
+];

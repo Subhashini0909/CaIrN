@@ -1,0 +1,6 @@
+/* Habakkuk */
+(window.CHAPINFO=window.CHAPINFO||{})[34]=[
+[`Habakkuk asks why God allows violence and injustice in Judah. God says he is raising up the Babylonians. Habakkuk is troubled, and asks how a holy God can use a wicked nation.`,[[`Habakkuk`,`Brings his honest questions and complaints to God.`],[`The Babylonians`,`A fierce people raised up to bring judgement, yet proud of their own strength.`]],`It is right to bring hard questions to God.`],
+[`Habakkuk waits for God's answer. God tells him to write the vision, and says the righteous will live by faith. Five woes are spoken against the proud and greedy, and the LORD is in his holy temple.`,[[`Habakkuk`,`Stands at his watch post, waiting to see what God will say.`],[`The LORD`,`Promises that the proud will fall, and that the earth will be filled with the knowledge of his glory.`]],`The righteous live by faith while waiting for God to act.`],
+[`Habakkuk's prayer recalls God's mighty acts in the past and ends with trust: even if the fig tree does not blossom and there is no food in the fields, he will rejoice in the LORD.`,[[`Habakkuk`,`Moves from fear to quiet confidence in God.`],[`The LORD`,`The strength of his people, who makes their feet steady on high places.`]],`Trust and joy in God do not depend on circumstances.`]
+];
