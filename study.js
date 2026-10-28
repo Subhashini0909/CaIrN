@@ -140,8 +140,14 @@ const nmList=()=>{if(ST.ver==='NIV')return '';load();if(!NM.ready()){if(!U.nmReq
 const chapLoad={};const chapIntro=()=>{const bk=ST.bk,d=(window.CHAPINFO||{})[bk];if(!d){if(!chapLoad[bk]){chapLoad[bk]=1;const e=document.createElement('script');e.src='chapters/ch-'+String(bk).padStart(2,'0')+'.js';e.onload=()=>{if(U.sub==='read'&&ST.bk===bk&&typeof rr==='function')rr()};e.onerror=()=>{chapLoad[bk]=2};document.head.appendChild(e)}return ''}
  const c=d[ST.ch-1];if(!c)return '';return `<details class="chintro" ${U.chclosed?'':'open'}><summary>Chapter summary and character study</summary><p class="chs">${esc(c[0])}</p><h3>Character study</h3>${c[1].map(x=>`<div class="chc"><b>${esc(x[0])}</b><p>${esc(x[1])}</p></div>`).join('')}</details>`};
 document.addEventListener('toggle',e=>{if(e.target.classList&&e.target.classList.contains('chintro'))U.chclosed=!e.target.open},true);
+const bkExtras=()=>{const X=window.BKX;if(!X)return{h:'',on:0};X.warm(()=>{typeof rr==='function'&&rr()});
+ const mp=X.maps(ST.bk),tc=X.tlCount(ST.bk),k=U.bkx&&U.bkx.bk===ST.bk?U.bkx.k:null,btn=(a,ic,l)=>`<button class="g s ${k===a?'on':''}" data-sx="bkx:${a}" aria-pressed="${k===a}">${ic} ${l}</button>`;
+ if(!mp.length&&tc<2)return{h:'',on:0};let p='';
+ if(k==='map'&&mp.length){const i=Math.min(U.bkm||0,mp.length-1);p=`<div class="bkpanel">${mp.length>1?`<div class="bkmt">${mp.map((m,j)=>`<button class="g s ${j===i?'on':''}" data-sx="bkm:${j}">${esc(X.mapTitle(ST.bk,j))}</button>`).join('')}</div>`:''}${X.mapHTML(ST.bk,i)}</div>`}
+ else if(k==='tl'&&tc>=2)p=`<div class="bkpanel">${X.tlHTML(ST.bk,U.bkall)}</div>`;
+ return{h:`<div class="bkx">${mp.length?btn('map','\u{1F5FA}','Map'):''}${tc>=2?btn('tl','\u23F3','Timeline'):''}</div>${p}`,on:p?1:0}};
 const aboutBook=()=>{const b=(window.BOOKINFO||[])[ST.bk];if(!b)return '';const nm=BIB[ST.bk][0],m=b[5].match(/^(.+?) (\d+)/),bi=m?BIB.findIndex(x=>x[0]===m[1]):-1,kv=bi<0?esc(b[5]):`<a class="xr" data-sx="ref:${bi}:${m[2]}" href="#">${esc(b[5])}</a>`,row=(l,v)=>`<div><dt>${l}</dt><dd>${v}</dd></div>`;
- return `<details class="bkabout" ${ST.ch===1?'open':''}><summary>About ${esc(nm)}</summary><p class="bksum">${esc(b[6])}</p><dl>${row('Author',esc(b[0]))}${row('Written',esc(b[1]))}${row('Type',esc(b[2]))}${row('Written for',esc(b[3]))}${row('Main theme',esc(b[4]))}${row('Key verse',kv)}${row('Chapters',BIB[ST.bk][1])}${row('Testament',ST.bk<39?'Old Testament':'New Testament')}</dl></details>`};
+ const bx=bkExtras();return `<details class="bkabout" ${ST.ch===1||bx.on?'open':''}><summary>About ${esc(nm)}</summary><p class="bksum">${esc(b[6])}</p><dl>${row('Author',esc(b[0]))}${row('Written',esc(b[1]))}${row('Type',esc(b[2]))}${row('Written for',esc(b[3]))}${row('Main theme',esc(b[4]))}${row('Key verse',kv)}${row('Chapters',BIB[ST.bk][1])}${row('Testament',ST.bk<39?'Old Testament':'New Testament')}</dl>${bx.h}</details>`};
 const read=()=>`<div class="seg" role="tablist">${Object.entries(VER).map(([k,l])=>`<button class="${ST.ver===k?'on':''}" data-sx="ver:${k}">${l}</button>`).join('')}</div>
 <div class="card rd"><div class="rdh">${sel()}<div class="tools"><button class="g s" data-sx="fs:-1" aria-label="Smaller text">A−</button><button class="g s" data-sx="fs:1" aria-label="Larger text">A+</button><button class="g s" data-sx="cmpgo">Compare</button></div></div>
 ${ST.ver==='KJV'||ST.ver==='TAM'||ST.ver==='NLT'?tools(ST.ver==='KJV'||ST.ver==='NLT',1):''}${aboutBook()}<h2 class="ref">${esc(ref())}</h2>${chapIntro()}${body()}${nmList()}
@@ -563,6 +569,9 @@ document.addEventListener('click',e=>{const t=e.target.closest('[data-sx]');if(!
  else if(a==='cmstep'){const C=ST.cmp,d=+x;let v=(d>0?C.e:C.v)+d,b=C.b,c=C.c;if(v<1){if(c>1){c--;v=cvc(b,c)}else if(b>0){b--;c=BIB[b][1];v=cvc(b,c)}else v=1}else if(v>cvc(b,c)){if(c<BIB[b][1]){c++;v=1}else if(b<BIB.length-1){b++;c=1;v=1}else v=cvc(b,c)}C.b=b;C.c=c;C.v=C.e=v}
  else if(a==='cmcopy'){const t=U.cmpTxt&&U.cmpTxt[x];if(t&&navigator.clipboard)navigator.clipboard.writeText(t).then(()=>toast('Copied.'),()=>toast('Could not copy.'));return}
  else if(a==='cmpgo'){ST.cmp.b=ST.bk;ST.cmp.c=ST.ch;ST.cmp.v=ST.cmp.e=1;U.sub='cmp';U.nid=null;U.edit=null;top=1}
+ else if(a==='bkx'){U.bkx=U.bkx&&U.bkx.bk===ST.bk&&U.bkx.k===x?null:{bk:ST.bk,k:x};U.bkm=0;U.bkall=0}
+ else if(a==='bkm'){U.bkm=+x}
+ else if(a==='bkall'){U.bkall=!U.bkall}
  else if(a==='gv'){const[b,c,v]=x.split('.').map(Number);ST.bk=b;ST.ch=c;ST.ver=U.gl==='TAM'?'TAM':'KJV';U.sub='read';U.nid=null;U.edit=null;U.flash=v;U.from=0}
  else if(a==='gn'){const[id,si]=x.split('~');U.nid=id;U.sub='notes';U.from='search';U.edit=null;save();go();setTimeout(()=>{const el=document.getElementById('sxs'+si);el&&el.scrollIntoView({block:'start'})},60);return}
  else if(a==='ref'){ST.bk=+x;ST.ch=+y;U.sub='read';U.nid=null;U.edit=null;top=1}

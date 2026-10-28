@@ -203,3 +203,53 @@ h3.sh{display:flex;align-items:center;gap:8px;margin:20px 0 4px;font-size:17px;c
 .xrt.tam,.vnq.tam{font-family:'Noto Serif Tamil','Latha','Nirmala UI',var(--serif)}
 .xrmore{width:auto!important;flex:0 0 auto;white-space:nowrap}
 .xrcr{margin:12px 0 0;text-align:center}
+/* Book maps and timelines (About card) */
+.bkx{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0 2px}
+.bkx button.on,.bkmt button.on{background:var(--acc,#0F1533);color:#fff;border-color:var(--acc,#0F1533)}
+.bkpanel{margin-top:12px;padding-top:12px;border-top:1px solid var(--gold2,#e3d3a8)}
+.bkmt{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
+.bkpanel figure.jm{margin:8px 0;border:1px solid var(--line);border-radius:16px;overflow:hidden;background:#fff}
+.bkpanel figure.jm svg{display:block;width:100%;height:auto}
+.bkpanel figure.jm figcaption{padding:8px 14px 12px;font-size:12.5px;color:var(--mute);line-height:1.45}
+.bkpanel h4{margin:14px 0 4px;font-size:14px}
+.bkpanel ol.jr{margin:6px 0 4px;padding-left:22px;font-size:13.5px;line-height:1.5}
+.bkpanel ol.jr li{margin:3px 0}.bkpanel .rf{white-space:nowrap}
+.bktl{list-style:none;margin:4px 0 10px 6px;padding:0;border-left:2px solid var(--gold2,#e3d3a8)}
+.bktl li{position:relative;display:flex;gap:12px;padding:7px 0 7px 16px;font-size:13.5px;line-height:1.45}
+.bktl li:before{content:'';position:absolute;left:-7px;top:13px;width:10px;height:10px;border-radius:50%;background:var(--acc,#0F1533);border:2px solid #fbf7ee}
+.bktl .yr{flex:0 0 72px;font-size:12px;font-weight:600;color:var(--mute)}
+.bktl .du{font-size:12px;color:var(--mute)}
+.bktl .xr{white-space:nowrap}
+
+/* Live map */
+.lmv{position:relative;height:380px;overflow:hidden;border-radius:16px;border:1px solid var(--line);background:#cfd8e3;touch-action:none;cursor:grab;user-select:none}
+.lmt img{position:absolute;width:256px;height:256px;max-width:none;-webkit-user-drag:none}
+.lmo{position:absolute;inset:0;width:100%;height:100%}
+.lmo text{pointer-events:none}.lmo text.lml{font:600 12.5px Inter,system-ui,sans-serif;fill:#1b1730;paint-order:stroke;stroke:#fff;stroke-width:3.5px;stroke-linejoin:round}
+.lmo text.lmn{font:700 11px Inter,system-ui,sans-serif;fill:#fff}.lmo .st{cursor:pointer}
+.lmctl{position:absolute;top:8px;right:8px;display:flex;flex-direction:column;gap:6px}
+.lmctl button{min-width:36px;height:36px;padding:0 8px;border-radius:10px;border:1px solid var(--line);background:rgba(255,255,255,.94);color:#1b1730;font-size:18px;line-height:1;cursor:pointer}
+.lmctl button.lml2{font-size:12px;font-weight:600}
+.lma{position:absolute;left:6px;bottom:4px;font-size:10px;background:rgba(255,255,255,.85);padding:1px 6px;border-radius:6px;color:#444;pointer-events:none}
+.lmi{margin:8px 2px 2px;font-size:13.5px;line-height:1.5}.lmc{margin:2px}
+
+.jm .jrg{font:700 10px Inter,system-ui,sans-serif;letter-spacing:.09em;text-transform:uppercase;fill:#4a4258;opacity:.85;paint-order:stroke;stroke:rgba(255,255,255,.55);stroke-width:2px;pointer-events:none}
+.jm .js{fill:#2b5f6b;font-style:italic}
+.lmtoggle{margin:2px 0 8px}
+
+/* natural look */
+.jm .jrg{font-family:Georgia,'Times New Roman',serif;font-weight:600;letter-spacing:.16em;text-transform:uppercase;fill:#5a4636;opacity:.7;stroke:rgba(255,255,255,.35);stroke-width:2px;paint-order:stroke}
+.jm .jl{font:italic 600 11.5px Georgia,'Times New Roman',serif;fill:#2a2220;stroke:#fff;stroke-opacity:.75;stroke-width:2.6px}
+.jm .jn{font-size:8.5px}.jm .js{fill:#5b88a3;font-family:Georgia,serif;letter-spacing:.2em;text-transform:uppercase;font-size:10px}
+.jm .jn2{font:italic 600 10px Georgia,serif;fill:#5a4636}
+
+/* political style (default): flat pastel territories, thin borders, sans-serif names */
+.jm.pol .jfl{filter:none}
+.jm.pol .jbd{stroke:#fff;stroke-opacity:.95;stroke-width:1.4}
+.jm.pol svg>rect:first-of-type,.jm.pol svg path[fill="#B9DAE7"]{fill:#9CCBE5}
+.jm.pol .jrg{font-family:Inter,system-ui,sans-serif;font-weight:700;letter-spacing:.06em;fill:#3d3446;opacity:.9;stroke:rgba(255,255,255,.45)}
+.jm.pol .jl{font-family:Inter,system-ui,sans-serif;font-style:normal;font-weight:700;font-size:11px;fill:#1f1b26}
+.jm.pol .js{font-family:Inter,system-ui,sans-serif;font-style:italic;font-weight:600;letter-spacing:.04em;text-transform:none;fill:#3f7fae}
+.lmstyle{margin:2px 0 8px 6px}
+
+.jm:not(.pol) .jfimg{filter:blur(2.5px)}.jm:not(.pol) .jbdimg{display:none}
