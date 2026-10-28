@@ -50,6 +50,13 @@ mark{background:linear-gradient(transparent 50%,#E3C77A99 50%);color:inherit;pad
 .chips .rtools{flex:0 0 100%;margin:0}
 .sw{font:600 13px var(--serif);padding:0 4px;border-radius:3px}
 .a-h,.scr .vs.hl{background:linear-gradient(transparent 45%,#E3C77ACC 45%)}
+/* ---- Highlight colours: green blessing, pink promise, purple God and Christ, grey bad, orange to do, teal caution ---- */
+.a-g,.scr .vs.hg{background:linear-gradient(transparent 45%,#A6DDB4D9 45%)}
+.a-p,.scr .vs.hp{background:linear-gradient(transparent 45%,#F6B3D0D9 45%)}
+.a-v,.scr .vs.hv{background:linear-gradient(transparent 45%,#CDB6F2D9 45%)}
+.a-b,.scr .vs.hb{background:linear-gradient(transparent 45%,#D8DAE0D9 45%)}
+.a-o,.scr .vs.ho{background:linear-gradient(transparent 45%,#FFC48AD9 45%)}
+.a-c,.scr .vs.hc{background:linear-gradient(transparent 45%,#8FD9E3D9 45%)}
 .a-u,.scr .vs.ul,.nb u,.rte u{text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:3px;text-decoration-color:var(--acc)}
 .a-i,.imp,.scr .vs.imp{background:#FBE1E1;color:#7A1D28;font-weight:600;border-radius:3px;padding:0 2px;-webkit-box-decoration-break:clone;box-decoration-break:clone}
 .scr .vs.imp sup:before{content:'★ ';color:var(--rose)}

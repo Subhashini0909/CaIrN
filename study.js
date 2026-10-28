@@ -14,10 +14,13 @@ NM.cfg.text=(b,c,v)=>KJV&&KJV[b]&&KJV[b].chapters[c-1]?KJV[b].chapters[c-1][v-1]
 NM.cfg.go=(b,c,v)=>{ST.bk=b;ST.ch=c;U.sub='read';U.nid=null;U.edit=null;U.flash=v;if(ST.ver!=='KJV'&&ST.ver!=='TAM')ST.ver='KJV';if(tab!=='study'){const t=document.querySelector('[data-tab=study]');t&&t.click()}save();go();if(!U.flash)return;scrollTo({top:0})};
 document.addEventListener('toggle',e=>{const c=e.target.classList;if(c&&c.contains('nmlist'))U.nmopen=e.target.open;if(c&&c.contains('bkp'))U.bk=e.target.open},true);
 // ---- reading tools: Highlight (h), Underline (u), Important (i), Clear (x) ----
-const TL=[['h','Highlight'],['u','Underline'],['i','Important'],['t','Treasure'],['n','Note'],['r','Related'],['x','Clear']];
+// Highlight colours: h yellow, g green, p pink, v purple, i red, b grey, o orange (to do), c teal (caution). Only one colour per piece of text; underline (u) can be added on top.
+const TL=[['h','Holy Spirit'],['g','Blessing'],['p','Promise'],['v','God and Christ'],['i','Warning'],['b','Bad'],['o','To do'],['c','Caution'],['u','Underline'],['t','Treasure'],['n','Note'],['r','Related'],['x','Clear']];
+const COL='hgpvibco',VC={h:' hl',u:' ul',i:' imp',g:' hg',p:' hp',v:' hv',b:' hb',o:' ho',c:' hc'};
 const canon=f=>[...new Set(f)].sort().join('');
-const tog=(f,t)=>{f=f||'';return f.includes(t)?f.replace(t,''):canon(f+t)};
-const vcls=f=>f?(f.includes('h')?' hl':'')+(f.includes('u')?' ul':'')+(f.includes('i')?' imp':''):'';
+const ad=(f,t)=>canon((COL.includes(t)?[...f].filter(c=>!COL.includes(c)).join(''):f)+t);
+const tog=(f,t)=>{f=f||'';return f.includes(t)?f.replace(t,''):ad(f,t)};
+const vcls=f=>f?[...f].map(k=>VC[k]||'').join(''):'';
 const hash=t=>{let h=5381;for(let i=0;i<t.length;i++)h=((h<<5)+h+t.charCodeAt(i))|0;return h};
 const secTxt=x=>{const d=document.createElement('div');d.innerHTML=(x.hd?`<h1>${esc(x.t)}</h1>`:'')+x.h;return d.textContent};
 const tools=(nmb,tv)=>`<div class="rtools" role="toolbar" aria-label="Reading tools">${TL.filter(([k])=>!'tnr'.includes(k)||tv).map(([k,l])=>`<button class="${ST.tool===k?'on':''}" data-sx="tool:${k}" aria-pressed="${ST.tool===k}"><span class="sw ${k==='x'?'':k==='t'?'tvsw':k==='n'?'tvsw vnsw':k==='r'?'tvsw':'a-'+k}">${k==='x'?'✕':k==='t'?'♥':k==='n'?'✎':k==='r'?'⇄':'Aa'}</span>${l}</button>`).join('')}${nmb?`<button class="nmtog ${ST.nm?'on':''}" data-sx="nmtog" aria-pressed="${!!ST.nm}" title="Show details when you hover over names and places"><span class="sw nmsw">Ab</span>Names</button>`:''}<span class="rhint"></span></div>`;
@@ -26,7 +29,7 @@ const paint=(list,s0,e0,t)=>{const out=[],mid=[];
  list.forEach(([a,b,f])=>{if(b<=s0||a>=e0){out.push([a,b,f]);return}if(a<s0)out.push([a,s0,f]);if(b>e0)out.push([e0,b,f]);mid.push([Math.max(a,s0),Math.min(b,e0),f])});
  mid.sort((x,y)=>x[0]-y[0]);const full=[];let c=s0;mid.forEach(([a,b,f])=>{if(a>c)full.push([c,a,'']);full.push([a,b,f]);c=b});if(c<e0)full.push([c,e0,'']);
  const on=t!=='x'&&full.every(x=>x[2].includes(t));
- full.forEach(x=>{x[2]=t==='x'?'':on?x[2].replace(t,''):canon(x[2]+t)});
+ full.forEach(x=>{x[2]=t==='x'?'':on?x[2].replace(t,''):ad(x[2],t)});
  const m=[];[...out,...full.filter(x=>x[2])].sort((x,y)=>x[0]-y[0]).forEach(x=>{const p=m[m.length-1];if(p&&p[1]===x[0]&&p[2]===x[2])p[1]=x[1];else m.push([...x])});return m};
 const wrap=(html,segs)=>{const d=document.createElement('div');d.innerHTML=html;
  const w=document.createTreeWalker(d,NodeFilter.SHOW_TEXT),L=[];let p=0,n;while((n=w.nextNode())){L.push([n,p,p+n.data.length]);p+=n.data.length}
@@ -365,7 +368,7 @@ const bkData=()=>({app:'daylog-study',v:1,exported:new Date().toISOString(),st:{
 const bkCounts=()=>{const m=Object.keys(ST.hl).length,a=Object.keys(ST.an).length,my=ST.my.length,ed=Object.keys(ST.ov).length,pl=(n,w)=>n+' '+w+(n===1?'':'s');return `${pl(my,'own note')}, ${pl(ed,'edited note')}, ${pl(m,'marked verse')}, ${pl(a,'note')} with highlights, ${pl(ST.tv.length,'treasured verse')}`};
 const bkPanel=()=>`<details class="bkp" ${U.bk?'open':''}><summary>Import and export</summary><div class="bkrow"><button class="s" data-sx="impick:doc" title="PDF, Word, Excel or image files">\u2B06 Import</button><button class="g s" data-sx="expzip:docx" title="All notes, one Word file each, in a zip">\u2B07 Export all as Word (.zip)</button><button class="g s" data-sx="expzip:pdf" title="All notes, one PDF each, in a zip">\u2B07 Export all as PDF (.zip)</button></div></details>`;
 const cleanNote=n=>{if(!isO(n)||!Array.isArray(n.secs))return null;const secs=n.secs.filter(isO).slice(0,80).map(x=>({t:String(x.t||'Notes').slice(0,200),h:clean(String(x.h||''),1),hd:1,...(typeof x.img==='string'&&x.img.length<3e6&&/^data:image\/jpeg;base64,[A-Za-z0-9+\/=]+$/.test(x.img)?{img:x.img}:{})}));if(!secs.length)return null;return{title:String(n.title||'Untitled').slice(0,200),sum:String(n.sum||'').slice(0,500),ico:String(n.ico||'\uD83D\uDCDD').slice(0,8),secs}};
-const flagOK=v=>typeof v==='string'&&/^[hui]+$/.test(v);
+const flagOK=v=>typeof v==='string'&&/^[huigpvboc]+$/.test(v);
 const cleanAn=o=>{const r={};Object.keys(o).forEach(i=>{const v=o[i];if(badKey(i)||!/^\d+$/.test(i)||!isO(v)||typeof v.h!=='number'||!Array.isArray(v.r))return;const q=v.r.filter(e=>Array.isArray(e)&&e.length>=3&&Number.isFinite(+e[0])&&Number.isFinite(+e[1])&&flagOK(String(e[2]))).slice(0,500).map(e=>[+e[0],+e[1],String(e[2])]);if(q.length)r[i]={h:v.h,r:q}});return r};
 const doImport=(txt,mode)=>{let d;try{d=JSON.parse(txt)}catch{return alert('That file is not a valid backup.')}
  if(isO(d)&&d.app==='daylog-note'){const n=cleanNote(d.note);if(!n)return alert('That note file is damaged.');n.id=uid();n.ts=Date.now();ST.my.push(n);save();U.nid=n.id;U.sub='notes';U.from=0;U.edit=null;go();return toast('Note added to your own notes.')}

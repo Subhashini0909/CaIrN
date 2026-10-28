@@ -1,4 +1,4 @@
-const C='cairn-v38',F=['./','index.html','style.css','app.js','config.js','lock.js','cloud.js','manifest.json','icon.svg','logo-lockup.svg','brand-lockup.svg','apple-touch-icon.png','favicon.ico','favicon-32.png','icon-192.png','icon-512.png','icon-maskable-192.png','icon-maskable-512.png','premium.css','study.js','books.js','maps.js','names.js','names.json','events.json','kjv.json','xref.json','tamil.json'];
+const C='cairn-v40',F=['./','index.html','style.css','app.js','config.js','lock.js','cloud.js','manifest.json','icon.svg','logo-lockup.svg','brand-lockup.svg','apple-touch-icon.png','favicon.ico','favicon-32.png','icon-192.png','icon-512.png','icon-maskable-192.png','icon-maskable-512.png','premium.css','study.js','books.js','maps.js','names.js','names.json','events.json','kjv.json','xref.json','tamil.json'];
 self.addEventListener('install',e=>e.waitUntil(caches.open(C).then(c=>c.addAll(F))));
 self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(k=>Promise.all(k.filter(x=>x!==C).map(x=>caches.delete(x))))));
 // Only our own files are handled here. Sign-in, sync and Bible API requests go straight to the network and are never cached.
