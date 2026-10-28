@@ -253,3 +253,8 @@ h3.sh{display:flex;align-items:center;gap:8px;margin:20px 0 4px;font-size:17px;c
 .lmstyle{margin:2px 0 8px 6px}
 
 .jm:not(.pol) .jfimg{filter:blur(2.5px)}.jm:not(.pol) .jbdimg{display:none}
+
+/* NLT: no inline footnotes (markers like *1:1a and their note text); one verse per line */
+.scr.nlt .a-tn,.scr.nlt .tn,.scr.nlt .tn-ref,.scr.nlt .footnote{display:none!important}
+.scr.nlt.vl verse_export{display:block;margin:0 0 .45em}
+.scr.nlt.vl .vbr{display:block;height:.45em}
