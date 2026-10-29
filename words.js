@@ -56,7 +56,10 @@ function lookup(low){if(!D)return null;const L=D.L,F=D.F;
  for(const w of t){if(w.length>1&&(r=get(w)))return r}
  return null}
 const POS={noun:'noun',verb:'verb',adj:'adjective',adv:'adverb'};
+// plain function words (the, of, these, to ...) get no bubble: the dictionary meaning adds nothing
+const PLAIN=new Set('a an the this that these those of to in on at by for from with without into onto upon over under about above after before between through during as than then so if or and but nor yet not no nor is am are was were be been being do does did have has had will would shall should can could may might must it its he him his she her hers we us our ours you your yours they them their theirs i me my mine who whom whose which what when where why how there here all any each every some such too very also just only own same other another both either neither more most less much many few up down out off again once'.split(' '));
 function autoMeaning(raw,s,st){let low=raw.toLowerCase().replace(/['\u2019]s$/,'');
+ if(PLAIN.has(low))return null;
  if(raw==='LORD')return'the personal name of God (Yahweh)';
  if(raw[0]!==low[0]&&!atStart(s,st)&&!CAPOK.has(low))return null;   // a capital letter in mid-sentence is usually a name; names have their own feature
  const r=lookup(low);if(!r)return null;const lem=r[0],e=r[1],k=e.indexOf('|'),g=e.slice(k+1);
