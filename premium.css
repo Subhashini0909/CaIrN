@@ -350,3 +350,23 @@ h3.sh{display:flex;align-items:center;gap:8px;margin:20px 0 4px;font-size:17px;c
 .jpring{fill:none;stroke:#B8913F;stroke-width:3;opacity:0;transform-box:fill-box;transform-origin:center;animation:jpr 1.7s ease-out infinite}
 @keyframes jpr{0%{opacity:.95;transform:scale(.6)}100%{opacity:0;transform:scale(1.9)}}
 @media(prefers-reduced-motion:reduce){.jpdraw path{animation:none;stroke-dashoffset:0}.jpring{animation:none;opacity:.9}}
+/* Life story (character page) inside the name sheet */
+.lf{font-size:14px}.lfspan{margin:0 0 12px;padding:7px 12px;border-radius:10px;background:#FBF5E4;border:1px solid var(--gold2,#e3d3a8);font-size:13px;color:var(--ink)}
+.lfl{list-style:none;margin:0;padding:0 0 0 8px}.lfl .lfl{margin-top:6px}
+.lfn{position:relative;padding:0 0 16px 22px;border-left:2px solid var(--gold2,#e3d3a8)}
+.lfn::before{content:"";position:absolute;left:-7px;top:3px;width:12px;height:12px;border-radius:50%;background:#fff;border:2px solid var(--gold,#B8913F)}
+.lfn.birth::before,.lfn.first::before{background:var(--gold,#B8913F)}
+.lfn.call::before{background:var(--acc,#27346F);border-color:var(--acc,#27346F);box-shadow:0 0 0 3px rgba(39,52,111,.15)}
+.lfn.death::before,.lfn.last::before{background:#1D2757;border-color:#1D2757}
+.lfn.death,.lfn.last{border-left-color:transparent;padding-bottom:4px}
+.lfk{display:inline-block;font:600 10.5px Inter,system-ui,sans-serif;letter-spacing:.1em;text-transform:uppercase;color:var(--mute);margin:0 0 2px}
+.lfn.call .lfk{color:var(--acc,#27346F)}.lfn.birth .lfk,.lfn.first .lfk{color:var(--gold,#B8913F)}
+.lft{font:600 16.5px/1.35 'Cormorant Garamond',Georgia,serif;color:var(--ink)}
+.lfn.moment .lft{font-weight:500;font-size:15.5px}
+.lfy{font-size:12px;color:var(--mute);margin-top:1px}
+.lfq{margin:6px 0 0;padding-left:10px;border-left:2px solid var(--gold,#B8913F);font:13.5px/1.55 Georgia,'Times New Roman',serif;color:var(--ink);opacity:.85}
+.lfr{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.lfmore{list-style:none;padding:0 0 12px 22px;border-left:2px dashed var(--gold2,#e3d3a8)}.lfmore summary{cursor:pointer;font-size:12.5px;color:var(--acc)}
+.lfmore .lfn{padding-left:18px}
+.lfall{margin:8px 0 6px 8px}
+@media (max-width:480px){.lft{font-size:15.5px}.lfn{padding-left:18px}}

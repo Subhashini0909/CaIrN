@@ -24,7 +24,7 @@ NM.load=cb=>{loadEv();if(cb)waiting.push(cb);if(D||busy)return;busy=1;
   D.forEach((e,i)=>e.rw.forEach((r,ri)=>{let p=0;r.r.forEach(d=>{p+=d;const a=IDX.get(p);a?a.push([i,ri]):IDX.set(p,[[i,ri]])})}));
   busy=0;waiting.splice(0).forEach(f=>f())}).catch(()=>{busy=0;NM.err=1;waiting.splice(0).forEach(f=>f())})};
 let EV=null,VM=null,evBusy=0,BYN=null;
-const loadEv=()=>{if(EV||evBusy)return;evBusy=1;fetch('events.json').then(r=>r.json()).then(j=>{EV=j.e;VM=j.v;evBusy=0;if(NM.cfg.refresh)NM.cfg.refresh()}).catch(()=>{evBusy=0})};
+const loadEv=()=>{if(EV||evBusy)return;evBusy=1;fetch('events.json').then(r=>r.json()).then(j=>{EV=j.e;VM=j.v;evBusy=0;if(NM.cfg.refresh)NM.cfg.refresh();if(typeof sheet!=='undefined'&&sheet&&stack.length)fillLife(stack[stack.length-1])}).catch(()=>{evBusy=0;EV=false;if(typeof sheet!=='undefined'&&sheet&&stack.length)fillLife(stack[stack.length-1])})};
 const nameIdx=n=>{if(!D)return null;if(!BYN){BYN=new Map();D.forEach((e,i)=>{const c=BYN.get(e.n);if(c==null||refs(D[c]).length<refs(e).length)BYN.set(e.n,i)})}const i=BYN.get(n);return i==null?null:i};
 NM.ev=(b,c,v)=>{if(!VM)return '';const k=b+'.'+c+'.'+v;return VM[k]?` class="evm" data-ev="${k}" tabindex="0" role="button" title="What is happening in this verse"`:''};
 const loadBg=cb=>{if(BG)return cb();if(bgBusy)return;bgBusy=1;fetch('names-bg.json').then(r=>r.json()).then(j=>{BG=j;bgBusy=0;cb()}).catch(()=>{bgBusy=0;BG=false;cb()})};
@@ -145,6 +145,99 @@ function famTree(i){const e=D[i];if(e.t!=='p')return '';
  const kk=kids.filter(x=>!sn.has(x)).slice(0,CAP);kk.forEach(x=>sn.add(x));
  const dnH=kk.length?`<div class="ftdn"><span class="ftgl">Children and descendants</span><ul>${kk.map(x=>dn(x,1)).join('')}${kids.length>CAP?`<li class="mute">+${kids.length-CAP} more children</li>`:''}</ul></div>`:'';
  return `<div class="ft">${upH}${meH}${sibH}${dnH}<p class="nmsrc">Tap any name to open that person. Links come from the Tyndale (TIPNR) name data and follow the father’s line upward.</p></div>`}
+// ---------- life story (character page): a person's life as a mini timeline ----------
+// Sources: (1) dated events in events.json whose "who" list names the person (birth, death, calling, key moments);
+// (2) the background note in names-bg.json, whose sentences and Scripture references fill any gap (birth, calling, key moments, death);
+// (3) the person's own verse list (first and last mention). Every step links to the verse in the reader.
+const ABB='Gen Exo Lev Num Deu Jos Jdg Rut 1Sa 2Sa 1Ki 2Ki 1Ch 2Ch Ezr Neh Est Job Psa Pro Ecc Sng Isa Jer Lam Ezk Dan Hos Jol Amo Oba Jon Mic Nam Hab Zep Hag Zec Mal Mat Mrk Luk Jhn Act Rom 1Co 2Co Gal Eph Php Col 1Th 2Th 1Ti 2Ti Tit Phm Heb Jas 1Pe 2Pe 1Jn 2Jn 3Jn Jud Rev'.split(' ');
+const NRM=s=>String(s||'').replace(/\([^)]*\)/g,' ').replace(/\s+/g,' ').trim().toLowerCase();
+// Names used in events.json that differ from the name database
+const WALIAS={'jesus christ':'jesus','simon peter':'peter','john the apostle':'john','john the baptist':'john','john mark':'mark','phillip the evangelist':'philip','phillip the apostle':'philip','timotheus':'timothy','portius festus':'festus','herod agrippa i':'herod','herod antipas':'herod','judas iscariot':'judas','jacob (israel)':'israel','levi (patriarch)':'levi','judah (patriarch)':'judah'};
+let NIX=null;
+const nameIx=()=>{if(NIX)return NIX;NIX=new Map();D.forEach((e,i)=>{if(e.t!=='p')return;const s=new Set([NRM(e.n)]);e.rw.forEach(r=>{if(r.alt)s.add(NRM(r.alt))});s.forEach(k=>{if(!k)return;const a=NIX.get(k);a?a.push(i):NIX.set(k,[i])})});return NIX};
+const lowB=(a,x)=>{let l=0,h=a.length;while(l<h){const m=(l+h)>>1;a[m]<x?l=m+1:h=m}return l};
+const evKey=e=>{const a=e.r[0],z=e.r[1]||a;return[vk(a[0],a[1],a[2]||1),vk(z[0],z[1],z[2]||999)]};
+const overlaps=(i,e)=>{const r=refs(D[i]),[lo,hi]=evKey(e),j=lowB(r,lo);return j<r.length&&r[j]<=hi};
+// does this event belong to person i? the name must match, and when several people share it the verses decide
+function evPos(i,e){const ix=nameIx(),w=e.who||[];for(let p=0;p<w.length;p++){const k=WALIAS[String(w[p]).toLowerCase()]||NRM(w[p]),c=ix.get(k);if(!c||!c.includes(i))continue;
+  if(c.length===1)return p;const ov=c.filter(j=>overlaps(j,e));
+  if(ov.length){if(ov.includes(i))return p}else{const pr=c.filter(j=>NRM(D[j].n)===k);if(pr.length&&pr.reduce((a,j)=>refs(D[j]).length>refs(D[a]).length?j:a,pr[0])===i)return p}}return -1}
+const yNum=s=>{const m=/(\d+)\s*(BC|AD)/i.exec(s||'');return m?(m[2].toUpperCase()==='BC'?-(+m[1]):+m[1]):null};
+const yShow=s=>String(s||'').replace(/^about\s+/i,'c. ');
+const rr=(b,c,v,c2,v2)=>({b,c,v:v||0,c2:c2||c,v2:v2||0});
+const rLabel=x=>`${BIB[x.b][0]} ${x.c}${x.v?':'+x.v:''}${x.c2!==x.c?'\u2013'+x.c2+(x.v2?':'+x.v2:''):x.v2&&x.v2!==x.v?'\u2013'+x.v2:''}`;
+const rKey=x=>vk(x.b,x.c,x.v||1);
+// book names for plain-text references inside the background note (Genesis 12:1-3, 1Samuel 17, Psalms 3, 23, 51)
+let PRE=null;
+const prx=()=>{if(PRE)return PRE;const nm=BIB.map((x,b)=>[x[0],b]).concat([['Psalm',18],['Song of Songs',21]]).sort((a,b)=>b[0].length-a[0].length);
+ PRE={map:new Map(nm.map(([n,b])=>[n.toLowerCase().replace(/\s+/g,''),b])),re:new RegExp('\\b('+nm.map(([n])=>n.replace(/^(\d) /,'$1 ?').replace(/ /g,'\\s+')).join('|')+')\\s+(\\d+)(?::(\\d+))?(?:\\s?[\u2013-]\\s?(\\d+)(?::(\\d+))?)?((?:,\\s*\\d+(?![\\d:]))*)','g')};return PRE};
+function refsIn(t){const P=prx(),out=[];P.re.lastIndex=0;let m;
+ while((m=P.re.exec(t))){const b=P.map.get(m[1].toLowerCase().replace(/\s+/g,''));if(b==null)continue;const c=+m[2];
+  if(m[3]){const v=+m[3];if(m[5])out.push(rr(b,c,v,+m[4],+m[5]));else out.push(rr(b,c,v,c,m[4]?+m[4]:0))}
+  else{out.push(rr(b,c,0,m[4]?+m[4]:c,0));(m[6]||'').split(',').map(x=>+x).filter(Boolean).forEach(c2=>out.push(rr(b,c2,0)))}}
+ return out}
+// the background note as plain sentences, each with the Scripture it cites
+function bioSentences(i){const g=BG&&BG[i];const a=g&&g[1];if(!a)return[];
+ const txt=String(a).replace(/<ref="([^"]*)">[^<]*<\/ref>/g,(m,r)=>{const p=r.split('.'),b=ABB.indexOf(p[0]);if(b<0||!+p[1])return '';return `${BIB[b][0]} ${p[1]}${p[2]?':'+p[2].replace(/^(\d+)-(\d+)$/,'$1\u2013$2'):''}`}).replace(/<BR>/gi,' ').replace(/<[^>]+>/g,'').replace(/\s+/g,' ').trim();
+ return txt.split(/(?<=[.!?])\s+(?=[A-Z\u201C"(])/).map(t=>({t:t.trim(),r:refsIn(t)})).filter(x=>x.t.length>25)}
+const RX_BIRTH=/\b(was born|were born|born (?:in|to|at|of|into|during|about|around|a )|his birth|her birth|his early life|her early life)\b/i;
+const RX_CALL=/\b(called (?:him|her|by god)|was called|calling|commissioned|anointed|chosen|chose|appointed|appeared to (?:him|her)|summoned|conver(?:ted|sion)|ordained|raised up|set apart|sent by god|god sent|vision|baptized)\b/i;
+const RX_DEATH=/\b(?:he|she|they)\b[^.;]{0,60}?\b(?:died|was (?:buried|killed|executed|stoned|slain|murdered|crucified|beheaded|assassinated|martyred|put to death))\b|\b(?:his|her) (?:death|burial|martyrdom|execution)\b|\bdied (?:in|at|of|after|during|when|as)\b|\bwas martyred\b|\bmartyred\b/i;
+const short=(t,n)=>t.length>n?t.slice(0,n).replace(/\s+\S*$/,'')+'\u2026':t;
+const KEYS=e=>{const s=new Set([NRM(e.n)]);e.rw.forEach(r=>{if(r.alt)s.add(NRM(r.alt))});return[...s].filter(x=>x.length>2)};
+const hasName=(t,ks)=>{const l=t.toLowerCase();return ks.some(k=>new RegExp('\\b'+k.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'\\b').test(l))};
+function lifeData(i){const e=D[i];if(!e||e.t!=='p'||(e.ty!=='Male'&&e.ty!=='Female'))return null;
+ const ks=KEYS(e),R=refs(e),nodes=[];let span='';
+ // 1) events
+ const mine=EV?EV.map(x=>[x,x.r&&x.r.length?evPos(i,x):-1]).filter(([x,p])=>p>=0):[];
+ let ba=null,da=null,ca=null;const mom=[];
+ mine.forEach(([x,p])=>{const t=x.t,named=hasName(t,ks),lead=named||p===0;
+  if(/^(Lifetime|Reign) of /.test(t)){if(named&&!span)span=`${t.replace(/ of .*/,'')}: ${[x.y&&yShow(x.y),x.d].filter(Boolean).join(' \u00B7 ')}`;return}
+  if(/^Birth of /.test(t)&&named&&!ba){ba=x;return}
+  if((/^(Death|Burial|Martyrdom|Execution|Crucifixion)\b|\bbeheaded\b|\bis stoned\b/i.test(t))&&lead&&!da){da=x;return}
+  if(/call|commission|anoint|vision|bush|conver|chosen|appoint|ordain|baptis/i.test(t)&&!ca&&lead)ca=x;else mom.push([x,p])});
+ const evNode=(st,x)=>({st,title:x.t,yr:x.y?yShow(x.y):'',sub:x.d||'',refs:[rr(x.r[0][0],x.r[0][1],x.r[0][2],(x.r[1]||x.r[0])[1],(x.r[1]||x.r[0])[2])],src:'ev'});
+ // 2) the background note
+ const bs=bioSentences(i),used=new Set();
+ const bio=(st,s)=>({st,title:short(s.t,230),yr:'',sub:'',refs:s.r.slice(0,3),src:'bio'});
+ let bB=null,bC=null,bD=null;
+ if(!ba)for(let k=0;k<Math.min(4,bs.length);k++)if(RX_BIRTH.test(bs[k].t)&&!/gave birth|bore /i.test(bs[k].t)){bB=bs[k];used.add(k);break}
+ if(!ca)for(let k=0;k<bs.length*.7;k++)if(!used.has(k)&&RX_CALL.test(bs[k].t)){bC=bs[k];used.add(k);break}
+ if(!da)for(let k=bs.length-1;k>=Math.floor(bs.length*.3);k--)if(!used.has(k)&&RX_DEATH.test(bs[k].t)){bD=bs[k];used.add(k);break}
+ const mineV=x=>{const lo=vk(x.b,x.c,x.v||1),hi=vk(x.b,x.c2,x.v2||999),j=lowB(R,lo);return j<R.length&&R[j]<=hi};
+ const bm=[];bs.forEach((s,k)=>{if(!used.has(k)&&s.r.length&&s.t.length<400&&!/^(This|These|However|Additionally|Overall|Today|Furthermore|Despite|In (?:summary|conclusion))\b/.test(s.t)&&!/New Testament|prophecy was fulfilled|significance/i.test(s.t)&&s.r.some(mineV))bm.push(s)});
+ // assemble: first mention / birth, calling, key moments (in the order of the Bible text), death / last mention
+ const first=R.length?(()=>{const[b,c,v]=vp(R[0]);return{st:'first',title:'First mentioned in Scripture',yr:'',sub:'',refs:[rr(b,c,v)],src:'v'}})():null;
+ const last=R.length>1?(()=>{const[b,c,v]=vp(R[R.length-1]);return{st:'last',title:'Last mentioned in Scripture',yr:'',sub:'',refs:[rr(b,c,v)],src:'v'}})():null;
+ nodes.push(ba?evNode('birth',ba):bB?bio('birth',bB):first);
+ if(ca)nodes.push(evNode('call',ca));else if(bC)nodes.push(bio('call',bC));
+ const by0=ba?yNum(ba.y):null,prim=mom.filter(([x,p])=>p===0||hasName(x.t,ks)||(p===1&&(x.who||[]).length<=3)),use=(prim.length>=3?prim:mom).map(m=>m[0]).filter(x=>{const y=yNum(x.y);return !(by0!=null&&y!=null&&y<by0)});
+ let mm=use.map(x=>evNode('moment',x));
+ if(mm.length<3)mm=mm.concat(bm.slice(0,Math.max(0,7-mm.length)).map(s=>bio('moment',s)));
+ mm.sort((a,b)=>rKey(a.refs[0])-rKey(b.refs[0]));
+ const dn=da?evNode('death',da):bD?bio('death',bD):last;
+ // a moment that repeats the calling or the death by its verses is dropped
+ const dup=n=>nodes.concat(dn?[dn]:[]).some(o=>o!==n&&o.refs[0]&&n.refs[0]&&rKey(o.refs[0])===rKey(n.refs[0]));
+ mm=mm.filter(n=>!dup(n));
+ // when the calling comes first in the text it goes first; otherwise the verse order decides
+ const out=nodes.filter(Boolean).concat(mm);if(dn)out.push(dn);
+ const by=ba&&da?[yNum(ba.y),yNum(da.y)]:null;
+ if(by&&by[0]!=null&&by[1]!=null){const n=Math.abs(by[1]-by[0]);span=`${yShow(ba.y)} \u2013 ${yShow(da.y)} \u00B7 about ${n} years`+(span?' \u00B7 '+span:'')}
+ if(!span){const x=BG&&BG[i]&&BG[i][2]&&BG[i][2].yr;if(x)span=String(x)}
+ return{span,nodes:out,count:R.length}}
+const LBL={birth:'Birth',call:'Calling',moment:'Key moment',death:'Death',first:'First mention',last:'Last mention'};
+function lifeHtml(i){const e=D[i];if(!e||e.t!=='p'||(e.ty!=='Male'&&e.ty!=='Female'))return '';
+ if(BG===null||EV===null)return '<p class="mute">Loading life story\u2026</p>';
+ const L=lifeData(i);if(!L||!L.nodes.length)return '';
+ const node=n=>{const f=n.refs[0],t=f?NM.cfg.text(f.b,f.c,f.v||1):'';
+  return `<li class="lfn ${n.st}"><span class="lfk">${LBL[n.st]}</span><div class="lfb"><div class="lft">${esc(n.title)}</div>${n.yr||n.sub?`<div class="lfy">${esc([n.yr,n.sub].filter(Boolean).join(' \u00B7 '))}</div>`:''}\n  ${t?`<div class="lfq">${esc(short(t,170))}</div>`:''}<div class="lfr">${n.refs.map(x=>`<button class="nmvl nmin" data-nmgo="${x.b}:${x.c}:${x.v||1}">${esc(rLabel(x))}</button>`).join('')}</div></div></li>`};
+ const mo=L.nodes.filter(n=>n.st==='moment'),head=L.nodes.filter(n=>n.st!=='moment'&&n.st!=='death'&&n.st!=='last'),tail=L.nodes.filter(n=>n.st==='death'||n.st==='last');
+ const CAP=8,shown=mo.slice(0,CAP),rest=mo.slice(CAP);
+ return `<div class="lf">${L.span?`<p class="lfspan">${esc(L.span)}</p>`:''}<ol class="lfl">${head.map(node).join('')}${shown.map(node).join('')}${rest.length?`<li class="lfmore"><details><summary>${rest.length} more key moment${rest.length===1?'':'s'}</summary><ol class="lfl">${rest.map(node).join('')}</ol></details></li>`:''}${tail.map(node).join('')}</ol>
+  <p class="lfall"><button type="button" class="nmc" data-nmjump="vs">All ${L.count} verse${L.count===1?'':'s'} \u2193</button></p>
+  <p class="nmsrc">Dates and events come from Theographic (CC BY-SA 4.0). Steps marked from the background note are AI-assisted summaries (STEPBible, Tyndale House) matched to the verses they cite; check them against the text.</p></div>`}
+const fillLife=i=>{const b=sheet&&i>=0&&stack[stack.length-1]===i&&sheet.querySelector('.nmlife');if(b)b.innerHTML=lifeHtml(i)};
+NM.life=lifeData;
 function mapLink(e){const q=ll(e);return q?`<a class="btn nmmap" target="_blank" rel="noopener" href="https://www.google.com/maps/search/?api=1&query=${q[0]},${q[1]}">Open on map ↗</a> <span class="mute">${q[0]}°, ${q[1]}° (approximate, from OpenBible geolocation)</span>`:''}
 function related(i){const e=D[i],cnt=new Map(),rs=refs(e);rs.forEach(k=>(IDX.get(k)||[]).forEach(([j])=>{if(j!==i&&D[j].t!=='o')cnt.set(j,(cnt.get(j)||0)+1)}));
  const fam=new Set([...(e.par||[]),...(e.sib||[]),...(e.ptr||[]),...(e.off||[]),...(e.fd||[]),...(e.pp||[])].map(x=>Array.isArray(x)?x[0]:x));
@@ -171,6 +264,7 @@ function detail(i,ri){const e=D[i],n=refs(e).length,r0=ri!=null?e.rw[ri]:null,al
  ${sec('Also called',alsoCalled(e))}
  ${sec('Root word and root meaning',roots(e,r0))}
  ${sec('Background',`<div class="nmbg">${bgHtml(i)}</div>${e.t==='l'?mapLink(e):''}`)}
+ ${e.t==='p'&&(e.ty==='Male'||e.ty==='Female')?sec('Life story','<div class="nmlife">'+lifeHtml(i)+'</div>','lfs'):''}
  ${e.t==='p'?sec('Family tree',famTree(i)):''}
  ${sec(e.t==='l'?'People and places connected':'Family and connections',family(e))}
  ${sec('Related people and places',related(i))}
@@ -196,16 +290,17 @@ NM.openEv=k=>{if(!EV||!VM||!VM[k])return;hidePop();
 const draw=()=>{if(!sheet)return;const i=stack[stack.length-1];if(i<0){const p=sheet.querySelector('.nmpanel');p.innerHTML=evHtml(EVK[0]);p.scrollTop=0;return}sheet.querySelector('.nmpanel').innerHTML=detail(i,RI[RI.length-1]);sheet.querySelector('.nmpanel').scrollTop=0};
 NM.open=(i,a,ri)=>{if(!D||!D[i])return;hidePop();
  if(!sheet){sheet=document.createElement('div');sheet.className='nmsheet';sheet.innerHTML='<div class="nmscrim" data-nmx></div><div class="nmpanel" role="dialog" aria-modal="true" aria-label="Name details" tabindex="-1"></div>';document.body.appendChild(sheet);document.body.classList.add('nmlock')}
- alts=a||null;stack.push(i);RI.push(ri);draw();sheet.querySelector('.nmpanel').focus({preventScroll:true});loadBg(()=>{if(sheet&&stack[stack.length-1]===i){const b=sheet.querySelector('.nmbg');if(b)b.innerHTML=bgHtml(i)}})};
+ alts=a||null;stack.push(i);RI.push(ri);draw();sheet.querySelector('.nmpanel').focus({preventScroll:true});loadBg(()=>{if(sheet&&stack[stack.length-1]===i){const b=sheet.querySelector('.nmbg');if(b)b.innerHTML=bgHtml(i);fillLife(i)}})};
 NM.close=()=>{if(sheet){sheet.remove();sheet=null}stack=[];RI=[];EVK=[];alts=null;document.body.classList.remove('nmlock');hidePop()};
-const fillBg=i=>i<0?0:loadBg(()=>{const b=sheet&&stack[stack.length-1]===i&&sheet.querySelector('.nmbg');if(b)b.innerHTML=bgHtml(i)});
-document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('.nm,sup.evm,[data-nmo],[data-nmx],[data-nmback],[data-nmgo]');if(!t)return;
+const fillBg=i=>i<0?0:loadBg(()=>{const b=sheet&&stack[stack.length-1]===i&&sheet.querySelector('.nmbg');if(b)b.innerHTML=bgHtml(i);fillLife(i)});
+document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('.nm,sup.evm,[data-nmo],[data-nmx],[data-nmback],[data-nmgo],[data-nmjump]');if(!t)return;
  const stop=()=>{e.preventDefault();e.stopPropagation()};
  if(t.matches('sup.evm')){stop();NM.openEv(t.dataset.ev);return}
  if(t.classList.contains('nm')){stop();const ids=parse(t.dataset.nm);stack=[];RI=[];NM.open(ids[0].i,ids,ids[0].ri);return}
  if(t.hasAttribute('data-nmx')){stop();NM.close();return}
  if(t.hasAttribute('data-nmback')){stop();stack.pop();RI.pop();alts=null;draw();fillBg(stack[stack.length-1]);return}
- if(t.dataset.nmgo){stop();const[b,c,v]=t.dataset.nmgo.split(':').map(Number);NM.close();NM.cfg.go(b,c,v);return}
+ if(t.dataset.nmjump){stop();const vs=sheet&&sheet.querySelector('.nms.vs');if(vs){const d=vs.querySelector('details.nmb');if(d&&!d.open)d.open=true;vs.scrollIntoView({behavior:'smooth',block:'start'})}return}
+  if(t.dataset.nmgo){stop();const[b,c,v]=t.dataset.nmgo.split(':').map(Number);NM.close();NM.cfg.go(b,c,v);return}
  if(t.dataset.nmo!=null){stop();const[ia,ib]=t.dataset.nmo.split('.'),i=+ia,ri=ib==null||ib===''?undefined:+ib;
   if(t.dataset.keep){stack[stack.length-1]=i;RI[RI.length-1]=ri;draw();fillBg(i)}      // switching between same-name candidates
   else if(sheet)NM.open(i);                                           // moving on to a relative or related place
