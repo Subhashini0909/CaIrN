@@ -6,6 +6,9 @@
 const NM=window.NM={cfg:{text:()=>null,go:()=>{}}};
 let D=null,LX={},BG=null,busy=0,bgBusy=0;const waiting=[],IDX=new Map(),VC=new Map();
 const TYPE={Male:'Man',Female:'Woman',Group:'People or group',Place:'Place',Supernatural:'Supernatural',Time:'Festival or month',Title:'Title',Language:'Language',Musical:'Musical term',Star:'Star or constellation',Other:'Other'};
+// Position of a place. The source data uses 0,14 as a placeholder for "unknown" (Eden, Nod, Havilah and others), so those are treated as unmapped.
+const LLFIX={'Hazor':[33.0167,35.5683],'Gerasa':[32.2811,35.8914],'Plains of Moab':[31.83,35.57]};
+const ll=e=>e&&e.t==='l'&&e.ll&&!(e.ll[0]===0&&e.ll[1]===14)?e.ll:(e&&e.t==='l'&&LLFIX[e.n])||null;
 const kind=e=>e.t==='l'?'Place':e.t==='p'?(TYPE[e.ty]||'Person'):(TYPE[e.ty]||'Name');
 const vk=(b,c,v)=>b*1e6+c*1e3+v,vp=k=>[Math.floor(k/1e6),Math.floor(k%1e6/1e3),k%1e3];
 const refs=e=>{if(e._r)return e._r;const s=new Set();e.rw.forEach(r=>{let p=0;r.r.forEach(d=>{p+=d;s.add(p)})});return e._r=[...s].sort((a,b)=>a-b)};
@@ -110,7 +113,7 @@ function family(e){let h='';
  if(e.t==='p'){h+=row('Tribe or nation',esc(e.tr||''));h+=row('Parents',relChips(e.par,FL));h+=row('Brothers and sisters',relChips(e.sib,FL));h+=row('Spouse',relChips(e.ptr,FL));h+=row('Children',relChips(e.off,FL))}
  else if(e.t==='l'){h+=row('Region',esc(e.ar||''));h+=row('Founded or built by',relChips(e.fd,FL));h+=row('People who lived there',relChips(e.pp,FL))}
  return h}
-function mapLink(e){return e.ll?`<a class="btn nmmap" target="_blank" rel="noopener" href="https://www.google.com/maps/search/?api=1&query=${e.ll[0]},${e.ll[1]}">Open on map ↗</a> <span class="mute">${e.ll[0]}°, ${e.ll[1]}° (approximate, from OpenBible geolocation)</span>`:''}
+function mapLink(e){const q=ll(e);return q?`<a class="btn nmmap" target="_blank" rel="noopener" href="https://www.google.com/maps/search/?api=1&query=${q[0]},${q[1]}">Open on map ↗</a> <span class="mute">${q[0]}°, ${q[1]}° (approximate, from OpenBible geolocation)</span>`:''}
 function related(i){const e=D[i],cnt=new Map(),rs=refs(e);rs.forEach(k=>(IDX.get(k)||[]).forEach(([j])=>{if(j!==i&&D[j].t!=='o')cnt.set(j,(cnt.get(j)||0)+1)}));
  const fam=new Set([...(e.par||[]),...(e.sib||[]),...(e.ptr||[]),...(e.off||[]),...(e.fd||[]),...(e.pp||[])].map(x=>Array.isArray(x)?x[0]:x));
  const top=[...cnt.entries()].filter(([j,c])=>c>=2&&!fam.has(j)).map(([j,c])=>[j,c,c/Math.sqrt(refs(D[j]).length)]).sort((a,b)=>b[2]-a[2]).slice(0,10);
@@ -130,6 +133,7 @@ function detail(i,ri){const e=D[i],n=refs(e).length,r0=ri!=null?e.rw[ri]:null,al
  return `<div class="nmhd"><button class="g s" data-nmback ${stack.length>1?'':'hidden'}>‹ Back</button><span class="grow"></span><button class="g s" data-nmx aria-label="Close">✕</button></div>
  <div class="nmbody"><div class="nmtitle"><h2>${esc(title)}</h2><span class="nmtag big">${esc(kind(e))}</span></div>
  <p class="nmsub">${al?`Another name for <b>${esc(e.n)}</b>. `:''}${esc(e.t==='l'?[e.ar&&'Region: '+e.ar,e.ty&&e.ty!=='Place'?e.ty:''].filter(Boolean).join(' · '):e.d||'')}${e.t==='p'&&e.tr?' · '+esc(e.tr):''}</p>${altH}
+ ${ll(e)?`<p class="nmatlr"><button type="button" class="s nmatl" data-atlp="${i}">📍 Show on map</button></p>`:''}
  ${mean?`<div class="nmmean"><span>Meaning of the name${al?' “'+esc(title)+'”':''}</span><b>${esc(mean)}</b></div>`:''}
  ${sec('Name in the original languages',forms(e,ri))}
  ${sec('Also called',alsoCalled(e))}
@@ -144,13 +148,13 @@ const EVRE=new RegExp('\\b('+BIB.map(x=>x[0]).sort((a,b)=>b.length-a.length).joi
 const evLink=t=>esc(t).replace(EVRE,(m,n,c,v)=>{const b=BIB.findIndex(x=>x[0]===n);return `<button class="nmvl nmin" data-nmgo="${b}:${c}:${v}">${m}</button>`});
 const evChip=n=>{const i=nameIdx(n);return i!=null?chip(i):esc(n)};
 const evRng=r=>{const a=r[0],b=r[1];return `<button class="nmvl nmin" data-nmgo="${a[0]}:${a[1]}:${a[2]}">${esc(BIB[a[0]][0])} ${a[1]}:${a[2]}${a[1]===b[1]&&a[2]===b[2]?'':'–'+(a[1]===b[1]?'':b[1]+':')+b[2]}</button>`};
-const evOne=(e,o)=>`<details class="nmev"${o?' open':''}><summary>${e.c?'📖':'📌'} <b>${esc(e.t)}</b></summary>`
+const evOne=(e,o,n)=>`<details class="nmev"${o?' open':''}><summary>${e.c?'📖':'📌'} <b>${esc(e.t)}</b></summary>`
  +evRow('When',esc([e.y&&(e.c?e.y:'about '+e.y),e.d].filter(Boolean).join(' · ')))+(e.sec||[]).map(([l,t])=>evRow(esc(l),evLink(t))).join('')
- +evRow('Who',(e.who||[]).map(evChip).join(' '))+evRow('Where',(e.at||[]).map(evChip).join(' '))+evRow('Part of',esc((e.po||[]).join(', ')))+evRow('Includes',esc((e.in||[]).join(' · ')))
+ +(n!=null&&(e.r||(e.at||[]).length)?`<div class="nmevr"><button type="button" class="s nmatl" data-atle="${n}">📍 Passage and map</button></div>`:'')+evRow('Who',(e.who||[]).map(evChip).join(' '))+evRow('Where',(e.at||[]).map(evChip).join(' '))+evRow('Part of',esc((e.po||[]).join(', ')))+evRow('Includes',esc((e.in||[]).join(' · ')))
  +evRow('Happened before',esc((e.pre||[]).join(', ')))+evRow('Happened after',esc((e.nx||[]).join(', ')))+(e.r?evRow('Passage',evRng(e.r)):'')+'</details>';
 const evHtml=k=>{const[b,c,v]=k.split('.').map(Number),ix=(VM&&VM[k]||[]).slice(0,4);
  return `<div class="nmhd"><button class="g s" data-nmback ${stack.length>1?'':'hidden'}>‹ Back</button><span class="grow"></span><button class="g s" data-nmx aria-label="Close">✕</button></div>
- <div class="nmbody"><div class="nmtitle"><h2>${esc(BIB[b][0])} ${c}:${v}</h2><span class="nmtag big">What is happening here</span></div>${ix.map((n,j)=>evOne(EV[n],j===0)).join('')}
+ <div class="nmbody"><div class="nmtitle"><h2>${esc(BIB[b][0])} ${c}:${v}</h2><span class="nmtag big">What is happening here</span></div>${ix.map((n,j)=>evOne(EV[n],j===0,n)).join('')}
  <p class="nmsrc">📖 summaries are written from the Scripture text. 📌 events, people and places come from Theographic (CC BY-SA 4.0); dates are approximate scholarly estimates.</p></div>`};
 let EVK=[];
 NM.openEv=k=>{if(!EV||!VM||!VM[k])return;hidePop();
@@ -177,5 +181,5 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(sheet)NM.close()
 // verse lists inside a collapsed book are filled the first time it is opened
 document.addEventListener('toggle',e=>{const d=e.target;if(!d.classList||!d.classList.contains('nmb')||!d.open||d.dataset.done)return;d.dataset.done=1;
  const i=stack[stack.length-1],ks=(byBook(D[i]).get(+d.dataset.b)||[]);d.querySelector('.nmvs').innerHTML=vlist(ks)},true);
-NM.names=i=>D&&D[i];NM.chip=i=>D?chip(i):'';
+NM.names=i=>D&&D[i];NM.chip=i=>D?chip(i):'';NM.idx=nameIdx;NM.ll=ll;NM.refs=i=>D&&D[i]?refs(D[i]):[];
 })();

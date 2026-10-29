@@ -11,6 +11,7 @@ let TAM=null,ldT=0;const loadT=()=>{if(TAM||ldT)return;ldT=1;fetch('tamil.json')
 const ref=()=>`${BIB[ST.bk][0]} ${ST.ch}`;
 NM.cfg.refresh=()=>{if(tab==='study')render()};
 NM.cfg.text=(b,c,v)=>KJV&&KJV[b]&&KJV[b].chapters[c-1]?KJV[b].chapters[c-1][v-1]:null;
+NM.cfg.where=()=>[ST.bk,ST.ch];NM.cfg.vc=(b,c)=>KJV&&KJV[b]&&KJV[b].chapters[c-1]?KJV[b].chapters[c-1].length:0;
 NM.cfg.go=(b,c,v)=>{ST.bk=b;ST.ch=c;U.sub='read';U.nid=null;U.edit=null;U.flash=v;if(ST.ver!=='KJV'&&ST.ver!=='TAM')ST.ver='KJV';if(tab!=='study'){const t=document.querySelector('[data-tab=study]');t&&t.click()}save();go();if(!U.flash)return;scrollTo({top:0})};
 document.addEventListener('toggle',e=>{const c=e.target.classList;if(c&&c.contains('nmlist'))U.nmopen=e.target.open;if(c&&c.contains('bkp'))U.bk=e.target.open},true);
 // ---- reading tools: Highlight (h), Underline (u), Important (i), Clear (x) ----
@@ -173,7 +174,7 @@ const aboutBook=()=>{const b=(window.BOOKINFO||[])[ST.bk];if(!b)return '';const 
 // Book overview infographic (overview.js is loaded the first time it is opened)
 let ovLoad=0;document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('[data-ov]');if(!t)return;e.preventDefault();const bk=+t.dataset.ov,go=()=>window.BKOV&&window.BKOV.open(bk,t);if(window.BKOV){go();return}if(ovLoad)return;ovLoad=1;const sc=document.createElement('script');sc.src='overview.js';sc.onload=()=>{ovLoad=0;go()};sc.onerror=()=>{ovLoad=0;toast('Could not load the overview.')};document.head.appendChild(sc)});
 const read=()=>`<div class="seg" role="tablist">${Object.entries(VER).map(([k,l])=>`<button class="${ST.ver===k?'on':''}" data-sx="ver:${k}">${l}</button>`).join('')}</div>
-<div class="card rd"><div class="rdh">${sel()}<div class="tools"><button class="g s" data-sx="fs:-1" aria-label="Smaller text">A−</button><button class="g s" data-sx="fs:1" aria-label="Larger text">A+</button><button class="g s" data-sx="cmpgo">Compare</button></div></div>
+<div class="card rd"><div class="rdh">${sel()}<div class="tools"><button class="g s" data-sx="fs:-1" aria-label="Smaller text">A−</button><button class="g s" data-sx="fs:1" aria-label="Larger text">A+</button><button class="g s" data-sx="cmpgo">Compare</button><button class="g s" data-atlch="1" aria-label="Map of this chapter">\u{1F4CD} Map</button></div></div>
 ${ST.ver==='KJV'||ST.ver==='TAM'||ST.ver==='NLT'?tools(ST.ver==='KJV'||ST.ver==='NLT',1):''}${aboutBook()}<h2 class="ref">${esc(ref())}</h2>${chapIntro()}${body()}${nmList()}
 <div class="rdf"><button class="g" data-sx="nav:-1">‹ Previous</button><button data-sx="mark">${rcv(ST.bk,ST.ch-1)?'✓ Read · mark again':'Mark chapter read'}</button><button class="g" data-sx="note">＋ Note</button><button class="g" data-sx="soap">＋ SOAP</button><button class="g" data-sx="nav:1">Next ›</button></div>${U.msg?`<p class="mute" style="text-align:center">${U.msg}</p>`:''}</div>`;
 const SVG_TAGS=new Set(['figure','figcaption','svg','g','path','rect','circle','line','text','tspan','b','i','span']),SVG_ATTRS=new Set(['class','viewBox','viewbox','role','aria-label','width','height','d','fill','stroke','stroke-width','stroke-dasharray','stroke-linecap','stroke-linejoin','opacity','transform','x','y','cx','cy','r','rx','ry','x1','y1','x2','y2','text-anchor','fill-rule','xmlns','font-size']);

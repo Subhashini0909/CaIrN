@@ -276,3 +276,17 @@ h3.sh{display:flex;align-items:center;gap:8px;margin:20px 0 4px;font-size:17px;c
 .dwsw{font-family:var(--serif);border-bottom:1.5px dotted #2F8F83}
 .rtools button.dwtog.on{border-color:#2F8F83;box-shadow:0 2px 10px #2f8f8333}
 @media (prefers-reduced-motion:reduce){.dw{transition:none}}
+/* ---- Atlas: connected map, places and events ---- */
+.atlmap{margin:14px 0 4px}.atlv{height:300px}.atlnone,.atlfb .jm{margin:0}.atlnone{padding:14px 16px;border-radius:14px;background:var(--tint);color:var(--mute);font-size:14px}
+.atlfb figure{margin:0}.atlpin{cursor:pointer;outline:0}.atlpin:focus-visible circle:last-of-type{stroke:#B8913F;stroke-width:3.5}
+.atlbody{margin-top:10px}.atlcard{margin-top:12px;padding:14px 16px;border-radius:16px;background:#fff;border:1px solid var(--line)}
+.atlch{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.atlch b{font:600 22px/1.2 var(--serif);color:var(--acc)}
+.atlcard h4{margin:16px 0 6px;font:600 11px Inter;letter-spacing:.1em;text-transform:uppercase;color:var(--mute)}
+.atlbr{margin:8px 0;font-size:14.5px;line-height:1.55}.atlbtns{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0 4px}.atlbtns .btn{text-decoration:none}
+.atlev{display:flex;gap:12px;width:100%;text-align:left;background:none;box-shadow:none;color:var(--ink);border-radius:10px;padding:8px;align-items:baseline;font:400 14px/1.45 Inter}.atlev:hover,.atlev.on{background:#b8913f1a}
+.atlev .yr{flex:0 0 74px;font-size:12px;font-weight:600;color:var(--mute)}.atlev b{font-weight:600;color:var(--acc)}
+.atlpass p{margin:0 0 .6em;font:400 16px/1.65 var(--serif)}
+.atlvn{display:inline;width:auto;background:none;box-shadow:none;border:0;padding:0 2px;margin-right:2px;font:600 11px Inter;color:var(--gold);vertical-align:.3em;cursor:pointer}.atlvn:hover{text-decoration:underline}
+.atl .nm{cursor:pointer}.nmatlr{margin:12px 0 0}.nmatl{display:inline-flex;gap:6px;align-items:center}
+.atle{display:inline;width:auto;background:none;box-shadow:none;border:0;border-bottom:1px dashed var(--gold);border-radius:0;padding:0;font:inherit;font-weight:700;color:var(--acc);text-align:left;cursor:pointer}.atle:hover{background:#b8913f1a}
+@media(min-width:861px){.atl .nmpanel{width:620px}}
