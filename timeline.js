@@ -27,19 +27,28 @@ function build(raw){
   items.push(it);if(y!=null)dated.push(it)});
  items.forEach(it=>{if(it.y!=null)return;let best=null,bd=1e9;dated.forEach(o=>{const d=Math.abs(o.b-it.b)*1000+Math.abs(o.c-it.c);if(d<bd){bd=d;best=o}});it.y=best?best.y:0;it.ap=true});
  const J=(window.BKX&&window.BKX.mapData)||{};
- Object.keys(JM).forEach(k=>{const m=JM[k],j=J[k];if(!j)return;const st=[];((j.routes&&j.routes[0]&&j.routes[0].st)||[]).forEach(s=>{if(s[0]&&st.indexOf(s[0])<0)st.push(s[0])});
-  items.push({k:'j',t:m[0],y:m[1],ap:true,b:m[2],c:m[3],v:m[4],b2:m[2],c2:m[3],v2:m[4],who:[],at:st,d:'',cap:j.cap||'',id:'j'+k})});
+ const JE={pj1:'First Missionary Journey',pj2:'Second Missionary Journey',pj3:'Third Missionary Journey',prome:'Paul\u2019s Journey to Rome',wild:'Exodus from Egypt',elijah:'Prophecies of Elijah',jesus:'First Passover and Temple Cleansing'};
+ Object.keys(JM).forEach(k=>{const m=JM[k],j=J[k];if(!j)return;
+  const me=JE[k]&&dated.find(o=>o.t===JE[k].replace('\u2019',"'")&&o.k==='e'),yy=me&&k!=='jesus'?me.y:m[1];const st=[];((j.routes&&j.routes[0]&&j.routes[0].st)||[]).forEach(s=>{if(s[0]&&st.indexOf(s[0])<0)st.push(s[0])});
+  items.push({k:'j',t:m[0],y:yy,ap:true,b:m[2],c:m[3],v:m[4],b2:m[2],c2:m[3],v2:m[4],who:[],at:st,d:'',cap:j.cap||'',id:'j'+k})});
  items.sort((a,b)=>a.y-b.y||a.b-b.b||a.c-b.c||a.v-b.v);
  return items}
 
 function load(){if(D!==null||ld)return;ld=1;fetch('events.json').then(r=>r.json()).then(j=>{D=build(j.e||[])}).catch(()=>{D=0}).then(()=>{ld=0;if(typeof tab!=='undefined'&&tab==='study'&&document.querySelector('.tlv'))render()})}
 
-// The event that covers the chapter being read (narrowest span), or the closest one when none does.
+// The event that best covers the chapter being read: the one covering the most of that chapter's verses
+// (so a one-verse mention such as "Sojourn in Egypt" in Exodus 12:40 does not beat the Exodus itself), then the narrowest span.
+// When none covers it, the closest one by book and chapter, never Job/Psalms/Proverbs/Ecclesiastes/Song of Solomon for a chapter
+// outside them: they sit in the middle of the Bible but are not dated by their place in it (Job's Trial is 1649 BC, next to Nehemiah in book order).
 function anchor(items,p){
- const pb=p[0],pc=p[1],key=pb*1000+pc;let best=null,bs=1e9;
- items.forEach(it=>{if(it.k==='j')return;const lo=it.b*1000+it.c,hi=it.b2*1000+it.c2;if(key>=lo&&key<=hi&&hi-lo<bs){bs=hi-lo;best=it}});
+ const pb=p[0],pc=p[1],key=pb*1000+pc,vc=(window.NM&&NM.cfg&&NM.cfg.vc)?NM.cfg.vc(pb,pc):0;
+ let best=null,bo=-1,bs=1e9;
+ items.forEach(it=>{if(it.k==='j')return;const lo=it.b*1000+it.c,hi=it.b2*1000+it.c2;if(key<lo||key>hi)return;
+  const from=(it.b===pb&&it.c===pc)?it.v:1,to=(it.b2===pb&&it.c2===pc)?it.v2:(vc||1000),ov=Math.max(1,to-from+1),sp=hi-lo;
+  if(ov>bo||(ov===bo&&sp<bs)){bo=ov;bs=sp;best=it}});
  if(best)return{it:best,exact:true};
- let nd=1e9;items.forEach(it=>{if(it.k==='j')return;const d=Math.abs(it.b-pb)*1000+Math.abs(it.c-pc);if(d<nd){nd=d;best=it}});
+ const FLOAT=[17,18,19,20,21],skip=FLOAT.indexOf(pb)<0;
+ let nd=1e9;items.forEach(it=>{if(it.k==='j'||(skip&&FLOAT.indexOf(it.b)>=0))return;const d=Math.abs(it.b-pb)*1000+Math.abs(it.c-pc);if(d<nd){nd=d;best=it}});
  return best?{it:best,exact:false}:null}
 
 const hay=it=>(it.t+' '+it.who.join(' ')+' '+it.at.join(' ')+' '+yl(it.y,it.ap)+' '+refT(it)).toLowerCase();
@@ -80,7 +89,8 @@ function view(){
  const A=anchor(D,pos());
  if(TL.open===null)TL.open=new Set([ERAS[A?eraOf(A.it.y):0][0]]);
  const c={e:0,p:0,j:0};D.forEach(it=>c[it.k]++);
- if(!TL.did){TL.did=1;setTimeout(()=>{const h=document.getElementById('tl-here');if(h)h.scrollIntoView({block:'center'})},60)}
+ const hk=pos().join('.');
+ if(TL.did!==hk){TL.did=hk;if(A&&TL.open)TL.open.add(ERAS[eraOf(A.it.y)][0]);setTimeout(()=>{const h=document.getElementById('tl-here');if(h)h.scrollIntoView({block:'center'})},60)}
  const chip=(k,l,n)=>`<button class="tlc${TL.f===k?' on':''}" data-tl="f:${k}" aria-pressed="${TL.f===k}">${l} <small>${n}</small></button>`;
  return `<div class="card tlv${TL.q?' tlsearching':''}"><div class="tlh"><h2>Timeline</h2><span class="mute small">Creation to Revelation</span></div>
  <input id="tlq" class="srch" type="search" placeholder="Try Elijah, Exodus or 586 BC" value="${esc(TL.q)}" autocomplete="off" aria-label="Search the timeline">
