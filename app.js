@@ -22,7 +22,7 @@ const save=()=>{S.mod=Date.now();localStorage.setItem(KEY,JSON.stringify(S));win
 const money=n=>esc(S.cur)+Number(n).toLocaleString(undefined,{maximumFractionDigits:2});
 const last=n=>[...Array(n)].map((_,i)=>{const d=new Date();d.setDate(d.getDate()-(n-1-i));return iso(d)});
 const spend=d=>S.tx.filter(t=>t.date===d&&t.type==='dr').reduce((a,t)=>a+t.amount,0);
-let tab='today',month=today().slice(0,7);
+let tab=(()=>{try{return localStorage.getItem('cairn-tab')}catch(e){return null}})()||'today',month=today().slice(0,7);
 const CATS=[['Giving and church',['Tithes and offerings','Church and ministry','Missions and charity','Bible and Christian books']],['Everyday',['Food and dining','Groceries','Transport','Fuel','Shopping','Bills and utilities','Recharge and subscriptions','Rent','Home and maintenance','Personal care','Family and kids','Pets']],['Health and learning',['Health and medical','Medicines','Insurance','Education','Books and stationery']],['Lifestyle',['Entertainment','Travel','Gifts','Eating out','Hobbies']],['Money',['EMI and loans','Investment','Savings','Taxes','Fees and charges']],['Income',['Salary','Business income','Interest','Refund','Gift received','Other income']],['Other',['Other']]];
 const catSel=()=>`<select id="ca" aria-label="Category"><option value="">Choose category</option>${CATS.map(([g,l])=>`<optgroup label="${g}">${l.map(c=>`<option>${c}</option>`).join('')}</optgroup>`).join('')}</select>`;
 let wpage=1;const WPS=10;
@@ -160,7 +160,7 @@ settings(){return `${window.Lock?Lock.card():''}${window.Cloud?Cloud.card():''}`
 function animate(v,on){if(!on||(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches))return;v.classList.remove('enter');void v.offsetWidth;
  v.querySelectorAll('.card').forEach((e,i)=>e.style.setProperty('--i',Math.min(i,12)));v.querySelectorAll('.chap,.bk,.day').forEach((e,i)=>e.style.setProperty('--i',Math.min(i,40)));
  v.classList.add('enter');clearTimeout(animate.t);animate.t=setTimeout(()=>v.classList.remove('enter'),1500)}
-function render(anim){const v=$('#view');v.innerHTML=views[tab]();animate(v,anim);$('#dl').textContent=new Date().toLocaleDateString(undefined,{weekday:'short',day:'numeric',month:'short'});
+function render(anim){if(!views[tab])tab='today';try{localStorage.setItem('cairn-tab',tab)}catch(e){}const v=$('#view');v.innerHTML=views[tab]();animate(v,anim);$('#dl').textContent=new Date().toLocaleDateString(undefined,{weekday:'short',day:'numeric',month:'short'});
  const h=new Date().getHours();$('#gr').textContent=(h<12?'Good morning':h<18?'Good afternoon':'Good evening')+'!';document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.tab===tab))}
 const num=id=>Math.max(0,parseFloat($(id).value)||0);
 
