@@ -102,13 +102,19 @@ function forms(e,ti){const seen=new Set(),out=[];
  return out.length?out.slice(0,10).join('')+(out.length>10?`<p class="mute">${out.length-10} more spellings are not shown.</p>`:''):''}
 function alsoCalled(e){const out=e.rw.filter(r=>r.alt&&r.w&&r.g!=='lx'&&!/^(God|Lord|LORD|Most High)$/.test(r.alt)).reduce((a,r)=>{const k=r.alt+r.w;if(!a.some(x=>x.k===k))a.push({k,r});return a},[]);
  return out.length?`<ul class="nml">${out.slice(0,12).map(({r})=>{const l=lang(r),v=vp(r.r.reduce((a,d,i)=>i?a:d,0));return `<li><b>${esc(r.alt)}</b> ${scr(r.w,l)} ${r.x?`<i>${esc(r.x)}</i>`:''} <span class="lg">${l}</span> <button class="nmv" data-nmgo="${v.join(':')}">${vname(...v)}</button>${r.m?` <span class="mute">· ${esc(r.m)}</span>`:''}</li>`}).join('')}</ul>`:''}
+// Strong's codes inside a derivation (H6310) are shown with the word and its short meaning: peh “the mouth” H6310
+const shortD=d=>{const w=String(d||'').split(/[;,(…:]/)[0].trim().split(/\s+/);return w.slice(0,5).join(' ')};
+const dvHtml=t=>{let o='',p=0,m;const re=/\b([HG])(\d+)[a-z]?\b/g;t=String(t);
+ while((m=re.exec(t))){const k=m[1]+m[2],x=LX[k];o+=esc(t.slice(p,m.index));
+  o+=x?`<i>${esc(x.x||'')}</i>${x.d?` “${esc(shortD(x.d))}”`:''} <span class="nmtag">${k}</span>`:`<span class="nmtag">${k}</span>`;p=m.index+m[0].length}
+ return o+esc(t.slice(p))};
 function roots(e,r0){const cs=[...(r0&&r0.alt&&r0.s?[r0.s]:[]),...(e.lx||[])].filter((c,x,a)=>a.indexOf(c)===x);const items=cs.map(c=>[c,LX[c]]).filter(x=>x[1]);if(!items.length)return '';
  return items.map(([c,it])=>{const l=isH(c)?'Hebrew':'Greek',dv=fixc(it.dv||'');
   const ro=(it.ro||[]).map(rc=>{const r=LX[rc];if(!r)return '';const rl=isH(rc)?'Hebrew':'Greek';return `<div class="nmroot"><div>${scr(r.w,rl)} <i>${esc(r.x)}</i> <span class="nmtag">${fixc(rc)}</span></div><div><b>Root meaning:</b> ${esc(r.d)}</div>${r.k?`<div class="mute">Rendered in the KJV as: ${esc(r.k)}</div>`:''}</div>`}).join('');
   const none=!ro&&/primary|uncertain|foreign|origin/.test(dv);
   return `<div class="nmx"><div class="nmxh">${scr(it.w,l)} <i>${esc(it.x)}</i>${it.p?` <span class="mute">/${esc(it.p)}/</span>`:''} <span class="lg">${l}</span> <span class="nmtag">${fixc(c)}</span></div>
   ${it.d?`<p><b>Strong's definition:</b> ${esc(it.d)}</p>`:''}${it.k?`<p class="mute">KJV: ${esc(it.k)}</p>`:''}
-  ${dv?`<p><b>Root word (derivation):</b> ${esc(dv)}${none?'':''}</p>`:''}${ro}</div>`}).join('')}
+  ${dv?`<p><b>Root word (derivation):</b> ${dvHtml(dv)}</p>`:''}${ro}</div>`}).join('')}
 function family(e){let h='';
  if(e.t==='p'){h+=row('Tribe or nation',esc(e.tr||''));h+=row('Parents',relChips(e.par,FL));h+=row('Brothers and sisters',relChips(e.sib,FL));h+=row('Spouse',relChips(e.ptr,FL));h+=row('Children',relChips(e.off,FL))}
  else if(e.t==='l'){h+=row('Region',esc(e.ar||''));h+=row('Founded or built by',relChips(e.fd,FL));h+=row('People who lived there',relChips(e.pp,FL))}
