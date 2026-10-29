@@ -119,6 +119,32 @@ function family(e){let h='';
  if(e.t==='p'){h+=row('Tribe or nation',esc(e.tr||''));h+=row('Parents',relChips(e.par,FL));h+=row('Brothers and sisters',relChips(e.sib,FL));h+=row('Spouse',relChips(e.ptr,FL));h+=row('Children',relChips(e.off,FL))}
  else if(e.t==='l'){h+=row('Region',esc(e.ar||''));h+=row('Founded or built by',relChips(e.fd,FL));h+=row('People who lived there',relChips(e.pp,FL))}
  return h}
+
+// ---------- family tree (inside a person's sheet) ----------
+// Built from the parent / child / spouse / sibling links in names.json. Ancestors follow the father's line (the mother is shown beside him),
+// descendants are shown three generations down. Every name opens that person's own sheet, so the tree can be walked in either direction.
+const pid=x=>Array.isArray(x)?x[0]:x;
+const GEN=['Father','Grandfather','Great-grandfather'];
+const genLabel=n=>GEN[n-1]||(n+' generations back');
+function fatherOf(e){const ps=(e.par||[]).map(pid).filter(j=>D[j]);return{f:ps.find(j=>D[j].ty==='Male')??ps[0]??null,rest:ps}}
+function famTree(i){const e=D[i];if(e.t!=='p')return '';
+ const up=[],seen=new Set([i]);let cur=i;
+ while(up.length<60){const{f,rest}=fatherOf(D[cur]);if(f==null||seen.has(f))break;seen.add(f);up.push({f,m:rest.filter(j=>j!==f&&!seen.has(j))});cur=f}
+ const sib=(e.sib||[]).map(pid).filter(j=>D[j]),sp=(e.ptr||[]).map(pid).filter(j=>D[j]),kids=(e.off||[]).map(pid).filter(j=>D[j]);
+ if(!up.length&&!sib.length&&!sp.length&&!kids.length)return '';
+ const row=(g,k)=>`<div class="ftg"><span class="ftgl">${genLabel(k+1)}</span><div class="ftgc">${chip(g.f)}${g.m.length?`<span class="ftm">with ${g.m.map(j=>chip(j)).join(' ')}</span>`:''}</div></div>`;
+ const NEAR=6,near=up.slice(0,NEAR).map((g,k)=>row(g,k)).reverse().join(''),far=up.slice(NEAR).map((g,k)=>row(g,k+NEAR)).reverse().join('');
+ const upH=up.length?`<div class="ftup">${far?`<details class="ftfar"><summary>${up.length-NEAR} earlier generation${up.length-NEAR===1?'':'s'} back to ${esc(D[up[up.length-1].f].n)}</summary>${far}</details>`:''}${near}</div>`:'';
+ const meH=`<div class="ftg me"><span class="ftgl">${up.length?'This person':'Starting point'}</span><div class="ftgc"><span class="ftme">${esc(e.n)}</span>${sp.length?`<span class="ftm">married to ${sp.slice(0,8).map(j=>chip(j)).join(' ')}</span>`:''}</div></div>`;
+ const sibH=sib.length?`<div class="ftsib"><span class="ftgl">Brothers and sisters</span><div class="nmcs">${sib.slice(0,16).map(j=>chip(j)).join('')}${sib.length>16?`<span class="mute"> +${sib.length-16} more</span>`:''}</div></div>`:'';
+ const MAXD=3,CAP=14,sn=new Set([i]);
+ const dn=(j,d)=>{const k=(D[j].off||[]).map(pid).filter(x=>D[x]&&!sn.has(x));const li=`<li>${chip(j,d===MAXD&&k.length?k.length+(k.length===1?' child':' children'):'')}`;
+  if(d>=MAXD||!k.length)return li+'</li>';
+  const shown=k.slice(0,CAP);shown.forEach(x=>sn.add(x));
+  return li+`<ul>${shown.map(x=>dn(x,d+1)).join('')}${k.length>CAP?`<li class="mute">+${k.length-CAP} more</li>`:''}</ul></li>`};
+ const kk=kids.filter(x=>!sn.has(x)).slice(0,CAP);kk.forEach(x=>sn.add(x));
+ const dnH=kk.length?`<div class="ftdn"><span class="ftgl">Children and descendants</span><ul>${kk.map(x=>dn(x,1)).join('')}${kids.length>CAP?`<li class="mute">+${kids.length-CAP} more children</li>`:''}</ul></div>`:'';
+ return `<div class="ft">${upH}${meH}${sibH}${dnH}<p class="nmsrc">Tap any name to open that person. Links come from the Tyndale (TIPNR) name data and follow the father’s line upward.</p></div>`}
 function mapLink(e){const q=ll(e);return q?`<a class="btn nmmap" target="_blank" rel="noopener" href="https://www.google.com/maps/search/?api=1&query=${q[0]},${q[1]}">Open on map ↗</a> <span class="mute">${q[0]}°, ${q[1]}° (approximate, from OpenBible geolocation)</span>`:''}
 function related(i){const e=D[i],cnt=new Map(),rs=refs(e);rs.forEach(k=>(IDX.get(k)||[]).forEach(([j])=>{if(j!==i&&D[j].t!=='o')cnt.set(j,(cnt.get(j)||0)+1)}));
  const fam=new Set([...(e.par||[]),...(e.sib||[]),...(e.ptr||[]),...(e.off||[]),...(e.fd||[]),...(e.pp||[])].map(x=>Array.isArray(x)?x[0]:x));
@@ -145,6 +171,7 @@ function detail(i,ri){const e=D[i],n=refs(e).length,r0=ri!=null?e.rw[ri]:null,al
  ${sec('Also called',alsoCalled(e))}
  ${sec('Root word and root meaning',roots(e,r0))}
  ${sec('Background',`<div class="nmbg">${bgHtml(i)}</div>${e.t==='l'?mapLink(e):''}`)}
+ ${e.t==='p'?sec('Family tree',famTree(i)):''}
  ${sec(e.t==='l'?'People and places connected':'Family and connections',family(e))}
  ${sec('Related people and places',related(i))}
  ${sec('Linked verses ('+n+')',verses(i),'vs')}
