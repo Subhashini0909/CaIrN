@@ -9,7 +9,14 @@ const TYPE={Male:'Man',Female:'Woman',Group:'People or group',Place:'Place',Supe
 // Position of a place. The source data uses 0,14 as a placeholder for "unknown" (Eden, Nod, Havilah and others), so those are treated as unmapped.
 const LLFIX={'Hazor':[33.0167,35.5683],'Gerasa':[32.2811,35.8914],'Plains of Moab':[31.83,35.57]};
 const ll=e=>e&&e.t==='l'&&e.ll&&!(e.ll[0]===0&&e.ll[1]===14)?e.ll:(e&&e.t==='l'&&LLFIX[e.n])||null;
-const kind=e=>e.t==='l'?'Place':e.t==='p'?(TYPE[e.ty]||'Person'):(TYPE[e.ty]||'Name');
+// A "place" record that is really a nation or tribe (Ammon, Edom, Egypt, Amalek) is labelled as such
+const natl=e=>{const t=e.br||e.bf||e.d||'';return /^(?:an? |the )?(?:(?:ancient|nomadic|arabian|israelite|great|powerful) )*(?:nation|people|tribe)\b/i.test(t)||(/\b(?:nation|people group)\b/i.test(t)&&!/^(?:an? )?(?:town|city|village|gate|valley|mountain|fortified|region|capital|port)/i.test(t))};
+const kind=e=>e.t==='l'?(natl(e)?'Nation or people':'Place'):e.t==='p'?(TYPE[e.ty]||'Person'):(TYPE[e.ty]||'Name');
+// A people named after a place (Ammonites, Egyptians, Samaritans, Philistines): the word in the verse is the people, not the land
+const demo=(t,e)=>{if(!e||e.t!=='l')return false;const a=String(t).toLowerCase().replace(/['\u2019]s$/,''),n=e.n.toLowerCase();
+ if(a===n||/\s/.test(a)||/^(mount|valley|forest|gate|sea|river|plain)/.test(a))return false;
+ if(/(?:ites?|ians?|eans?)$/.test(a))return true;
+ return /(?:ans?|ines?)$/.test(a)&&/[aeiouy]$/.test(n)&&a.slice(0,3)===n.slice(0,3)};
 const vk=(b,c,v)=>b*1e6+c*1e3+v,vp=k=>[Math.floor(k/1e6),Math.floor(k%1e6/1e3),k%1e3];
 const refs=e=>{if(e._r)return e._r;const s=new Set();e.rw.forEach(r=>{let p=0;r.r.forEach(d=>{p+=d;s.add(p)})});return e._r=[...s].sort((a,b)=>a-b)};
 const vname=(b,c,v)=>`${BIB[b][0]} ${c}:${v}`;
@@ -32,10 +39,15 @@ const loadBg=cb=>{if(BG)return cb();if(bgBusy)return;bgBusy=1;fetch('names-bg.js
 // ---------- matching names inside a KJV verse ----------
 const L='A-Za-z\\u00C0-\\u024F',RC=new Map();
 const rx=(f,ci)=>{const k=(ci?'i:':'s:')+f;let r=RC.get(k);if(!r){r=new RegExp(`(^|[^${L}])(${f.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')})(s|es)?(?:['\u2019]s?)?(?![${L}])`,ci?'gi':'g');RC.set(k,r)}r.lastIndex=0;return r};
+const skel=w=>w.toLowerCase().replace(/ph/g,'f').replace(/ch|ck|k|q/g,'c').replace(/th/g,'t').replace(/sh/g,'s').replace(/h/g,'').replace(/[yj]/g,'i').replace(/(.)\1+/g,'$1');
 function spans(b,c,v,text){const key=vk(b,c,v),pr=IDX.get(key);if(!pr)return[];const raw=[];
  pr.forEach(([i,ri])=>{const e=D[i],r=e.rw[ri];let hit=0;
-  for(let pass=0;pass<2&&!hit;pass++)for(const f of r.k){if(f.length<2||(pass&&f.length<5&&e.t!=='o'))continue;const re=rx(f,pass);let m;
-   while((m=re.exec(text))){const s=m.index+m[1].length,en=s+m[2].length+(m[3]||'').length;raw.push({s,e:en,i,ri});hit=1;if(m[0]===''){re.lastIndex++}}}});
+  // the record's own (modern) spelling is tried too, because the KJV spelling is not always the one in the NLT (Shechaniah / Shecaniah, Abiah / Abijah)
+  const fs=e.t==='o'||r.k.some(k=>k.toLowerCase()===e.n.toLowerCase())?r.k:r.k.concat(e.n);
+  for(let pass=0;pass<2&&!hit;pass++)for(let fi=0;fi<fs.length;fi++){const f=fs[fi];if(f.length<2||(pass&&(f.length<5||fi>=r.k.length)&&e.t!=='o'))continue;const re=rx(f,pass);let m;
+   while((m=re.exec(text))){const s=m.index+m[1].length,en=s+m[2].length+(m[3]||'').length;raw.push({s,e:en,i,ri});hit=1;if(m[0]===''){re.lastIndex++}}}
+  // still nothing: a capitalised word that is spelled differently but sounds the same (Zechariah / Zachariah is NOT matched; Shechaniah / Shecaniah is)
+  if(!hit&&(e.t==='p'||e.t==='l')){const sk=new Set(fs.filter(f=>f.length>=5&&!/\s/.test(f)).map(skel));if(sk.size){const re=/[A-Z\u00C0-\u00DE][A-Za-z\u00C0-\u024F]{4,}/g;let m;while((m=re.exec(text))){if(sk.has(skel(m[0])))raw.push({s:m.index,e:m.index+m[0].length,i,ri})}}}});
  // identical spans share one marker (several people or places with the same name); longer spans beat shorter overlapping ones
  const g=new Map();raw.forEach(x=>{const k=x.s+':'+x.e,o=g.get(k);if(o){if(!o.ids.some(z=>z.i===x.i))o.ids.push({i:x.i,ri:x.ri})}else g.set(k,{s:x.s,e:x.e,ids:[{i:x.i,ri:x.ri}]})});
  const all=[...g.values()].sort((a,b)=>a.s-b.s||(b.e-b.s)-(a.e-a.s)),out=[];let end=-1;
@@ -43,7 +55,7 @@ function spans(b,c,v,text){const key=vk(b,c,v),pr=IDX.get(key);if(!pr)return[];c
  out.forEach(x=>x.ids.sort((a,b)=>refs(D[b.i]).length-refs(D[a.i]).length));return out}
 NM.mark=(b,c,v,text)=>{if(!D)return esc(text);const key=vk(b,c,v)+':'+text;let h=VC.get(key);if(h!=null)return h;
  const sp=spans(b,c,v,text);if(!sp.length){VC.set(key,esc(text));return esc(text)}
- h='';let p=0;sp.forEach(x=>{h+=esc(text.slice(p,x.s))+`<span class="nm n-${D[x.ids[0].i].t}" data-nm="${x.ids.map(z=>z.i+'.'+z.ri).join(',')}" tabindex="0" role="button">${esc(text.slice(x.s,x.e))}</span>`;p=x.e});
+ h='';let p=0;sp.forEach(x=>{h+=esc(text.slice(p,x.s))+`<span class="nm n-${demo(text.slice(x.s,x.e),D[x.ids[0].i])?'p':D[x.ids[0].i].t}" data-nm="${x.ids.map(z=>z.i+'.'+z.ri).join(',')}" tabindex="0" role="button">${esc(text.slice(x.s,x.e))}</span>`;p=x.e});
  h+=esc(text.slice(p));VC.set(key,h);return h};
 
 // ---------- people and places in a chapter ----------
@@ -61,10 +73,10 @@ const rowDef=r=>{const x=r.s&&LX[r.s];return x&&x.d?x.d:''};
 const firstForm=e=>{const r=e.rw.filter(r=>r.w&&!r.alt&&r.g!=='nc'&&r.g!=='sc'&&r.g!=='lx').sort((a,b)=>(isH(b.s)?1:0)-(isH(a.s)?1:0)||b.r.length-a.r.length);return r[0]||e.rw.find(r=>r.w)};
 const formLine=e=>{const out=[],seen=new Set();e.rw.filter(r=>r.w&&!r.alt&&['n','a','g'].includes(r.g)).sort((a,b)=>b.r.length-a.r.length).forEach(r=>{const l=lang(r),k=l+r.w;if(seen.has(l)||seen.has(k))return;seen.add(l);out.push(`${scr(r.w,l)}${r.x?` <i>${esc(r.x)}</i>`:''} <span class="lg">${l}</span>`)});return out.slice(0,3).join('')};
 const one=(r,l)=>`${scr(r.w,l)}${r.x?` <i>${esc(r.x)}</i>`:''} <span class="lg">${l}</span>${r.s?` <span class="nmtag">${fixc(r.s)}</span>`:''}`;
-const popHtml=(its,txt)=>{const{i,ri}=its[0],e=D[i],r=e.rw[ri],n=refs(e).length,l=lang(r),ml=rowMean(e,r)||(r.alt?rowDef(r):'');
+const popHtml=(its,txt)=>{const{i,ri}=its[0],e=D[i],r=e.rw[ri],n=refs(e).length,l=lang(r),ml=rowMean(e,r)||(r.alt?rowDef(r):''),dm=demo(txt,e);
  const other=formLine(e).split('</span>').length>1&&!r.alt?formLine(e):'';
- return `<div class="nmp-h"><b>${esc(txt)}</b><span class="nmtag">${esc(kind(e))}</span></div>${r.alt||txt!==e.n&&!txt.startsWith(e.n)?`<div class="nmp-s">${r.alt?'Also known as':'Entry'}: ${esc(e.n)}</div>`:''}
- ${e.d||e.ar?`<div class="nmp-s">${esc(e.t==='l'?(e.ar?'Region: '+e.ar:''):e.d)}</div>`:''}
+ return `<div class="nmp-h"><b>${esc(txt)}</b><span class="nmtag">${esc(dm?'People or group':kind(e))}</span></div>${dm||r.alt||txt!==e.n&&!txt.startsWith(e.n)?`<div class="nmp-s">${dm?'People of':r.alt?'Also known as':'Entry'}: ${esc(e.n)}</div>`:''}
+ ${(e.d||e.ar)&&!dm?`<div class="nmp-s">${esc(e.t==='l'?(e.ar?'Region: '+e.ar:''):e.d)}</div>`:''}
  <div class="nmp-w">${r.w?one(r,l):''}${r.alt?'':(other?'':'')}</div>
  ${ml?`<div class="nmp-m"><b>${rowMean(e,r)?'Means':'Strong\'s'}</b> ${esc(ml)}</div>`:''}
  ${brief(e)?`<div class="nmp-b">${esc(brief(e))}</div>`:''}

@@ -22,6 +22,10 @@ const canon=f=>[...new Set(f)].sort().join('');
 const ad=(f,t)=>canon((COL.includes(t)?[...f].filter(c=>!COL.includes(c)).join(''):f)+t);
 const tog=(f,t)=>{f=f||'';return f.includes(t)?f.replace(t,''):ad(f,t)};
 const vcls=f=>f?[...f].map(k=>VC[k]||'').join(''):'';
+// Verse highlights belong to ONE version: the key is VERSION:book:chapter:verse (KJV:9:16:13). Marks made before this change were shared
+// (book:chapter:verse), so each is copied once into KJV, Tamil and NLT, where it was already showing, and then they live apart.
+const hlMig=()=>{Object.keys(ST.hl).forEach(k=>{if(!/^\d+:\d+:\d+$/.test(k))return;['KJV','TAM','NLT'].forEach(V=>{const m=canon((ST.hl[V+':'+k]||'')+ST.hl[k]);if(m)ST.hl[V+':'+k]=m});delete ST.hl[k]});ST.hm={}};
+hlMig();
 const hash=t=>{let h=5381;for(let i=0;i<t.length;i++)h=((h<<5)+h+t.charCodeAt(i))|0;return h};
 const secTxt=x=>{const d=document.createElement('div');d.innerHTML=(x.hd?`<h1>${esc(x.t)}</h1>`:'')+x.h;return d.textContent};
 const tools=(nmb,tv)=>`<div class="rtools" role="toolbar" aria-label="Reading tools">${TL.filter(([k])=>!'tnr'.includes(k)||tv).map(([k,l])=>`<button class="${ST.tool===k?'on':''}" data-sx="tool:${k}" aria-pressed="${ST.tool===k}"><span class="sw ${k==='x'?'':k==='t'?'tvsw':k==='n'?'tvsw vnsw':k==='r'?'tvsw':'a-'+k}">${k==='x'?'✕':k==='t'?'♥':k==='n'?'✎':k==='r'?'⇄':'Aa'}</span>${l}</button>`).join('')}${nmb?`<button class="nmtog ${ST.nm?'on':''}" data-sx="nmtog" aria-pressed="${!!ST.nm}" title="Show details when you hover over names and places"><span class="sw nmsw">Ab</span>Names</button>`:''}<span class="rhint"></span></div>`;
@@ -92,32 +96,32 @@ const abGet=(k,C,done)=>{const l=abList(done);if(l===null)return null;if(l==='ke
 const compare=()=>{load();const C=ST.cmp;if(!BIB[C.b])C.b=0;const n=cvc(C.b,C.c);C.c=Math.min(Math.max(1,C.c),BIB[C.b][1]);C.v=Math.min(Math.max(1,C.v),n);C.e=Math.min(Math.max(C.e,C.v),n,C.v+14);
  const rf=`${BIB[C.b][0]} ${C.c}:${C.v}${C.e>C.v?'\u2013'+C.e:''}`,key=`${C.b}:${C.c}`;U.cmpTxt={};const done=()=>{if(tab==='study'&&U.sub==='cmp'&&!(document.activeElement&&/^(esvk|abk)$/.test(document.activeElement.id)))render()},gw=c=>`https://www.biblegateway.com/passage/?search=${encodeURIComponent(rf)}&version=${c}`;
  const opts=(len,cur,from)=>[...Array(len)].map((_,i)=>`<option ${i+from===cur?'selected':''}>${i+from}</option>`).join('');
- const sk='<div class="skel"></div><div class="skel"></div>',vhtml=ls=>ls.map(([v,t])=>`<p>${C.e>C.v?`<sup>${v}</sup> `:''}${t?vhx(C.b,C.c,v,t):'<span class="mute">Not available in this version.</span>'}</p>`).join('');
+ const sk='<div class="skel"></div><div class="skel"></div>',vhtml=(ls,V)=>ls.map(([v,t])=>`<p>${C.e>C.v?`<sup>${v}</sup> `:''}${t?vhx(C.b,C.c,v,t,V):'<span class="mute">Not available in this version.</span>'}</p>`).join('');
  const card=(code,title,sub,inner,plain,tam)=>{if(plain)U.cmpTxt[code]=`${rf} (${code})\n${plain}`;return `<article class="card cmpc"><div class="cmph"><b>${title}</b><span class="mute small">${sub}</span></div><div class="scr cmpt${tam?' tam':''}">${inner}</div>${plain?`<div class="cmpf"><button class="g s" data-sx="cmcopy:${code}">Copy</button></div>`:''}</article>`};
  const rows=m=>{const ls=[];for(let v=C.v;v<=C.e;v++)ls.push([v,m[v]||'']);return ls},plainOf=ls=>ls.map(x=>x[1]).filter(Boolean).join(' ');
  const cards=CMV.filter(([k])=>C.on[k]).map(([k,t,s])=>{
-  if(k==='KJV'){if(!KJV)return card(k,t,s,U.err?'<p class="mute">Could not load kjv.json.</p>':sk);const ls=[];for(let v=C.v;v<=C.e;v++)ls.push([v,(KJV[C.b].chapters[C.c-1]||[])[v-1]||'']);return card(k,t,s,vhtml(ls),plainOf(ls))}
-  if(k==='TAM'){loadT();if(!TAM)return card(k,t,s,U.errT?'<p class="mute">Could not load tamil.json.</p>':sk);const ls=[];for(let v=C.v;v<=C.e;v++)ls.push([v,(TAM[C.b].chapters[C.c-1]||[])[v-1]||'']);return card(k,t,s,vhtml(ls),plainOf(ls),1)}
+  if(k==='KJV'){if(!KJV)return card(k,t,s,U.err?'<p class="mute">Could not load kjv.json.</p>':sk);const ls=[];for(let v=C.v;v<=C.e;v++)ls.push([v,(KJV[C.b].chapters[C.c-1]||[])[v-1]||'']);return card(k,t,s,vhtml(ls,k),plainOf(ls))}
+  if(k==='TAM'){loadT();if(!TAM)return card(k,t,s,U.errT?'<p class="mute">Could not load tamil.json.</p>':sk);const ls=[];for(let v=C.v;v<=C.e;v++)ls.push([v,(TAM[C.b].chapters[C.c-1]||[])[v-1]||'']);return card(k,t,s,vhtml(ls,k),plainOf(ls),1)}
   if(k==='NLT'){if(NC[key]===undefined){NC[key]=null;const r=encodeURIComponent(`${BIB[C.b][0]} ${C.c}`);nltGet(r,0).catch(()=>nltGet(r,1)).then(o=>{NC[key]=o;done()}).catch(()=>{NC[key]=0;done()})}
    if(NC[key]===null||NC[key]===undefined)return card(k,t,s,sk);
    if(NC[key]===0)return card(k,t,s,`<p class="mute">The live NLT feed is unavailable right now (it needs internet).</p><a class="btn g s" href="${gw('NLT')}" target="_blank" rel="noopener">Open NLT \u2197</a>`);
-   const ls=nltVerses(NC[key],C.v,C.e);return card(k,t,s,vhtml(ls),plainOf(ls))}
+   const ls=nltVerses(NC[key],C.v,C.e);return card(k,t,s,vhtml(ls,k),plainOf(ls))}
   if(k==='ESV'){const ek=esvKey(),lnk=`<a class="btn g s" href="${gw('ESV')}" target="_blank" rel="noopener">Open ESV \u2197</a>`;
    if(!ek)return card(k,t,s,`<p class="mute">The ESV can only be shown through Crossway\u2019s official feed, which needs a free personal key (api.esv.org, free for non-commercial use). Paste it once and it stays on this device.</p><input id="esvk" class="srch" type="password" autocomplete="off" placeholder="ESV API key"><div class="cmpf"><button class="s" data-sx="esvsave">Save key</button>${lnk}</div>`);
    const q=`${BIB[C.b][0]} ${C.c}:${C.v}${C.e>C.v?'-'+C.e:''}`,m=esvGet(C,q,done);if(m===null||m===undefined)return card(k,t,s,sk);
    if(m==='key')return card(k,t,s,`<p class="mute">The ESV feed did not accept this key. Check it and save again.</p><input id="esvk" class="srch" type="password" autocomplete="off" placeholder="ESV API key"><div class="cmpf"><button class="s" data-sx="esvsave">Save key</button><button class="g s" data-sx="esvclear">Remove key</button>${lnk}</div>`);
    if(m===0)return card(k,t,s,`<p class="mute">The ESV feed is unavailable right now (it needs internet).</p>${lnk}`);
-   const ls=rows(m);return card(k,t,s+' · \u00A9 Crossway',vhtml(ls)+'<p class="mute small">ESV\u00AE Bible \u00A9 2001 by Crossway. Used by permission of the ESV API.</p>',plainOf(ls)+' (ESV)')}
+   const ls=rows(m);return card(k,t,s+' · \u00A9 Crossway',vhtml(ls,k)+'<p class="mute small">ESV\u00AE Bible \u00A9 2001 by Crossway. Used by permission of the ESV API.</p>',plainOf(ls)+' (ESV)')}
   if(ABV.has(k)){const lnk=`<a class="btn g s" href="${gw(k)}" target="_blank" rel="noopener">Open ${k} on BibleGateway \u2197</a>`;
    if(!abKey())return card(k,t,s,`<p class="mute">Add your API.Bible key in the box above to show this version here.</p>${lnk}`);
    const r=abGet(k,C,done);if(r===null||r===undefined)return card(k,t,s,sk);
    if(r==='key')return card(k,t,s,'<p class="mute">API.Bible did not accept this key. Check it in the box above.</p>'+lnk);
    if(r==='na')return card(k,t,s,`<p class="mute">${k} is not available on your API.Bible account. The free plan only includes public-domain and Creative Commons Bibles; licensed ones need to be added to your account.</p>${lnk}`);
    if(r===0)return card(k,t,s,`<p class="mute">This version could not be loaded right now (it needs internet).</p>${lnk}`);
-   const ls=rows(r.m);return card(k,t,s,vhtml(ls)+(r.cp?`<p class="mute small">${esc(r.cp)}</p>`:''),plainOf(ls))}
+   const ls=rows(r.m);return card(k,t,s,vhtml(ls,k)+(r.cp?`<p class="mute small">${esc(r.cp)}</p>`:''),plainOf(ls))}
   const g=GB[k];if(!g)return '';const m=gbGet(k,C,done);if(m===null||m===undefined)return card(k,t,s,sk);
   if(m===0)return card(k,t,s,`<p class="mute">This version could not be loaded right now (it needs internet).</p>${g.g?`<a class="btn g s" href="${gw(g.g)}" target="_blank" rel="noopener">Open on BibleGateway \u2197</a>`:''}`);
-  const ls=rows(m);return card(k,t,s,vhtml(ls),plainOf(ls))}).join('');
+  const ls=rows(m);return card(k,t,s,vhtml(ls,k),plainOf(ls))}).join('');
  const chip=k=>`<button class="${C.on[k]?'on':''}" data-sx="cmver:${k}" aria-pressed="${!!C.on[k]}">${k==='TAM'?'\u0BA4\u0BAE\u0BBF\u0BB4\u0BCD':k}</button>`;
  return `<div class="card cmpsel"><div class="pick cmpick"><select id="cmb" aria-label="Book"><optgroup label="Old Testament">${BIB.slice(0,39).map((x,i)=>`<option value="${i}" ${i===C.b?'selected':''}>${x[0]}</option>`).join('')}</optgroup><optgroup label="New Testament">${BIB.slice(39).map((x,i)=>`<option value="${i+39}" ${i+39===C.b?'selected':''}>${x[0]}</option>`).join('')}</optgroup></select><select id="cmc" aria-label="Chapter">${opts(BIB[C.b][1],C.c,1)}</select><select id="cmv" aria-label="From verse">${opts(n,C.v,1)}</select><span class="mute">to</span><select id="cme" aria-label="To verse">${opts(Math.min(15,n-C.v+1),C.e,C.v)}</select></div>
  <div class="cmpnav"><button class="g s" data-sx="cmstep:-1">\u2039 Previous verse</button><button class="g s" data-sx="cmstep:1">Next verse \u203A</button></div>
@@ -258,11 +262,11 @@ const nltNum=vn=>{const ve=vn.closest('verse_export'),a=vn.getAttribute('vn')||(
 const nltSpan=(sc,vn)=>{const r=document.createRange(),ve=vn.closest('verse_export');if(ve)r.selectNodeContents(ve);else{r.setStartBefore(vn);const l=[...sc.querySelectorAll('.vn')],nx=l[l.indexOf(vn)+1];nx?r.setEndBefore(nx):r.setEnd(sc,sc.childNodes.length)}
  const pre=document.createRange();pre.selectNodeContents(sc);pre.setEnd(r.startContainer,r.startOffset);const a=pre.toString().length;return{r,a,b:a+r.toString().length}};
 const nltText=r=>{const d=document.createElement('div');d.appendChild(r.cloneContents());d.querySelectorAll('.vn,.tn,.tn-ref,.footnote,.a-tn,.cw,.cw_ch,.chapter-number,sup,h1,h2,h3,h4,.bk_ch_vs_header,.subhead').forEach(x=>x.remove());return d.textContent.replace(/\s+/g,' ').trim()};
-// ---- Verse highlights are shared by every version: one mark per verse (ST.hl), drawn in KJV, Tamil, NLT and Compare ----
-const eff=(k,V)=>{const h=ST.hl[k]||'',m=ST.hm&&ST.hm[k];return m&&!m.s.split(',').includes(V)?[...m.f].reduce((a,t)=>ad(a,t),h):h};
+// ---- Verse highlights are kept per version (ST.hl['KJV:b:c:v']): a mark made in one version is drawn only in that version ----
+const eff=(k,V)=>ST.hl[V+':'+k]||'';
 const vhc=f=>f?[...f].map(k=>' vh-'+k).join(''):'';
-const vhx=(b,c,v,t)=>{const f=eff(`${b}:${c}:${v}`,'CMP');return f?`<span class="vhs${vhc(f)}">${esc(t)}</span>`:esc(t)};
-const hlNLT=(h,b,c)=>{const P=`${b}:${c}:`;if(!Object.keys(ST.hl).concat(Object.keys(ST.hm)).some(k=>k.startsWith(P)))return h;const d=document.createElement('div');d.innerHTML=h;let v=0;const T=[],w=document.createTreeWalker(d,NodeFilter.SHOW_ELEMENT|NodeFilter.SHOW_TEXT);let n;
+const vhx=(b,c,v,t,V)=>{const f=V?eff(`${b}:${c}:${v}`,V):'';return f?`<span class="vhs${vhc(f)}">${esc(t)}</span>`:esc(t)};
+const hlNLT=(h,b,c)=>{const P=`${b}:${c}:`;if(!Object.keys(ST.hl).some(k=>k.startsWith('NLT:'+P)))return h;const d=document.createElement('div');d.innerHTML=h;let v=0;const T=[],w=document.createTreeWalker(d,NodeFilter.SHOW_ELEMENT|NodeFilter.SHOW_TEXT);let n;
  while((n=w.nextNode())){if(n.nodeType===1){const a=n.getAttribute('vn');if(a&&/^\d+$/.test(a))v=+a;else if(n.classList.contains('vn')){const t=parseInt(n.textContent,10);if(t>0)v=t}}
   else if(v&&n.data.trim()&&n.parentElement&&!n.parentElement.closest('.vn,.tn,.tn-ref,.footnote,.a-tn,.cw,.cw_ch,.chapter-number,sup,h1,h2,h3,h4,.bk_ch_vs_header,.subhead')){const f=eff(P+v,'NLT');if(f)T.push([n,f])}}
  T.forEach(([n,f])=>{const sp=document.createElement('span');sp.className='vhs'+vhc(f);n.replaceWith(sp);sp.appendChild(n)});return d.innerHTML};
@@ -271,11 +275,8 @@ const selVerses=(r,id)=>{const o=new Set();
  if(id.startsWith('NLT:'))document.querySelectorAll('.scr.nlt').forEach(sc=>sc.querySelectorAll('.vn').forEach(vn=>{const v=nltNum(vn);if(v&&rngHit(r,nltSpan(sc,vn).r))o.add(v)}));
  else document.querySelectorAll('.scr .vs').forEach(el=>{const tr=document.createRange();tr.selectNodeContents(el);const v=+(el.dataset.sx||'').split(':')[1];if(v&&rngHit(r,tr))o.add(v)});
  return [...o].sort((a,b)=>a-b)};
-const markMir=(vs,t,ver)=>{if(t==='t'||t==='n'||t==='r')return;const P=`${ST.bk}:${ST.ch}:`;
- if(t==='x'){vs.forEach(v=>{delete ST.hm[P+v]});return}
- const on=vs.every(v=>((ST.hm[P+v]||{}).f||'').includes(t));
- vs.forEach(v=>{const k=P+v,o=ST.hm[k]||{f:'',s:''},f=on?o.f.replace(t,''):ad(o.f,t),s=[...new Set((o.s?o.s.split(','):[]).concat(ver))].join(',');if(f)ST.hm[k]={f,s};else delete ST.hm[k]})};
-const markVerses=(vs,t)=>{if(t==='t'||t==='n'||t==='r')return;const P=`${ST.bk}:${ST.ch}:`;
+// (Marks on selected text used to be copied to the other versions as whole-verse marks; they are not any more.)
+const markVerses=(vs,t)=>{if(t==='t'||t==='n'||t==='r')return;const P=`${ST.ver}:${ST.bk}:${ST.ch}:`;
  if(t==='x'){vs.forEach(v=>{delete ST.hl[P+v]});return}
  const on=vs.every(v=>(ST.hl[P+v]||'').includes(t));
  vs.forEach(v=>{const k=P+v,f=on?(ST.hl[k]||'').replace(t,''):ad(ST.hl[k]||'',t);if(f)ST.hl[k]=f;else delete ST.hl[k]})};
@@ -398,7 +399,7 @@ const isO=o=>o&&typeof o==='object'&&!Array.isArray(o),badKey=k=>k==='__proto__'
 const noteMd=n=>{const out=['# '+((n.ico?n.ico+' ':'')+n.title).trim()];if(n.sum)out.push('',n.sum);n.secs.forEach(x=>{const d=document.createElement('div');d.innerHTML=String(x.h||'').replace(/<figure[\s\S]*?<\/figure>/g,'').replace(/<li[^>]*>/gi,'<br>- ').replace(/<\/(p|h[1-6]|tr|ul|ol|div)>/gi,'</$1><br>').replace(/<\/t[dh]>/gi,' | ');d.querySelectorAll('br').forEach(b=>b.replaceWith('\n'));out.push('','## '+(x.t||'Notes'),d.textContent.replace(/[ \t]+\n/g,'\n').replace(/\n{3,}/g,'\n\n').trim())});return out.join('\n')};
 const noteJson=n=>JSON.stringify({app:'daylog-note',v:1,exported:new Date().toISOString(),note:{title:n.title,sum:n.sum||'',ico:n.ico||'\uD83D\uDCDD',secs:n.secs.map(x=>({t:x.t,h:x.h}))}},null,1);
 const bkData=()=>({app:'daylog-study',v:1,exported:new Date().toISOString(),st:{hl:ST.hl,my:ST.my,ov:ST.ov,an:ST.an,del:ST.del,tv:ST.tv,vn:ST.vn},rc:S.rc||{}});
-const bkCounts=()=>{const m=Object.keys(ST.hl).length,a=Object.keys(ST.an).length,my=ST.my.length,ed=Object.keys(ST.ov).length,pl=(n,w)=>n+' '+w+(n===1?'':'s');return `${pl(my,'own note')}, ${pl(ed,'edited note')}, ${pl(m,'marked verse')}, ${pl(a,'note')} with highlights, ${pl(ST.tv.length,'treasured verse')}`};
+const bkCounts=()=>{const m=new Set(Object.keys(ST.hl).map(k=>k.replace(/^[A-Z]+:/,''))).size,a=Object.keys(ST.an).length,my=ST.my.length,ed=Object.keys(ST.ov).length,pl=(n,w)=>n+' '+w+(n===1?'':'s');return `${pl(my,'own note')}, ${pl(ed,'edited note')}, ${pl(m,'marked verse')}, ${pl(a,'note')} with highlights, ${pl(ST.tv.length,'treasured verse')}`};
 const bkPanel=()=>`<details class="bkp" ${U.bk?'open':''}><summary>Import and export</summary><div class="bkrow"><button class="s" data-sx="impick:doc" title="PDF, Word, Excel or image files">\u2B06 Import</button><button class="g s" data-sx="expzip:docx" title="All notes, one Word file each, in a zip">\u2B07 Export all as Word (.zip)</button><button class="g s" data-sx="expzip:pdf" title="All notes, one PDF each, in a zip">\u2B07 Export all as PDF (.zip)</button></div></details>`;
 const cleanNote=n=>{if(!isO(n)||!Array.isArray(n.secs))return null;const secs=n.secs.filter(isO).slice(0,80).map(x=>({t:String(x.t||'Notes').slice(0,200),h:clean(String(x.h||''),1),hd:1,...(typeof x.img==='string'&&x.img.length<3e6&&/^data:image\/jpeg;base64,[A-Za-z0-9+\/=]+$/.test(x.img)?{img:x.img}:{})}));if(!secs.length)return null;return{title:String(n.title||'Untitled').slice(0,200),sum:String(n.sum||'').slice(0,500),ico:String(n.ico||'\uD83D\uDCDD').slice(0,8),secs}};
 const flagOK=v=>typeof v==='string'&&/^[huigpvboc]+$/.test(v);
@@ -423,7 +424,7 @@ const doImport=(txt,mode)=>{let d;try{d=JSON.parse(txt)}catch{return alert('That
   if(vnIn)Object.keys(vnIn).forEach(k=>{if(!ST.vn[k]){ST.vn[k]=vnIn[k];nN++}});
   if(tvIn)tvIn.forEach(t=>{if(!ST.tv.some(x=>x.k===t.k)){ST.tv.push(t);nT++}});
   Object.keys(rc).forEach(b=>{const a=S.rc[b]||(S.rc[b]=[]);rc[b].forEach((v,i)=>{if((a[i]||0)<v)a[i]=v})})}
- U.nid=null;U.edit=null;U.bk=1;save();go();
+ hlMig();U.nid=null;U.edit=null;U.bk=1;save();go();
  toast(mode==='replace'?'Backup restored.':`Merged: ${nM} note${nM===1?'':'s'}, ${nO} edited note${nO===1?'':'s'}, ${nH} marked verse${nH===1?'':'s'}, ${nA} highlight${nA===1?'':'s'}, ${nT} treasured verse${nT===1?'':'s'}, ${nN} verse note${nN===1?'':'s'} added.`)};
 // ---- Word and PDF: export and import ----
 const U8=new TextEncoder(),CRCT=(()=>{const t=new Uint32Array(256);for(let n=0;n<256;n++){let c=n;for(let k=0;k<8;k++)c=c&1?0xEDB88320^(c>>>1):c>>>1;t[n]=c>>>0}return t})();
@@ -599,8 +600,8 @@ document.addEventListener('click',e=>{const t=e.target.closest('[data-sx]');if(!
  pull();const E=U.edit;let top=0;
  if(a==='sub'){if(E&&!confirm('Discard this unsaved note?'))return;U.sub=x;U.edit=null;U.nid=null;U.from=0;top=1}
  else if(a==='cat')U.cat=x==='All'?'':x;else if(a==='nmtog')ST.nm=!ST.nm;else if(a==='ver')ST.ver=x;else if(a==='nav'){step(+x);top=1}else if(a==='fs')ST.fs=Math.max(15,Math.min(32,ST.fs+(+x)*2));
- else if(a==='vs'){if(hasSel()||(!e.target.closest('sup')&&ST.tool!=='t'&&ST.tool!=='n'&&ST.tool!=='r'))return;const k=`${ST.bk}:${ST.ch}:${x}`;if(ST.tool==='r'){xrOpen(+x);return}if(ST.tool==='n'){vnOpen(+x);return}if(ST.tool==='t')tvTap(+x);else if(ST.tool==='x')delete ST.hl[k];else{const f=tog(ST.hl[k],ST.tool);if(f)ST.hl[k]=f;else delete ST.hl[k]}}
- else if(a==='tool'){ST.tool=x;if(x==='t'){if(tvSelSave()){U.sel=null;const g=getSelection();g&&g.removeAllRanges&&g.removeAllRanges()}else toast('Tap a verse to treasure it, or select text across verses first.')}if(x==='n')toast('Tap a verse to add or edit its note. Verses with a note show a \u270E marker.');if(x==='r')toast('Tap a verse to see related verses.');const cx=x==='t'||x==='n'||x==='r'?null:selCtx();if(cx&&U.sel&&U.sel.length&&U.selId===cx.id){markSel(cx.id,x);if(U.selV&&U.selV.length){markMir(U.selV,x,cx.id.split(':')[0]);if(x==='x')markVerses(U.selV,'x')}U.sel=null;U.selV=null;const g=getSelection();g&&g.removeAllRanges&&g.removeAllRanges()}}
+ else if(a==='vs'){if(hasSel()||(!e.target.closest('sup')&&ST.tool!=='t'&&ST.tool!=='n'&&ST.tool!=='r'))return;const k=`${ST.bk}:${ST.ch}:${x}`;if(ST.tool==='r'){xrOpen(+x);return}if(ST.tool==='n'){vnOpen(+x);return}if(ST.tool==='t')tvTap(+x);else if(ST.tool==='x')delete ST.hl[ST.ver+':'+k];else{const f=tog(ST.hl[ST.ver+':'+k],ST.tool);if(f)ST.hl[ST.ver+':'+k]=f;else delete ST.hl[ST.ver+':'+k]}}
+ else if(a==='tool'){ST.tool=x;if(x==='t'){if(tvSelSave()){U.sel=null;const g=getSelection();g&&g.removeAllRanges&&g.removeAllRanges()}else toast('Tap a verse to treasure it, or select text across verses first.')}if(x==='n')toast('Tap a verse to add or edit its note. Verses with a note show a \u270E marker.');if(x==='r')toast('Tap a verse to see related verses.');const cx=x==='t'||x==='n'||x==='r'?null:selCtx();if(cx&&U.sel&&U.sel.length&&U.selId===cx.id){markSel(cx.id,x);if(U.selV&&U.selV.length){if(x==='x')markVerses(U.selV,'x')}U.sel=null;U.selV=null;const g=getSelection();g&&g.removeAllRanges&&g.removeAllRanges()}}
  else if(a==='mark'){rcs(ST.bk,ST.ch-1,1);U.msg=`${esc(ref())} marked as read.`}
  else if(a==='note'){U.sub='notes';U.nid=null;U.edit={...blank('Notes on '+ref()),sum:'Reading notes',secs:[{t:ref(),h:'<p><br></p>'}]};top=1}
  else if(a==='open'){U.nid=x;top=1}else if(a==='back'){U.nid=null;if(U.from){U.sub='search';U.from=0}top=1}
