@@ -92,7 +92,7 @@ const abGet=(k,C,done)=>{const l=abList(done);if(l===null)return null;if(l==='ke
 const compare=()=>{load();const C=ST.cmp;if(!BIB[C.b])C.b=0;const n=cvc(C.b,C.c);C.c=Math.min(Math.max(1,C.c),BIB[C.b][1]);C.v=Math.min(Math.max(1,C.v),n);C.e=Math.min(Math.max(C.e,C.v),n,C.v+14);
  const rf=`${BIB[C.b][0]} ${C.c}:${C.v}${C.e>C.v?'\u2013'+C.e:''}`,key=`${C.b}:${C.c}`;U.cmpTxt={};const done=()=>{if(tab==='study'&&U.sub==='cmp'&&!(document.activeElement&&/^(esvk|abk)$/.test(document.activeElement.id)))render()},gw=c=>`https://www.biblegateway.com/passage/?search=${encodeURIComponent(rf)}&version=${c}`;
  const opts=(len,cur,from)=>[...Array(len)].map((_,i)=>`<option ${i+from===cur?'selected':''}>${i+from}</option>`).join('');
- const sk='<div class="skel"></div><div class="skel"></div>',vhtml=ls=>ls.map(([v,t])=>`<p>${C.e>C.v?`<sup>${v}</sup> `:''}${t?esc(t):'<span class="mute">Not available in this version.</span>'}</p>`).join('');
+ const sk='<div class="skel"></div><div class="skel"></div>',vhtml=ls=>ls.map(([v,t])=>`<p>${C.e>C.v?`<sup>${v}</sup> `:''}${t?vhx(C.b,C.c,v,t):'<span class="mute">Not available in this version.</span>'}</p>`).join('');
  const card=(code,title,sub,inner,plain,tam)=>{if(plain)U.cmpTxt[code]=`${rf} (${code})\n${plain}`;return `<article class="card cmpc"><div class="cmph"><b>${title}</b><span class="mute small">${sub}</span></div><div class="scr cmpt${tam?' tam':''}">${inner}</div>${plain?`<div class="cmpf"><button class="g s" data-sx="cmcopy:${code}">Copy</button></div>`:''}</article>`};
  const rows=m=>{const ls=[];for(let v=C.v;v<=C.e;v++)ls.push([v,m[v]||'']);return ls},plainOf=ls=>ls.map(x=>x[1]).filter(Boolean).join(' ');
  const cards=CMV.filter(([k])=>C.on[k]).map(([k,t,s])=>{
@@ -131,7 +131,7 @@ function body(){const k=`${ST.bk}:${ST.ch}`,r=encodeURIComponent(ref()),v=ST.ver
   return anWrap('KJV:'+k,`<div class="scr vl" style="font-size:${ST.fs}px">${KJV[ST.bk].chapters[ST.ch-1].map((t,i)=>`<span class="vs${vcls(ST.hl[k+':'+(i+1)])}${tvc(i+1)}" data-sx="vs:${i+1}"><sup${NM.ev(ST.bk,ST.ch,i+1)}>${i+1}</sup>${vnm(i+1)}${ST.nm&&NM.ready()?NM.mark(ST.bk,ST.ch,i+1,t):esc(t)} </span>`).join('')}</div>`)}
  if(v==='TAM'){loadT();if(!TAM)return U.errT?'<div class="empty">Could not load the Tamil text. Check that tamil.json is next to index.html.</div>':'<div class="skel"></div><div class="skel"></div><div class="skel"></div>';
   return anWrap('TAM:'+k,`<div class="scr tam vl" style="font-size:${ST.fs}px">${TAM[ST.bk].chapters[ST.ch-1].map((t,i)=>`<span class="vs${vcls(ST.hl[k+':'+(i+1)])}${tvc(i+1)}" data-sx="vs:${i+1}"><sup>${i+1}</sup>${vnm(i+1)}${esc(t)} </span>`).join('')}</div>`)}
- if(v==='NLT'){if(NC[k]){let h=NC[k];if(ST.nm&&NM.ready())h=nmNLT(h,ST.bk,ST.ch);h=tvNLT(h,ST.bk,ST.ch);h=vnNLT(h,ST.bk,ST.ch);h=vlNLT(h);const a=ST.an['NLT:'+k]&&ST.an['NLT:'+k][0];if(a&&a.r.length&&a.h===hash(htmlTxt(h)))h=wrap(h,a.r);return `<div class="scr nlt vl" style="font-size:${ST.fs}px">${h}</div>`};
+ if(v==='NLT'){if(NC[k]){let h=NC[k];if(ST.nm&&NM.ready())h=nmNLT(h,ST.bk,ST.ch);h=tvNLT(h,ST.bk,ST.ch);h=vnNLT(h,ST.bk,ST.ch);h=vlNLT(h);h=hlNLT(h,ST.bk,ST.ch);const a=ST.an['NLT:'+k]&&ST.an['NLT:'+k][0];if(a&&a.r.length&&a.h===hash(htmlTxt(h)))h=wrap(h,a.r);return `<div class="scr nlt vl" style="font-size:${ST.fs}px">${h}</div>`};
   if(NC[k]===0)return ext('NLT',`https://www.biblegateway.com/passage/?search=${r}&version=NLT`,'The live NLT feed is unavailable right now (it needs internet).');
   if(NC[k]===null)return '<div class="skel"></div><div class="skel"></div><div class="skel"></div>';
   NC[k]=null;const get=n=>nltGet(r,n);
@@ -258,6 +258,22 @@ const nltNum=vn=>{const ve=vn.closest('verse_export'),a=vn.getAttribute('vn')||(
 const nltSpan=(sc,vn)=>{const r=document.createRange(),ve=vn.closest('verse_export');if(ve)r.selectNodeContents(ve);else{r.setStartBefore(vn);const l=[...sc.querySelectorAll('.vn')],nx=l[l.indexOf(vn)+1];nx?r.setEndBefore(nx):r.setEnd(sc,sc.childNodes.length)}
  const pre=document.createRange();pre.selectNodeContents(sc);pre.setEnd(r.startContainer,r.startOffset);const a=pre.toString().length;return{r,a,b:a+r.toString().length}};
 const nltText=r=>{const d=document.createElement('div');d.appendChild(r.cloneContents());d.querySelectorAll('.vn,.tn,.tn-ref,.footnote,.a-tn,.cw,.cw_ch,.chapter-number,sup,h1,h2,h3,h4,.bk_ch_vs_header,.subhead').forEach(x=>x.remove());return d.textContent.replace(/\s+/g,' ').trim()};
+// ---- Verse highlights are shared by every version: one mark per verse (ST.hl), drawn in KJV, Tamil, NLT and Compare ----
+const vhc=f=>f?[...f].map(k=>' vh-'+k).join(''):'';
+const vhx=(b,c,v,t)=>{const f=ST.hl[`${b}:${c}:${v}`];return f?`<span class="vhs${vhc(f)}">${esc(t)}</span>`:esc(t)};
+const hlNLT=(h,b,c)=>{const P=`${b}:${c}:`;if(!Object.keys(ST.hl).some(k=>k.startsWith(P)))return h;const d=document.createElement('div');d.innerHTML=h;let v=0;const T=[],w=document.createTreeWalker(d,NodeFilter.SHOW_ELEMENT|NodeFilter.SHOW_TEXT);let n;
+ while((n=w.nextNode())){if(n.nodeType===1){const a=n.getAttribute('vn');if(a&&/^\d+$/.test(a))v=+a;else if(n.classList.contains('vn')){const t=parseInt(n.textContent,10);if(t>0)v=t}}
+  else if(v&&n.data.trim()&&n.parentElement&&!n.parentElement.closest('.vn,.tn,.tn-ref,.footnote,.a-tn,.cw,.cw_ch,.chapter-number,sup,h1,h2,h3,h4,.bk_ch_vs_header,.subhead')){const f=ST.hl[P+v];if(f)T.push([n,f])}}
+ T.forEach(([n,f])=>{const sp=document.createElement('span');sp.className='vhs'+vhc(f);n.replaceWith(sp);sp.appendChild(n)});return d.innerHTML};
+const rngHit=(r,tr)=>{const c=r.cloneRange();if(c.compareBoundaryPoints(Range.START_TO_START,tr)<0)c.setStart(tr.startContainer,tr.startOffset);if(c.compareBoundaryPoints(Range.END_TO_END,tr)>0)c.setEnd(tr.endContainer,tr.endOffset);return !c.collapsed&&c.toString().trim().length>0};
+const selVerses=(r,id)=>{const o=new Set();
+ if(id.startsWith('NLT:'))document.querySelectorAll('.scr.nlt').forEach(sc=>sc.querySelectorAll('.vn').forEach(vn=>{const v=nltNum(vn);if(v&&rngHit(r,nltSpan(sc,vn).r))o.add(v)}));
+ else document.querySelectorAll('.scr .vs').forEach(el=>{const tr=document.createRange();tr.selectNodeContents(el);const v=+(el.dataset.sx||'').split(':')[1];if(v&&rngHit(r,tr))o.add(v)});
+ return [...o].sort((a,b)=>a-b)};
+const markVerses=(vs,t)=>{if(t==='t'||t==='n'||t==='r')return;const P=`${ST.bk}:${ST.ch}:`;
+ if(t==='x'){vs.forEach(v=>{delete ST.hl[P+v]});return}
+ const on=vs.every(v=>(ST.hl[P+v]||'').includes(t));
+ vs.forEach(v=>{const k=P+v,f=on?(ST.hl[k]||'').replace(t,''):ad(ST.hl[k]||'',t);if(f)ST.hl[k]=f;else delete ST.hl[k]})};
 // one verse per line: the NLT feed wraps each verse in <verse_export>; if it ever does not, break before each verse number
 const vlNLT=h=>{if(/<verse_export/i.test(h))return h;const d=document.createElement('div');d.innerHTML=h;[...d.querySelectorAll('.vn')].slice(1).forEach(n=>n.before(Object.assign(document.createElement('span'),{className:'vbr'})));return d.innerHTML};
 const tvNLT=(h,b,c)=>{if(!ST.tv.some(e=>e.ver==='NLT'&&e.b===b&&e.c===c))return h;const d=document.createElement('div');d.innerHTML=h;d.querySelectorAll('.vn').forEach(n=>{const v=nltNum(n);if(v&&tvHit('NLT',b,c,v))n.classList.add('tvn')});return d.innerHTML};
@@ -556,7 +572,7 @@ const fileIn=()=>{let f=document.getElementById('sxi');if(!f){f=document.createE
 views.study=()=>{const mc=all().filter(x=>x.mine).sort((a,b)=>b.ts-a.ts),n=U.nid&&getN(U.nid);return `<div class="seg main">${[['read','Read Bible'],['tv','Treasured'+(ST.tv.length?' ('+ST.tv.length+')':'')],['cmp','Compare'],['notes','Study notes'],['search','Search']].map(([k,l])=>`<button class="${U.sub===k?'on':''}" data-sx="sub:${k}">${l}</button>`).join('')}</div>${U.sub==='read'&&!U.edit?read():U.sub==='tv'&&!U.edit&&!n?tvList():U.sub==='cmp'&&!U.edit&&!n?compare():U.edit?editor():n?view():U.sub==='search'?srch():lib([...mc,...all().filter(x=>x.orig)],0)}`};
 const go=()=>{render();flash()};
 document.addEventListener('mousedown',e=>{if(e.target.closest('.tb button,.rtools button'))e.preventDefault()});
-document.addEventListener('pointerdown',e=>{if(!e.target.closest('.rtools'))U.sel=null});
+document.addEventListener('pointerdown',e=>{if(!e.target.closest('.rtools')){U.sel=null;U.selV=null}});
 const selCtx=()=>{if(tab!=='study')return null;if(U.sub==='read'&&(ST.ver==='KJV'||ST.ver==='TAM'))return{id:`${ST.ver}:${ST.bk}:${ST.ch}`,els:[...document.querySelectorAll('.scr')]};if(U.sub==='read'&&ST.ver==='NLT')return{id:`NLT:${ST.bk}:${ST.ch}`,els:[...document.querySelectorAll('.scr.nlt')]};if(U.nid&&!U.edit)return{id:U.nid,els:[...document.querySelectorAll('.nb section[id^="sxs"]')]};return null};
 document.addEventListener('click',e=>{const v=e.target.closest&&e.target.closest('.scr.nlt .vn');if(!v||tab!=='study'||U.sub!=='read'||ST.ver!=='NLT'||hasSel())return;const sc=v.closest('.scr.nlt'),ve=v.closest('verse_export'),r=document.createRange();
  if(ve)r.selectNodeContents(ve);else{r.setStartBefore(v);const all=[...sc.querySelectorAll('.vn')],nx=all[all.indexOf(v)+1];nx?r.setEndBefore(nx):r.setEnd(sc,sc.childNodes.length)}
@@ -564,12 +580,12 @@ document.addEventListener('click',e=>{const v=e.target.closest&&e.target.closest
  if(ST.tool==='r'){xrOpen(nltNum(v));return}
  if(ST.tool==='n'){vnOpen(nltNum(v));return}
  if(ST.tool==='t'){tvTapNlt(v,sc);return}
- const id=`NLT:${ST.bk}:${ST.ch}`;U.sel=[{i:0,s:a,e:b,h:hash(sc.textContent)}];U.selId=id;markSel(id,ST.tool);U.sel=null;save();go()});
+ const id=`NLT:${ST.bk}:${ST.ch}`,vv=nltNum(v);if(vv)markVerses([vv],ST.tool);if(ST.tool==='x'){U.sel=[{i:0,s:a,e:b,h:hash(sc.textContent)}];U.selId=id;markSel(id,'x');U.sel=null}save();go()});
 document.addEventListener('selectionchange',()=>{const cx=selCtx();if(!cx)return;const g=getSelection();if(!g||!g.rangeCount||g.isCollapsed)return;const r=g.getRangeAt(0),out=[];
  cx.els.forEach(sc=>{if(!r.intersectsNode(sc))return;const sr=document.createRange();sr.selectNodeContents(sc);const c=r.cloneRange();
   if(c.compareBoundaryPoints(Range.START_TO_START,sr)<0)c.setStart(sr.startContainer,sr.startOffset);if(c.compareBoundaryPoints(Range.END_TO_END,sr)>0)c.setEnd(sr.endContainer,sr.endOffset);
   const pre=document.createRange();pre.selectNodeContents(sc);pre.setEnd(c.startContainer,c.startOffset);const a=pre.toString().length,b=a+c.toString().length;if(b>a)out.push({i:sc.id&&sc.id.startsWith('sxs')?+sc.id.slice(3):0,s:a,e:b,h:/^(KJV|TAM|NLT):/.test(cx.id)?hash(sc.textContent):undefined})});
- if(out.length){U.sel=out;U.selId=cx.id}});
+ if(out.length){U.sel=out;U.selId=cx.id;U.selV=/^(KJV|TAM|NLT):/.test(cx.id)?selVerses(r,cx.id):null}});
 document.addEventListener('paste',e=>{if(!e.target.closest||!e.target.closest('.rte'))return;e.preventDefault();document.execCommand('insertText',false,(e.clipboardData||window.clipboardData).getData('text/plain'))});
 document.addEventListener('click',e=>{const t=e.target.closest('[data-sx]');if(!t)return;e.preventDefault();const[a,x,y]=t.dataset.sx.split(':');U.msg='';
  if(a==='fmt'){const c=document.execCommand.bind(document);if(x==='bold')c('bold');else if(x==='italic')c('italic');else if(x==='h2')c('formatBlock',false,'H2');else if(x==='p')c('formatBlock',false,'P');else if(x==='list')c('insertUnorderedList');else if(x==='clear')c('removeFormat');else if(x==='mark'){const s=String(getSelection());if(s)c('insertHTML',false,'<mark>'+esc(s)+'</mark>')}else if(x==='u')c('underline');else if(x==='imp'){const s=String(getSelection());if(s)c('insertHTML',false,'<b class="imp">'+esc(s)+'</b>')}return}
@@ -579,7 +595,7 @@ document.addEventListener('click',e=>{const t=e.target.closest('[data-sx]');if(!
  if(a==='sub'){if(E&&!confirm('Discard this unsaved note?'))return;U.sub=x;U.edit=null;U.nid=null;U.from=0;top=1}
  else if(a==='cat')U.cat=x==='All'?'':x;else if(a==='nmtog')ST.nm=!ST.nm;else if(a==='ver')ST.ver=x;else if(a==='nav'){step(+x);top=1}else if(a==='fs')ST.fs=Math.max(15,Math.min(32,ST.fs+(+x)*2));
  else if(a==='vs'){if(hasSel()||(!e.target.closest('sup')&&ST.tool!=='t'&&ST.tool!=='n'&&ST.tool!=='r'))return;const k=`${ST.bk}:${ST.ch}:${x}`;if(ST.tool==='r'){xrOpen(+x);return}if(ST.tool==='n'){vnOpen(+x);return}if(ST.tool==='t')tvTap(+x);else if(ST.tool==='x')delete ST.hl[k];else{const f=tog(ST.hl[k],ST.tool);if(f)ST.hl[k]=f;else delete ST.hl[k]}}
- else if(a==='tool'){ST.tool=x;if(x==='t'){if(tvSelSave()){U.sel=null;const g=getSelection();g&&g.removeAllRanges&&g.removeAllRanges()}else toast('Tap a verse to treasure it, or select text across verses first.')}if(x==='n')toast('Tap a verse to add or edit its note. Verses with a note show a \u270E marker.');if(x==='r')toast('Tap a verse to see related verses.');const cx=x==='t'||x==='n'||x==='r'?null:selCtx();if(cx&&U.sel&&U.sel.length&&U.selId===cx.id){markSel(cx.id,x);U.sel=null;const g=getSelection();g&&g.removeAllRanges&&g.removeAllRanges()}}
+ else if(a==='tool'){ST.tool=x;if(x==='t'){if(tvSelSave()){U.sel=null;const g=getSelection();g&&g.removeAllRanges&&g.removeAllRanges()}else toast('Tap a verse to treasure it, or select text across verses first.')}if(x==='n')toast('Tap a verse to add or edit its note. Verses with a note show a \u270E marker.');if(x==='r')toast('Tap a verse to see related verses.');const cx=x==='t'||x==='n'||x==='r'?null:selCtx();if(cx&&U.sel&&U.sel.length&&U.selId===cx.id){if(U.selV&&U.selV.length){markVerses(U.selV,x);if(x==='x')markSel(cx.id,x)}else markSel(cx.id,x);U.sel=null;U.selV=null;const g=getSelection();g&&g.removeAllRanges&&g.removeAllRanges()}}
  else if(a==='mark'){rcs(ST.bk,ST.ch-1,1);U.msg=`${esc(ref())} marked as read.`}
  else if(a==='note'){U.sub='notes';U.nid=null;U.edit={...blank('Notes on '+ref()),sum:'Reading notes',secs:[{t:ref(),h:'<p><br></p>'}]};top=1}
  else if(a==='open'){U.nid=x;top=1}else if(a==='back'){U.nid=null;if(U.from){U.sub='search';U.from=0}top=1}

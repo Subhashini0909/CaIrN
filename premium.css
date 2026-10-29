@@ -291,3 +291,16 @@ h3.sh{display:flex;align-items:center;gap:8px;margin:20px 0 4px;font-size:17px;c
 .atl .nm{cursor:pointer}.nmatlr{margin:12px 0 0}.nmatl{display:inline-flex;gap:6px;align-items:center}
 .atle{display:inline;width:auto;background:none;box-shadow:none;border:0;border-bottom:1px dashed var(--gold);border-radius:0;padding:0;font:inherit;font-weight:700;color:var(--acc);text-align:left;cursor:pointer}.atle:hover{background:#b8913f1a}
 @media(min-width:861px){.atl .nmpanel{width:620px}}
+/* verse highlights shared across KJV, Tamil, NLT and Compare */
+.scr .vhs{border-radius:3px;-webkit-box-decoration-break:clone;box-decoration-break:clone}
+.scr .vhs.vh-h{background:linear-gradient(transparent 45%,#E3C77ACC 45%)}
+.scr .vhs.vh-g{background:linear-gradient(transparent 45%,#A6DDB4D9 45%)}
+.scr .vhs.vh-p{background:linear-gradient(transparent 45%,#F6B3D0D9 45%)}
+.scr .vhs.vh-v{background:linear-gradient(transparent 45%,#CDB6F2D9 45%)}
+.scr .vhs.vh-b{background:linear-gradient(transparent 45%,#D8DAE0D9 45%)}
+.scr .vhs.vh-o{background:linear-gradient(transparent 45%,#FFC48AD9 45%)}
+.scr .vhs.vh-c{background:linear-gradient(transparent 45%,#8FD9E3D9 45%)}
+.scr .vhs.vh-e{background:linear-gradient(transparent 45%,#9DC3F7D9 45%)}
+.scr .vhs.vh-l{background:linear-gradient(transparent 45%,#CFE77FD9 45%)}
+.scr .vhs.vh-u{text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:3px;text-decoration-color:var(--acc)}
+.scr .vhs.vh-i{background:#FBE1E1;color:#7A1D28;font-weight:600;padding:0 2px}

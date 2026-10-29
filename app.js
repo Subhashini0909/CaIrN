@@ -207,5 +207,6 @@ document.addEventListener('change',e=>{const t=e.target;
  if(t.id==='ty'||t.id==='ch'){const cr=$('#ty').value==='cr';$('#ch').hidden=cr;$('#tg').hidden=cr;$('#ap').hidden=cr||$('#ch').value!=='online'}
  if(t.id==='mo'){month=t.value||month;wpage=1;render()}
  if(t.id==='fi'){const r=new FileReader();r.onload=()=>{try{const d=JSON.parse(r.result);if(!d||typeof d!=='object'||Array.isArray(d)||typeof d.days!=='object'||!Array.isArray(d.tasks)||!Array.isArray(d.tx))throw 0;if(r.result.length>25e6)throw 0;const c=sanitizeState(d);c.uid=S.uid;S=c;save();location.reload()}catch{alert('Not a valid CaIrN backup.')}};r.readAsText(t.files[0])}});
-render(true);checkDue();
+// First screen: wait until every script has loaded (Study registers its view in study.js, which loads after this file), otherwise a reload on Study fell back to the Dashboard.
+const boot=()=>{render(true);checkDue()};document.readyState==='loading'?document.addEventListener('DOMContentLoaded',boot):boot();
 if('serviceWorker' in navigator&&!NATIVE)navigator.serviceWorker.register('sw.js');
