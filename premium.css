@@ -267,3 +267,12 @@ h3.sh{display:flex;align-items:center;gap:8px;margin:20px 0 4px;font-size:17px;c
 .scr.nlt .a-tn,.scr.nlt .tn,.scr.nlt .tn-ref,.scr.nlt .footnote{display:none!important}
 .scr.nlt.vl verse_export{display:block;margin:0 0 .45em}
 .scr.nlt.vl .vbr{display:block;height:.45em}
+/* Word helper: tap an old or difficult word and its meaning opens inside the line (see words.js) */
+.dw{border-bottom:1.5px dotted #2F8F83;cursor:pointer;border-radius:2px;transition:background .15s}
+.dw:hover,.dw:focus-visible{background:#2f8f8322;outline:0}
+.dw.open{background:#2f8f8326}
+.dw.open::after{content:attr(data-m);display:inline;margin:0 .15em 0 .35em;padding:2px 8px;border-radius:9px;background:#E6F3F0;color:#1B5E55;border:1px solid #2f8f8340;font:600 .6em/1.2 Inter,system-ui,sans-serif;font-style:normal;letter-spacing:0;vertical-align:.12em;box-decoration-break:clone;-webkit-box-decoration-break:clone}
+.scr.tam .dw.open::after{font-family:"Noto Serif Tamil","Noto Sans Tamil","Nirmala UI",Latha,Inter,sans-serif;font-size:.58em}
+.dwsw{font-family:var(--serif);border-bottom:1.5px dotted #2F8F83}
+.rtools button.dwtog.on{border-color:#2F8F83;box-shadow:0 2px 10px #2f8f8333}
+@media (prefers-reduced-motion:reduce){.dw{transition:none}}
