@@ -333,3 +333,16 @@ h3.sh{display:flex;align-items:center;gap:8px;margin:20px 0 4px;font-size:17px;c
 .trs{margin:10px 0 0 40px;padding-left:16px;border-left:2px dotted var(--gold2)}.trsl{margin:0 0 6px;font-size:12px;color:var(--mute)}.trsc{display:flex;gap:6px;flex-wrap:wrap}
 .trsb{background:#fff;color:var(--acc);border:1px solid var(--line);box-shadow:none;border-radius:12px;padding:7px 13px;font:600 15px var(--serif)}.trsb.on{border-color:var(--gold);background:#FFFBEF}.trsb.gone{color:var(--mute);border-style:dashed}
 @media(max-width:560px){.trc{padding:14px 8px 18px}.trb{padding:10px 12px;gap:10px}.trname{font-size:18px}.trtag{display:none}.trs{margin-left:20px}.trd{margin-left:6px}}
+
+/* Background pages */
+.seg.main{max-width:780px}
+.bgstrip{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:12px 0 4px}.bgh{font:600 11px Inter,sans-serif;letter-spacing:.12em;text-transform:uppercase;color:var(--mute);margin-right:2px}
+.bgchip{display:inline-flex;align-items:center;gap:7px;background:#FFFBEF;color:var(--ink);border:1px solid var(--gold2);box-shadow:none;border-radius:99px;padding:7px 13px;font:500 13px Inter,sans-serif;max-width:100%;text-align:left}.bgchip:hover{background:#FFF4D6}
+.bgchip .bgl{font-weight:600;color:var(--acc);white-space:nowrap}.bgchip .bgw{color:var(--mute);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:200px}
+.bgp{padding:20px 22px}.bgp h2{margin:6px 0 4px}.bgs{margin:10px 0 8px}.bgback{margin-bottom:6px}
+.bgh3{font:600 20px var(--serif);color:var(--acc);margin:26px 0 8px;border-bottom:2px solid var(--gold2);padding-bottom:5px}
+.bgr{display:grid;grid-template-columns:190px 1fr;gap:6px 16px;padding:12px 12px;border-radius:14px;border:1px solid transparent}.bgr+.bgr{border-top:1px solid var(--line)}
+.bgr.hit{background:#FFF8E1;border-color:var(--gold2)}
+.bgn{font:600 18px var(--serif);color:var(--acc);display:flex;gap:8px;align-items:flex-start}.bgb p{margin:0 0 4px;font-size:14px;line-height:1.55}.bgb .bgm{font-size:12.5px;color:var(--mute)}.bgb .trw2{margin-top:6px}
+.bgc{border:1px solid var(--line);border-radius:14px;padding:4px 14px;margin:8px 0;background:#fff}.bgc.hit{background:#FFF8E1;border-color:var(--gold2)}.bgc summary{cursor:pointer;font:600 18px var(--serif);color:var(--acc);padding:10px 0}.bgc p{margin:0 0 8px;font-size:14px;line-height:1.6}.bgc .trw2{margin:4px 0 12px}
+@media(max-width:620px){.bgp{padding:16px 12px}.bgr{grid-template-columns:1fr}.bgchip .bgw{max-width:120px}}
