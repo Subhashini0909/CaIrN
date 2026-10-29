@@ -15,9 +15,9 @@ NM.cfg.where=()=>[ST.bk,ST.ch];NM.cfg.vc=(b,c)=>KJV&&KJV[b]&&KJV[b].chapters[c-1
 NM.cfg.go=(b,c,v)=>{ST.bk=b;ST.ch=c;U.sub='read';U.nid=null;U.edit=null;U.flash=v;if(ST.ver!=='KJV'&&ST.ver!=='TAM')ST.ver='KJV';if(tab!=='study'){const t=document.querySelector('[data-tab=study]');t&&t.click()}save();go();if(!U.flash)return;scrollTo({top:0})};
 document.addEventListener('toggle',e=>{const c=e.target.classList;if(c&&c.contains('nmlist'))U.nmopen=e.target.open;if(c&&c.contains('bkp'))U.bk=e.target.open},true);
 // ---- reading tools: Highlight (h), Underline (u), Important (i), Clear (x) ----
-// Highlight colours: h yellow, g green, p pink, v purple, i red, b grey, o orange (to do), c teal (caution). Only one colour per piece of text; underline (u) can be added on top.
-const TL=[['h','Holy Spirit'],['g','Blessing'],['p','Promise'],['v','God and Christ'],['i','Warning'],['b','Bad'],['o','To do'],['c','Caution'],['u','Underline'],['t','Treasure'],['n','Note'],['r','Related'],['x','Clear']];
-const COL='hgpvibco',VC={h:' hl',u:' ul',i:' imp',g:' hg',p:' hp',v:' hv',b:' hb',o:' ho',c:' hc'};
+// Highlight colours: h yellow, g green, p pink, v purple, i red, b grey, o orange (to do), c teal (caution), e blue (person), l lime (place). Only one colour per piece of text; underline (u) can be added on top.
+const TL=[['h','Holy Spirit'],['g','Blessing'],['p','Promise'],['v','God and Christ'],['i','Warning'],['b','Bad'],['o','To do'],['c','Caution'],['e','Person'],['l','Place'],['u','Underline'],['t','Treasure'],['n','Note'],['r','Related'],['x','Clear']];
+const COL='hgpvibcel',VC={e:' hpe',l:' hpl',h:' hl',u:' ul',i:' imp',g:' hg',p:' hp',v:' hv',b:' hb',o:' ho',c:' hc'};
 const canon=f=>[...new Set(f)].sort().join('');
 const ad=(f,t)=>canon((COL.includes(t)?[...f].filter(c=>!COL.includes(c)).join(''):f)+t);
 const tog=(f,t)=>{f=f||'';return f.includes(t)?f.replace(t,''):ad(f,t)};

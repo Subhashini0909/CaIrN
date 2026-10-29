@@ -57,6 +57,8 @@ mark{background:linear-gradient(transparent 50%,#E3C77A99 50%);color:inherit;pad
 .a-b,.scr .vs.hb{background:linear-gradient(transparent 45%,#D8DAE0D9 45%)}
 .a-o,.scr .vs.ho{background:linear-gradient(transparent 45%,#FFC48AD9 45%)}
 .a-c,.scr .vs.hc{background:linear-gradient(transparent 45%,#8FD9E3D9 45%)}
+.a-e,.scr .vs.hpe{background:linear-gradient(transparent 45%,#9DC3F7D9 45%)}
+.a-l,.scr .vs.hpl{background:linear-gradient(transparent 45%,#CFE77FD9 45%)}
 .a-u,.scr .vs.ul,.nb u,.rte u{text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:3px;text-decoration-color:var(--acc)}
 .a-i,.imp,.scr .vs.imp{background:#FBE1E1;color:#7A1D28;font-weight:600;border-radius:3px;padding:0 2px;-webkit-box-decoration-break:clone;box-decoration-break:clone}
 .scr .vs.imp sup:before{content:'★ ';color:var(--rose)}
@@ -268,14 +270,13 @@ h3.sh{display:flex;align-items:center;gap:8px;margin:20px 0 4px;font-size:17px;c
 .scr.nlt.vl verse_export{display:block;margin:0 0 .45em}
 .scr.nlt.vl .vbr{display:block;height:.45em}
 /* Word helper: tap an old or difficult word and its meaning opens inside the line (see words.js) */
-.dw{border-bottom:1.5px dotted #2F8F83;cursor:pointer;border-radius:2px;transition:background .15s}
-.dw:hover,.dw:focus-visible{background:#2f8f8322;outline:0}
-.dw.open{background:#2f8f8326}
-.dw.open::after{content:attr(data-m);display:inline;margin:0 .15em 0 .35em;padding:2px 8px;border-radius:9px;background:#E6F3F0;color:#1B5E55;border:1px solid #2f8f8340;font:600 .6em/1.2 Inter,system-ui,sans-serif;font-style:normal;letter-spacing:0;vertical-align:.12em;box-decoration-break:clone;-webkit-box-decoration-break:clone}
-.scr.tam .dw.open::after{font-family:"Noto Serif Tamil","Noto Sans Tamil","Nirmala UI",Latha,Inter,sans-serif;font-size:.58em}
-.dwsw{font-family:var(--serif);border-bottom:1.5px dotted #2F8F83}
-.rtools button.dwtog.on{border-color:#2F8F83;box-shadow:0 2px 10px #2f8f8333}
-@media (prefers-reduced-motion:reduce){.dw{transition:none}}
+/* Word meaning bubble: appears when you hover over (or tap) any word in the Bible text. No underline, no button. */
+#dwhl{position:fixed;left:0;top:0;width:0;height:0;z-index:9998;pointer-events:none}
+#dwhl i{position:fixed;border-radius:3px;background:#2f8f8326;box-shadow:inset 0 -1.5px 0 #2f8f8355}
+#dwtip{position:fixed;left:0;top:0;z-index:9999;max-width:min(320px,calc(100vw - 16px));box-sizing:border-box;padding:7px 12px;border-radius:8px;background:#2b2d31;color:#fff;font:500 13.5px/1.4 Inter,system-ui,-apple-system,"Segoe UI",sans-serif;letter-spacing:0;font-style:normal;text-align:left;box-shadow:0 6px 22px #0000003d,0 0 0 1px #ffffff14;pointer-events:none;opacity:0;visibility:hidden;transform:translateY(2px);transition:opacity .12s,transform .12s,visibility 0s .12s}
+#dwtip.on{opacity:1;visibility:visible;transform:none;transition:opacity .12s,transform .12s}
+#dwtip.tam{font-family:"Noto Sans Tamil","Nirmala UI",Latha,Inter,system-ui,sans-serif;font-size:13px}
+@media (prefers-reduced-motion:reduce){#dwtip,#dwtip.on{transition:none;transform:none}}
 /* ---- Atlas: connected map, places and events ---- */
 .atlmap{margin:14px 0 4px}.atlv{height:300px}.atlnone,.atlfb .jm{margin:0}.atlnone{padding:14px 16px;border-radius:14px;background:var(--tint);color:var(--mute);font-size:14px}
 .atlfb figure{margin:0}.atlpin{cursor:pointer;outline:0}.atlpin:focus-visible circle:last-of-type{stroke:#B8913F;stroke-width:3.5}
