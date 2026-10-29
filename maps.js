@@ -179,7 +179,7 @@ const steps=r=>{const s=r.st.filter(x=>/n/.test(x[3]||''));return s.length?'<ol 
 // ---------- public API used by the About card ----------
 const BK=window.BKX={};
 BK.maps=b=>BM[b]||[];BK._p=partition;BK._R=REGIONS;
-BK.mapTitle=(b,i)=>MAPS[BM[b][i][0]].t;
+BK.mapData=MAPS;BK.mapTitle=(b,i)=>MAPS[BM[b][i][0]].t;
 let STY='pol';const sty=h=>h.replace(/class="jm( pol)?"/,'class="jm'+(STY==='pol'?' pol':'')+'"');
 const tb='<button type="button" class="g s lmtoggle">\u{1F30D} Real terrain view</button><button type="button" class="g s lmstyle">\u{1F3A8} Switch map style</button>';
 BK.mapHTML=(b,i)=>{const e=BM[b][i],d=MAPS[e[0]],pins=e[1],multi=d.routes.length>1;
@@ -230,4 +230,4 @@ BK.tlHTML=(b,all)=>{const l=tl(b)||[],show=all?l:l.slice(0,12);let ly='';l.forEa
  return `<ol class="bktl">${show.map(x=>`<li><span class="yr">${esc(x.yy)}</span><div><button type="button" class="atle" data-atle="${x.i}" title="See the passage and the places on the map">${esc(x.e.t)}</button>${x.e.d?` <span class="du">${esc(x.e.d)}</span>`:''} <a class="xr" data-sx="gv:${b}.${x.c}.${x.v}" href="#">${esc(BIB[b][0])} ${x.c}:${x.v}</a></div></li>`).join('')}</ol>`
  +(l.length>12?`<button class="g s" data-sx="bkall">${all?'Show fewer':'Show all '+l.length}</button>`:'')
  +'<p class="mute small">Tap an event to read its passage and see where it happened. Dates are approximate and follow one common chronology. Event data: Theographic (CC BY-SA 4.0).</p>'};
-})();
+})();gikt
