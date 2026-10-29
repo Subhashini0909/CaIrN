@@ -29,7 +29,7 @@ window.JMAP=function(o){
   dots+=`<circle cx="${x}" cy="${y}" r="3" fill="#8a7f68"/>`;lab+=`<text x="${tx}" y="${ty}" text-anchor="${side==='l'?'end':side==='r'?'start':'middle'}" class="jl jx">${esc(s[0])}</text>`});
  (o.pins||[]).forEach(s=>{const x=X(s[1]),y=Y(s[2]),f=s[3]||'';g+=`<circle cx="${x}" cy="${y}" r="14" fill="none" stroke="#B45309" stroke-width="3" stroke-dasharray="5 3"/>`;if(f.includes('x')){const side=(f.match(/[lrtb]/)||['r'])[0],tx=side==='l'?x-18:side==='r'?+x+18:x,ty=side==='t'?y-20:side==='b'?+y+26:+y+4;dots+=`<circle cx="${x}" cy="${y}" r="4" fill="#B45309"/>`;lab+=`<text x="${tx}" y="${ty}" text-anchor="${side==='l'?'end':side==='r'?'start':'middle'}" class="jl">${esc(s[0])}</text>`}});
  (o.seas||[]).forEach(s=>{lab+=`<text x="${X(s[1])}" y="${Y(s[2])}" text-anchor="middle" class="js">${esc(s[0])}</text>`});
- return `<figure class="jm"><svg viewBox="0 0 ${w} ${h}" role="img" aria-label="${esc(o.title||'Map')}"><rect width="${w}" height="${h}" rx="14" fill="#B9DAE7"/><path d="${land}" fill="#EAE4CE" stroke="#B3AA8B" stroke-width="1" fill-rule="evenodd"/>${regSVG(X,Y,land,o.box,sx,w,h)}${waterSVG(X,Y)}${g}${dots}${lab}<rect x="8" y="8" width="${Math.min(w-16,7.4*(o.title||'').length+22)}" height="26" rx="8" fill="#fff" opacity=".9"/><text x="19" y="26" class="jt">${esc(o.title||'')}</text>${leg}${compass(w,h,sx,k)}</svg><figcaption>${o.cap||''}</figcaption></figure>`};
+ return `<figure class="jm"><svg viewBox="0 0 ${w} ${h}" role="img" aria-label="${esc(o.title||'Map')}"><rect width="${w}" height="${h}" rx="14" fill="#B9DAE7"/><path d="${land}" fill="#EAE4CE" stroke="#B3AA8B" stroke-width="1" fill-rule="evenodd"/>${regSVG(X,Y,land,o.box,sx,w,h)}${waterSVG(X,Y)}${g}<g class="jpslot"></g>${dots}${lab}<rect x="8" y="8" width="${Math.min(w-16,7.4*(o.title||'').length+22)}" height="26" rx="8" fill="#fff" opacity=".9"/><text x="19" y="26" class="jt">${esc(o.title||'')}</text>${leg}${compass(w,h,sx,k)}</svg><figcaption>${o.cap||''}</figcaption></figure>`};
 
 // ---------- lakes and rivers (drawn under the routes; approximate) ----------
 const LAKES=[[[35.55,32.89],[35.59,32.9],[35.64,32.84],[35.65,32.76],[35.61,32.7],[35.57,32.71],[35.54,32.77],[35.53,32.84]],
@@ -176,6 +176,64 @@ const link=t=>String(t).split(';').reduce((a,p)=>{p=p.trim();let m=p.match(/^((?
  return [a[0]+(a[0]?'; ':'')+(b>=0?`<a class="xr" data-sx="ref:${b}:${c}" href="#">${esc(p)}</a>`:esc(p)),b>=0?b:a[1]]},['',-1])[0];
 const steps=r=>{const s=r.st.filter(x=>/n/.test(x[3]||''));return s.length?'<ol class="jr">'+s.map(x=>`<li><b>${esc(x[0])}</b>${x[4]?' — '+esc(x[4]):''} ${x[5]?`<span class="rf">${link(x[5])}</span>`:''}</li>`).join('')+'</ol>':''};
 
+// ---------- journey player: the route draws itself stop by stop, with the verses for each stop ----------
+const JPS={},jpSt=id=>JPS[id]||(JPS[id]={k:-1,on:0,tm:0}),RM=()=>!!(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches),DWELL=4200;
+// a step is a numbered stop (or the end of a route that has none); "from" is where the leg to it starts
+const jpSteps=d=>{if(d._st)return d._st;const out=[];
+ d.routes.forEach((r,ri)=>{const n=r.st.length,ck=[];r.st.forEach((x,i)=>{if(/n/.test(x[3]||''))ck.push(i)});if(n>1&&ck[ck.length-1]!==n-1&&r.st[n-1][0])ck.push(n-1);
+  ck.forEach((i,j)=>{const x=r.st[i],num=/n/.test(x[3]||'')?r.st.slice(0,i+1).filter(y=>/n/.test(y[3]||'')).length:0;
+   out.push({ri,i,from:j===0?0:ck[j-1],name:x[0],desc:x[4]||(num?'':'The way back'),ref:x[5]||'',rn:r.name||'',c:r.c,num,one:d.routes.length>1})})});
+ return d._st=out};
+const jpDur=s=>RM()?0:Math.min(4.2,1.5+.55*(s.i-s.from));
+const jpProj=d=>{const [W,E,S,N]=d.box,k=Math.cos((S+N)/2*Math.PI/180),sx=(d.w||640)/((E-W)*k);return(lon,lat)=>[(lon-W)*k*sx,(N-lat)*sx]};
+const jpPath=(pts,fl,curved)=>{let s='M'+pts[0][0].toFixed(1)+' '+pts[0][1].toFixed(1);
+ for(let i=1;i<pts.length;i++){const a=pts[i-1],b=pts[i];if(!curved){s+='L'+b[0].toFixed(1)+' '+b[1].toFixed(1);continue}
+  const sea=(fl[i]||'').includes('s'),mx=(a[0]+b[0])/2,my=(a[1]+b[1])/2,dx=b[0]-a[0],dy=b[1]-a[1],L=Math.hypot(dx,dy)||1,bow=sea?L*.12:L*.06;
+  s+='Q'+(mx-dy/L*bow).toFixed(1)+' '+(my+dx/L*bow).toFixed(1)+' '+b[0].toFixed(1)+' '+b[1].toFixed(1)}
+ return s};
+// SVG for the player at step k: finished legs, the leg being travelled (animated when anim), the traveller and a ring on the stop
+function jpLayer(d,k,proj,curved,anim){const S=jpSteps(d);if(k<0||k>=S.length)return '';
+ const leg=s=>{const st=d.routes[s.ri].st,ix=[];for(let j=s.from;j<=s.i;j++)ix.push(j);return jpPath(ix.map(j=>proj(st[j][1],st[j][2])),ix.map(j=>st[j][3]||''),curved)};
+ const line=(p,c,x)=>`<path d="${p}" fill="none" stroke="#fff" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" opacity=".9"${x||''}/><path d="${p}" fill="none" stroke="${c}" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"${x||''}/>`;
+ let g='';for(let j=0;j<k;j++){const s=S[j];if(s.from!==s.i)g+=line(leg(s),s.c)}
+ const cur=S[k],pt=d.routes[cur.ri].st[cur.i],[x,y]=proj(pt[1],pt[2]),trav=cur.from!==cur.i,dur=jpDur(cur),go=anim&&trav&&dur>0;
+ if(trav){const p=leg(cur);
+  if(go){g+=`<g class="jpdraw" style="--d:${dur}s">${line(p,cur.c,' pathLength="1"')}</g><circle r="8.5" fill="${cur.c}" stroke="#fff" stroke-width="3"><animateMotion begin="indefinite" dur="${dur}s" fill="freeze" path="${p}"/></circle>`}
+  else g+=line(p,cur.c)+`<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="8.5" fill="${cur.c}" stroke="#fff" stroke-width="3"/>`}
+ else g+=`<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="8.5" fill="${cur.c}" stroke="#fff" stroke-width="3"/>`;
+ g+=`<circle class="jpring" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="14" style="animation-delay:${go?dur:0}s"/>`;
+ return g}
+const jpBegin=svg=>svg.querySelectorAll('.jpl animateMotion').forEach(a=>{try{a.beginElement()}catch(e){}});
+// overlay on the live (tile) map: called from its draw()
+const jpL=(el,P,anim)=>{const st=JPS[el.dataset.m];if(!st||st.k<0)return '';return `<g class="jpl">${jpLayer(MAPS[el.dataset.m],st.k,(a,b)=>P(a,b).map(Number),false,anim)}</g>`};
+// the verses of a stop: its first reference, up to three verses (KJV, as in the reader)
+function jpVerses(ref){const m=/^((?:[1-3] )?[A-Za-z]+(?: [A-Za-z]+)*) (\d+)(?::(\d+)(?:[-\u2013](\d+))?)?/.exec(String(ref).split(';')[0].trim());if(!m)return '';
+ const b=bi(m[1]),c=+m[2],v1=m[3]?+m[3]:1,v2=m[4]?+m[4]:(m[3]?v1:v1+2),tx=window.NM&&NM.cfg&&NM.cfg.text;if(b<0||!tx)return '';
+ let h='';for(let v=v1;v<=Math.min(v2,v1+2);v++){const t=tx(b,c,v);if(t==null)return h?`<blockquote class="jpv">${h}</blockquote>`:'';h+=`<sup>${v}</sup>${esc(t)} `}
+ return `<blockquote class="jpv">${h}${v2>v1+2?'\u2026':''}</blockquote>`}
+function jpUI(id){const d=MAPS[id],S=jpSteps(d),st=jpSt(id),k=st.k,s=S[k],last=S.length-1;
+ const lab=st.on?'\u275A\u275A Pause':k<0?'\u25B6 Play journey':k>=last?'\u21BB Replay':'\u25B6 Resume';
+ const card=s?`<div class="jpcard"><span class="jpn" style="background:${s.c}">${s.num||'\u2022'}</span><div class="jpb"><div class="jph"><b>${esc(s.name)}</b>${s.one&&s.rn?` <span class="mute small">\u00B7 ${esc(s.rn)}</span>`:''}</div>${s.desc?`<div class="jpd">${esc(s.desc)}</div>`:''}${s.ref?`<div class="jpr"><span class="rf">${link(s.ref)}</span></div>${jpVerses(s.ref)}`:''}</div></div>`
+  :`<div class="jpcard jpidle">Press play to follow the route stop by stop, with the verses for each place.</div>`;
+ return `<div class="jpbar"><button type="button" class="jpplay" data-jpa="play">${lab}</button><button type="button" class="g s" data-jpa="prev" aria-label="Previous stop"${k<=0?' disabled':''}>\u2039</button><span class="jpc mute small">${k<0?S.length+' stops':'Stop '+(k+1)+' of '+S.length}</span><button type="button" class="g s" data-jpa="next" aria-label="Next stop"${k>=last?' disabled':''}>\u203A</button></div>${card}`}
+function jpApply(el,id,anim){const d=MAPS[id],st=jpSt(id),S=jpSteps(d),s=S[st.k];
+ if(el.querySelector('.lmv')){el._jpA=anim?1:0;if(s&&el._focus){const p=d.routes[s.ri].st[s.i];el._focus(p[1],p[2])}el._redraw&&el._redraw();return}
+ const svg=el.querySelector('figure.jm svg'),slot=svg&&svg.querySelector('.jpslot');if(!slot)return;
+ slot.innerHTML=`<g class="jpl">${jpLayer(d,st.k,jpProj(d),true,anim)}</g>`;if(anim)jpBegin(svg)}
+function jpShow(root,k,anim){const id=root.dataset.jp,st=jpSt(id),el=root.previousElementSibling;st.k=k;root.innerHTML=jpUI(id);jpApply(el,id,anim)}
+function jpStop(root,st){clearTimeout(st.tm);st.tm=0;st.on=0;if(root&&document.body.contains(root))root.innerHTML=jpUI(root.dataset.jp)}
+function jpTick(root,id,st){const S=jpSteps(MAPS[id]);if(!st.on)return;
+ if(!document.body.contains(root)){st.on=0;return}
+ if(st.k>=S.length-1){jpStop(root,st);return}
+ jpShow(root,st.k+1,true);st.tm=setTimeout(()=>jpTick(root,id,st),jpDur(S[st.k])*1000+DWELL)}
+// keep the map clear of the reader's sticky toolbar when a player button is pressed
+const jpView=el=>{const tb=document.querySelector('.rtools');let off=0;for(let n=tb;n&&n!==document.body;n=n.parentElement)if(/sticky|fixed/.test(getComputedStyle(n).position)){off=n.getBoundingClientRect().bottom;break}
+ const r=el.getBoundingClientRect();if(r.top<off+8)scrollBy({top:r.top-off-8,behavior:RM()?'auto':'smooth'})};
+document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('[data-jpa]');if(!t)return;e.preventDefault();
+ const root=t.closest('.jp'),id=root.dataset.jp,st=jpSt(id),S=jpSteps(MAPS[id]),a=t.dataset.jpa;
+ if(a==='play'){if(st.on){jpStop(root,st);return}if(st.k<0||st.k>=S.length-1)st.k=-1;st.on=1;jpView(root.previousElementSibling);jpTick(root,id,st)}
+ else{clearTimeout(st.tm);st.tm=0;st.on=0;jpShow(root,Math.max(0,Math.min(S.length-1,st.k+(a==='next'?1:-1))),true);jpView(root.previousElementSibling)}});
+
 // ---------- public API used by the About card ----------
 const BK=window.BKX={};
 BK.maps=b=>BM[b]||[];BK._p=partition;BK._R=REGIONS;
@@ -183,8 +241,10 @@ BK.mapData=MAPS;BK.mapTitle=(b,i)=>MAPS[BM[b][i][0]].t;
 let STY='pol';const sty=h=>h.replace(/class="jm( pol)?"/,'class="jm'+(STY==='pol'?' pol':'')+'"');
 const tb='<button type="button" class="g s lmtoggle">\u{1F30D} Real terrain view</button><button type="button" class="g s lmstyle">\u{1F3A8} Switch map style</button>';
 BK.mapHTML=(b,i)=>{const e=BM[b][i],d=MAPS[e[0]],pins=e[1],multi=d.routes.length>1;
- const svg=sty(window.JMAP({box:d.box,w:d.w,title:d.t,cap:d.cap,seas:d.seas,extra:d.extra,pins,routes:d.routes})),pj=JSON.stringify(pins).replace(/&/g,'&amp;').replace(/"/g,'&quot;');
- return `<div class="lm" data-m="${e[0]}" data-p="${pj}"><div class="lmfb">${svg}${tb}</div></div>`+(pins.length?`<p class="mute small">Ringed on the map: ${pins.map(p=>esc(p[0])).join(', ')}.</p>`:'')+d.routes.map(r=>(multi?`<h4>${esc(r.name)}</h4>`:'')+steps(r)).join('')};
+ let svg=sty(window.JMAP({box:d.box,w:d.w,title:d.t,cap:d.cap,seas:d.seas,extra:d.extra,pins,routes:d.routes}));const jps=jpSteps(d),jst=jpSt(e[0]);if(jst.tm){clearTimeout(jst.tm);jst.tm=0}jst.on=0;
+ if(jst.k>=0&&jst.k<jps.length){svg=svg.replace('<g class="jpslot"></g>',`<g class="jpslot"><g class="jpl">${jpLayer(d,jst.k,jpProj(d),true,false)}</g></g>`)}
+ const pj=JSON.stringify(pins).replace(/&/g,'&amp;').replace(/"/g,'&quot;');
+ return `<div class="lm" data-m="${e[0]}" data-p="${pj}"><div class="lmfb">${svg}${tb}</div></div>`+(jps.length>1?`<div class="jp" data-jp="${e[0]}">${jpUI(e[0])}</div>`:'')+(pins.length?`<p class="mute small">Ringed on the map: ${pins.map(p=>esc(p[0])).join(', ')}.</p>`:'')+d.routes.map(r=>(multi?`<h4>${esc(r.name)}</h4>`:'')+steps(r)).join('')};
 
 // ---------- live map on real terrain / satellite tiles (needs internet; falls back to the drawn map) ----------
 const TL={topo:['Satellite','https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}','Tiles \u00A9 Esri, HERE, Garmin, USGS, NGA'],sat:['Terrain','https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}','Tiles \u00A9 Esri, Maxar, Earthstar Geographics']};
@@ -207,7 +267,8 @@ function mountLive(el){
     top+=`<g data-r="${ri}" data-k="${k}"${nn?' class="st"':''}><circle cx="${x}" cy="${y}" r="${nn?12:5}" fill="${nn?r.c:'#fff'}" stroke="${nn?'#fff':r.c}" stroke-width="2.5"/>${nn?`<text class="lmn" x="${x}" y="${+y+4}" text-anchor="middle">${cnt}</text>`:''}</g>`+(a[0]?lab(x,y,f,a[0]):'')})});
   (d.extra||[]).forEach(a=>{const [x,y]=P(a[1],a[2]);top+=`<circle cx="${x}" cy="${y}" r="4" fill="#8a7f68" stroke="#fff" stroke-width="1.5"/>`+lab(x,y,a[3]||'',a[0])});
   pins.forEach(a=>{const [x,y]=P(a[1],a[2]),f=a[3]||'';s+=`<circle cx="${x}" cy="${y}" r="18" fill="none" stroke="#B45309" stroke-width="3.5" stroke-dasharray="6 4"/>`;if(f.includes('x'))top+=`<circle cx="${x}" cy="${y}" r="5" fill="#B45309" stroke="#fff" stroke-width="1.5"/>`+lab(x,y,f,a[0])});
-  sv.innerHTML=s+top;lb.textContent=TL[layer][0];at.textContent=TL[layer][2]};
+  const jpA=el._jpA;el._jpA=0;sv.innerHTML=s+jpL(el,P,jpA)+top;if(jpA)jpBegin(sv);lb.textContent=TL[layer][0];at.textContent=TL[layer][2]};
+ el._redraw=draw;el._focus=(lon,lat)=>{const W=v.clientWidth||W0,x=mx(lon,z)-(c.x-W/2),y=my(lat,z)-(c.y-H/2);if(x<60||x>W-60||y<60||y>H-60){c.x=mx(lon,z);c.y=my(lat,z)}};
  const zoom=dz=>{const nz=Math.max(3,Math.min(13,z+dz));if(nz===z)return;const f=2**(nz-z);c.x*=f;c.y*=f;z=nz;draw()};
  let drag=null,moved=0,wt=0;
  v.addEventListener('pointerdown',e=>{if(e.target.closest('button'))return;drag={x:e.clientX,y:e.clientY};moved=0});
@@ -230,4 +291,4 @@ BK.tlHTML=(b,all)=>{const l=tl(b)||[],show=all?l:l.slice(0,12);let ly='';l.forEa
  return `<ol class="bktl">${show.map(x=>`<li><span class="yr">${esc(x.yy)}</span><div><button type="button" class="atle" data-atle="${x.i}" title="See the passage and the places on the map">${esc(x.e.t)}</button>${x.e.d?` <span class="du">${esc(x.e.d)}</span>`:''} <a class="xr" data-sx="gv:${b}.${x.c}.${x.v}" href="#">${esc(BIB[b][0])} ${x.c}:${x.v}</a></div></li>`).join('')}</ol>`
  +(l.length>12?`<button class="g s" data-sx="bkall">${all?'Show fewer':'Show all '+l.length}</button>`:'')
  +'<p class="mute small">Tap an event to read its passage and see where it happened. Dates are approximate and follow one common chronology. Event data: Theographic (CC BY-SA 4.0).</p>'};
-})();gikt
+})();

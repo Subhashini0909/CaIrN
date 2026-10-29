@@ -329,3 +329,24 @@ h3.sh{display:flex;align-items:center;gap:8px;margin:20px 0 4px;font-size:17px;c
 .ftdn ul{list-style:none;margin:0;padding:0 0 0 18px;border-left:2px solid var(--gold2)}.ftdn>ul{padding-left:12px}
 .ftdn li{position:relative;margin:7px 0;padding-left:0}.ftdn li::before{content:"";position:absolute;left:-18px;top:16px;width:14px;border-top:2px solid var(--gold2)}.ftdn>ul>li::before{left:-12px;width:10px}
 .ftdn li>ul{margin:6px 0 2px 10px}
+/* Journey player (Map button) */
+.jp{margin:10px 0 6px}
+.jpbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.jp button.jpplay{background:var(--acc);color:#fff;border-radius:99px;padding:8px 18px;font-size:13.5px}
+.jp button:disabled{opacity:.4;cursor:default}
+.jpc{min-width:84px;text-align:center}
+.jpcard{display:flex;gap:12px;margin-top:10px;background:#FBF5E4;border:1px solid var(--gold2,#e3d3a8);border-radius:14px;padding:12px 14px}
+.jpcard.jpidle{color:var(--mute);font-size:13.5px;background:var(--tint,#F4F1E8);border-color:var(--line)}
+.jpn{flex:0 0 28px;height:28px;border-radius:50%;color:#fff;font:700 13px Inter,system-ui,sans-serif;display:flex;align-items:center;justify-content:center}
+.jpb{min-width:0}
+.jph b{font-family:'Cormorant Garamond',Georgia,serif;font-size:20px;font-weight:600;color:var(--ink)}
+.jpd{font-size:13.5px;line-height:1.5;margin-top:1px}
+.jpr{font-size:12.5px;margin-top:3px}
+.jpv{margin:8px 0 0;padding-left:11px;border-left:2px solid var(--gold,#B8913F);font:14px/1.6 Georgia,'Times New Roman',serif;color:var(--ink)}
+.jpv sup{font:600 10px Inter,system-ui,sans-serif;color:var(--gold,#B8913F);margin-right:2px}
+.jpl{pointer-events:none}
+.jpdraw path{stroke-dasharray:1;stroke-dashoffset:1;animation:jpd var(--d,2s) linear forwards}
+@keyframes jpd{to{stroke-dashoffset:0}}
+.jpring{fill:none;stroke:#B8913F;stroke-width:3;opacity:0;transform-box:fill-box;transform-origin:center;animation:jpr 1.7s ease-out infinite}
+@keyframes jpr{0%{opacity:.95;transform:scale(.6)}100%{opacity:0;transform:scale(1.9)}}
+@media(prefers-reduced-motion:reduce){.jpdraw path{animation:none;stroke-dashoffset:0}.jpring{animation:none;opacity:.9}}
