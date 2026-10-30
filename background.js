@@ -79,7 +79,7 @@ const MEAS={
   ['Fathom','1.8 m','6 feet','The reach of the arms; used for sounding water.',/fathoms?/,['Acts 27:28']],
   ['Reed','3 m','10 feet','Six long cubits; a measuring rod.',/\breed/,['Ezekiel 40:5']],
   ['Furlong','185 m','1/8 mile','A Greek “stadion”, the length of a running track.',/furlongs?/,['Luke 24:13','John 6:19']],
-  ['Sabbath day’s journey','900 m','about ¾ mile','Two thousand cubits, the distance allowed on the sabbath.',/sabbath day|day.s journey/,['Acts 1:12','Numbers 35:5']],
+  ['Sabbath day’s journey','900 m','just over half a mile','Two thousand cubits, the distance allowed on the sabbath.',/sabbath day|day.s journey/,['Acts 1:12','Numbers 35:5']],
   ['Mile','1.5 km','1,000 paces','The Roman mile.',/\bmile\b/,['Matthew 5:41']],
   ['Day’s journey','20–30 km','12–18 miles','What a traveller on foot covered in one day.',/day.s journey/,['Luke 2:44','Numbers 11:31']]]},
  dry:{t:'Dry measures (grain and flour)',rows:[

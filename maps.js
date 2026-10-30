@@ -1,5 +1,5 @@
 /* Maps and timelines for the "About this book" card.
-   Plain file on purpose: it does not depend on the locked study notes, so maps work before you enter the notes passphrase.
+   Plain file on purpose: it does not depend on the study notes, so maps load on their own.
    Coastlines: GSHHS intermediate resolution, simplified. Routes are approximate and drawn from the Scripture references given.
    Timeline data comes from events.json (Theographic, CC BY-SA 4.0). */
 (()=>{
@@ -289,6 +289,5 @@ const tl=b=>{if(!EVD)return null;if(TLC[b])return TLC[b];const best={},p=b+'.';
 BK.tlCount=b=>{const l=tl(b);return l?l.length:0};
 BK.tlHTML=(b,all)=>{const l=tl(b)||[],show=all?l:l.slice(0,12);let ly='';l.forEach(x=>{if(x.e.y)ly=x.e.y;x.yy=x.e.y||(ly?'~'+ly:'')});let ny='';for(let i=l.length-1;i>=0;i--){if(l[i].e.y)ny=l[i].e.y;else if(!l[i].yy&&ny)l[i].yy='~'+ny}
  return `<ol class="bktl">${show.map(x=>`<li><span class="yr">${esc(x.yy)}</span><div><button type="button" class="atle" data-atle="${x.i}" title="See the passage and the places on the map">${esc(x.e.t)}</button>${x.e.d?` <span class="du">${esc(x.e.d)}</span>`:''} <a class="xr" data-sx="gv:${b}.${x.c}.${x.v}" href="#">${esc(BIB[b][0])} ${x.c}:${x.v}</a></div></li>`).join('')}</ol>`
- +(l.length>12?`<button class="g s" data-sx="bkall">${all?'Show fewer':'Show all '+l.length}</button>`:'')
- +'<p class="mute small">Tap an event to read its passage and see where it happened. Dates are approximate and follow one common chronology. Event data: Theographic (CC BY-SA 4.0).</p>'};
+ +(l.length>12?`<button class="g s" data-sx="bkall">${all?'Show fewer':'Show all '+l.length}</button>`:'')};
 })();

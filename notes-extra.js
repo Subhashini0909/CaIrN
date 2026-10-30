@@ -17,7 +17,7 @@ const N=[
 ['Song of Solomon','8','Love poetry','The beauty of faithful married love, often read as a picture of God\'s love.','Song of Solomon 2, 8']])},
 {t:'Major prophets',h:'<h1>Major prophets (longer books)</h1>'+T(['Book','Chapters','Setting','Main message','Read slowly'],[
 ['Isaiah','66','Judah, 740-680, Assyrian threat','Judgment on sin, comfort for God\'s people, and the coming Servant-King who saves.','Isaiah 6, 7:14, 9:6-7, 40, 53, 55, 61'],
-['Jeremiah','52','Judah, 627-586, fall of Jerusalem','A weeping prophet warns of exile and promises a new covenant written on hearts.','Jeremiah 1, 7, 18, 29, 31:31-34'],
+['Jeremiah','52','Judah, 627-580, fall of Jerusalem','A weeping prophet warns of exile and promises a new covenant written on hearts.','Jeremiah 1, 7, 18, 29, 31:31-34'],
 ['Lamentations','5','Jerusalem in ruins, 586','Grief expressed honestly to God, with hope in His faithfulness.','Lamentations 3'],
 ['Ezekiel','48','Exiles in Babylon, 593-571','God\'s glory leaves the temple, then returns; dry bones live; a new temple.','Ezekiel 1, 10, 34, 37, 47'],
 ['Daniel','12','Babylon and Persia, 605-536','God rules over every empire; faithful people stand firm in a hostile culture.','Daniel 1, 3, 6, 7, 9']])},
@@ -58,10 +58,10 @@ const N=[
 {id:'prophets-glance',title:'The Writing Prophets at a Glance',ico:'🔥',sum:'Sixteen prophets: when they lived, who they spoke to, which kings they served and their core message.',secs:[
 {t:'Overview table',h:'<h1>Overview table</h1><p>Companion to the "Prophets in 1 & 2 Kings" note, which covers the prophets who appear in the history books (Elijah, Elisha and others).</p>'+T(['Prophet','Approx. dates (BC)','Spoke to','Kings and empire','Core message'],[
 ['Isaiah','740-680','Judah','Uzziah to Hezekiah; Assyria','Holy God judges sin and sends a Servant-King'],
-['Jeremiah','627-586','Judah','Josiah to Zedekiah; Babylon rising','Repent or face exile; a new covenant is coming'],
+['Jeremiah','627-580','Judah','Josiah to Zedekiah; Babylon rising','Repent or face exile; a new covenant is coming'],
 ['Ezekiel','593-571','Exiles in Babylon','Zedekiah era; Babylon','God\'s glory is with the exiles; renewal and a new heart'],
 ['Daniel','605-536','Babylon and Persia courts','Nebuchadnezzar to Cyrus','God rules history; stay faithful'],
-['Hosea','755-715','Israel','Jeroboam II to Hoshea; Assyria','Return to the God who loves you faithfully'],
+['Hosea','755-710','Israel','Jeroboam II to Hoshea; Assyria','Return to the God who loves you faithfully'],
 ['Joel','Uncertain','Judah','Date debated','Repent; the Day of the Lord; Spirit poured out'],
 ['Amos','About 760','Israel','Jeroboam II, Uzziah','Let justice roll like water'],
 ['Obadiah','About 586','Edom','After Jerusalem\'s fall','Pride before a fall; Edom judged'],

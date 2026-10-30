@@ -3,12 +3,12 @@
 (()=>{
 const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 // [key, name, description, first year, last year]  (BC is negative)
-const ERAS=[['origins','Origins','Creation to Babel',-99999,-2201],['patriarchs','Patriarchs','Abraham to Joseph',-2200,-1572],['exodus','Exodus and Judges','Moses to Samuel',-1571,-1096],['kings','Kings','Saul to the fall of Jerusalem',-1095,-587],['exile','Exile and return','Babylon to the end of the Old Testament',-586,-5],['gospels','Gospels','The life of Jesus',-4,30],['church','Church','Acts, the letters and Revelation',31,99999]];
+const ERAS=[['origins','Origins','Creation to Babel',-99999,-2167],['patriarchs','Patriarchs','Abraham to Joseph',-2166,-1527],['exodus','Exodus and Judges','Moses to Samuel',-1526,-1051],['kings','Kings','Saul to the fall of Jerusalem',-1050,-587],['exile','Exile and return','Babylon to the end of the Old Testament',-586,-8],['gospels','Gospels','The life of Jesus',-7,30],['church','Church','Acts, the letters and Revelation',31,99999]];
 const eraOf=y=>{for(let i=0;i<ERAS.length;i++)if(y>=ERAS[i][3]&&y<=ERAS[i][4])return i;return ERAS.length-1};
 // Journeys come from maps.js: [title, year (BC negative), book index, chapter, verse]
-const JM={abraham:['Abraham’s journey',-1921,0,12,1],wild:['Exodus and the wilderness',-1491,1,12,1],david:['David’s journeys',-1062,8,19,1],elijah:['Elijah’s journeys',-910,10,17,1],jonah:['Jonah’s journey',-785,31,1,1],exile:['Exile and return',-586,11,24,1],jesus:['Jesus’ ministry',27,39,3,1],pj1:['Paul’s first journey',46,43,13,1],pj2:['Paul’s second journey',49,43,15,36],pj3:['Paul’s third journey',53,43,18,23],prome:['Paul’s voyage to Rome',59,43,27,1],seven:['The seven churches',96,65,2,1]};
+const JM={abraham:['Abraham’s journey',-2091,0,12,1],wild:['Exodus and the wilderness',-1446,1,12,1],david:['David’s journeys',-1018,8,19,1],elijah:['Elijah’s journeys',-866,10,17,1],jonah:['Jonah’s journey',-785,31,1,1],exile:['Exile and return',-586,11,24,1],jesus:['Jesus’ ministry',27,39,3,1],pj1:['Paul’s first journey',46,43,13,1],pj2:['Paul’s second journey',49,43,15,36],pj3:['Paul’s third journey',53,43,18,23],prome:['Paul’s voyage to Rome',59,43,27,1],seven:['The seven churches',96,65,2,1]};
 // Events in events.json that have no year. Everything else without one takes the year of its nearest dated neighbour.
-const OV={'War: Abraham rescues Lot':-1913,'Battle: Egypt and the Red Sea':-1491,'Battle: Israel vs Amalek':-1491,'Battle: the fall of Jericho':-1451,'Battle: Ai':-1451,'Battle: Gibeon and the long day':-1451,'Battle: Deborah, Barak and Sisera':-1277,'Battle: Gideon and the Midianites':-1249,'Battle: David and Goliath':-1063,'Battle: Mount Gilboa':-1056,'War: Jehoshaphat vs Moab and Ammon':-895,'Paul Writes Galatians':50};
+const OV={'War: Abraham rescues Lot':-2084,'Battle: Egypt and the Red Sea':-1446,'Battle: Israel vs Amalek':-1446,'Battle: the fall of Jericho':-1406,'Battle: Ai':-1406,'Battle: Gibeon and the long day':-1406,'Battle: Deborah, Barak and Sisera':-1233,'Battle: Gideon and the Midianites':-1205,'Battle: David and Goliath':-1022,'Battle: Mount Gilboa':-1011,'War: Jehoshaphat vs Moab and Ammon':-851,'Paul Writes Galatians':49};
 const TN={e:'Event',p:'Person',j:'Journey'};
 const TL={f:'all',q:'',open:null,did:0};
 let D=null,ld=0;
@@ -23,7 +23,7 @@ function build(raw){
   if(!e||!e.r||!e.r.length||/^Creation: the seven days/.test(e.t))return; // duplicate of "Creation of all things"
   const a=e.r[0],z=e.r[1]&&e.r[1][0]===a[0]?e.r[1]:a;let y=yr(e.y),ap=/^about/i.test(e.y||'');
   if(y==null&&OV[e.t]!=null){y=OV[e.t];ap=true}
-  const it={k:/^(Lifetime|Reign) of /.test(e.t)?'p':'e',t:e.t,y,ap,b:a[0],c:a[1],v:a[2]||1,b2:z[0],c2:z[1],v2:z[2]||1,who:e.who||[],at:e.at||[],d:e.d||'',id:'e'+i};
+  const it={u:!!e.u,k:/^(Lifetime|Reign) of /.test(e.t)?'p':'e',t:e.t,y,ap,b:a[0],c:a[1],v:a[2]||1,b2:z[0],c2:z[1],v2:z[2]||1,who:e.who||[],at:e.at||[],d:e.d||'',id:'e'+i};
   items.push(it);if(y!=null)dated.push(it)});
  items.forEach(it=>{if(it.y!=null)return;let best=null,bd=1e9;dated.forEach(o=>{const d=Math.abs(o.b-it.b)*1000+Math.abs(o.c-it.c);if(d<bd){bd=d;best=o}});it.y=best?best.y:0;it.ap=true});
  const J=(window.BKX&&window.BKX.mapData)||{};
@@ -60,7 +60,7 @@ function row(it,A){
  const stops=it.k==='j'&&it.at.length?`<div class="tlstops">${it.at.slice(0,6).map(esc).join(' <span aria-hidden="true">\u2192</span> ')}${it.at.length>6?' \u2026':''}</div>`:'';
  const cap=it.k==='j'&&it.cap?`<div class="tlcap">${esc(it.cap)}</div>`:'';
  const act=here?`<div class="tlact"><button class="s" data-tl="open:${p[0]}.${p[1]}.0">Back to chapter</button>${A.exact?'':'<span class="mute small">Closest event to this chapter</span>'}</div>`:'';
- return `<div class="tlrow${here?' tlhere':''}"${here?' id="tl-here"':''}><div class="tly">${esc(yl(it.y,it.ap))}</div><div class="tlrail"><i class="tld ${it.k}"></i></div>
+ return `<div class="tlrow${here?' tlhere':''}"${here?' id="tl-here"':''}><div class="tly">${it.u?'Undated':esc(yl(it.y,it.ap))}</div><div class="tlrail"><i class="tld ${it.k}"></i></div>
  <div class="tlcd">${here?`<span class="tlpill">You are here \u00B7 ${esc(BIB[p[0]][0]+' '+p[1])}</span>`:''}<div class="tlty ${it.k}">${TN[it.k]}</div><div class="tltt">${esc(it.t)}</div>
  <button class="tlref" data-tl="open:${it.b}.${it.c}.${it.v}">${esc(refT(it))}</button>${it.d?`<span class="mute small"> \u00B7 ${esc(it.d)}</span>`:''}${stops}${cap}${chips?`<div>${chips}</div>`:''}${act}</div></div>`}
 

@@ -130,7 +130,7 @@ function pick(i,fly){if(!S||!P(i))return;S.sel=i;if(!mkPts(S).some(p=>p.i===i)){
 
 function show(s,push){if(push&&S)HIST.push(S);S=s;mv=null;paint(1)}
 function shell(){if(el)return;el=document.createElement('div');el.className='nmsheet atl';
- el.innerHTML='<div class="nmscrim" data-atlx></div><div class="nmpanel" role="dialog" aria-modal="true" aria-label="Map" tabindex="-1"><div class="nmhd"><button type="button" class="g s" data-atlb hidden>\u2039 Back</button><span class="grow"></span><button type="button" class="g s" data-atlx aria-label="Close">\u2715</button></div><div class="nmbody"><div class="nmtitle"><h2 class="atlh"></h2><span class="nmtag big">Map</span></div><p class="nmsub atls"></p><div class="atlmap"></div><div class="atlbody"></div><p class="nmsrc">Positions are approximate (OpenBible geolocation); events and dates from Theographic (CC BY-SA 4.0). Tap a pin, a place name or an event to explore.</p></div></div>';
+ el.innerHTML='<div class="nmscrim" data-atlx></div><div class="nmpanel" role="dialog" aria-modal="true" aria-label="Map" tabindex="-1"><div class="nmhd"><button type="button" class="g s" data-atlb hidden>\u2039 Back</button><span class="grow"></span><button type="button" class="g s" data-atlx aria-label="Close">\u2715</button></div><div class="nmbody"><div class="nmtitle"><h2 class="atlh"></h2><span class="nmtag big">Map</span></div><p class="nmsub atls"></p><div class="atlmap"></div><div class="atlbody"></div></div></div>';
  document.body.appendChild(el);document.body.classList.add('nmlock');el.querySelector('.nmpanel').focus({preventScroll:true})}
 const close=()=>{if(el){el.remove();el=null}S=null;HIST=[];mv=null;if(!document.querySelector('.nmsheet'))document.body.classList.remove('nmlock')};
 

@@ -156,7 +156,7 @@ function famTree(i){const e=D[i];if(e.t!=='p')return '';
   return li+`<ul>${shown.map(x=>dn(x,d+1)).join('')}${k.length>CAP?`<li class="mute">+${k.length-CAP} more</li>`:''}</ul></li>`};
  const kk=kids.filter(x=>!sn.has(x)).slice(0,CAP);kk.forEach(x=>sn.add(x));
  const dnH=kk.length?`<div class="ftdn"><span class="ftgl">Children and descendants</span><ul>${kk.map(x=>dn(x,1)).join('')}${kids.length>CAP?`<li class="mute">+${kids.length-CAP} more children</li>`:''}</ul></div>`:'';
- return `<div class="ft">${upH}${meH}${sibH}${dnH}<p class="nmsrc">Tap any name to open that person. Links come from the Tyndale (TIPNR) name data and follow the father’s line upward.</p></div>`}
+ return `<div class="ft">${upH}${meH}${sibH}${dnH}</div>`}
 // ---------- life story (character page): a person's life as a mini timeline ----------
 // Sources: (1) dated events in events.json whose "who" list names the person (birth, death, calling, key moments);
 // (2) the background note in names-bg.json, whose sentences and Scripture references fill any gap (birth, calling, key moments, death);
@@ -247,24 +247,24 @@ function lifeHtml(i){const e=D[i];if(!e||e.t!=='p'||(e.ty!=='Male'&&e.ty!=='Fema
  const CAP=8,shown=mo.slice(0,CAP),rest=mo.slice(CAP);
  return `<div class="lf">${L.span?`<p class="lfspan">${esc(L.span)}</p>`:''}<ol class="lfl">${head.map(node).join('')}${shown.map(node).join('')}${rest.length?`<li class="lfmore"><details><summary>${rest.length} more key moment${rest.length===1?'':'s'}</summary><ol class="lfl">${rest.map(node).join('')}</ol></details></li>`:''}${tail.map(node).join('')}</ol>
   <p class="lfall"><button type="button" class="nmc" data-nmjump="vs">All ${L.count} verse${L.count===1?'':'s'} \u2193</button></p>
-  <p class="nmsrc">Dates and events come from Theographic (CC BY-SA 4.0). Steps marked from the background note are AI-assisted summaries (STEPBible, Tyndale House) matched to the verses they cite; check them against the text.</p></div>`}
+  </div>`}
 const fillLife=i=>{const b=sheet&&i>=0&&stack[stack.length-1]===i&&sheet.querySelector('.nmlife');if(b)b.innerHTML=lifeHtml(i)};
 NM.life=lifeData;
 function mapLink(e){const q=ll(e);return q?`<a class="btn nmmap" target="_blank" rel="noopener" href="https://www.google.com/maps/search/?api=1&query=${q[0]},${q[1]}">Open on map ↗</a> <span class="mute">${q[0]}°, ${q[1]}° (approximate, from OpenBible geolocation)</span>`:''}
 function related(i){const e=D[i],cnt=new Map(),rs=refs(e);rs.forEach(k=>(IDX.get(k)||[]).forEach(([j])=>{if(j!==i&&D[j].t!=='o')cnt.set(j,(cnt.get(j)||0)+1)}));
  const fam=new Set([...(e.par||[]),...(e.sib||[]),...(e.ptr||[]),...(e.off||[]),...(e.fd||[]),...(e.pp||[])].map(x=>Array.isArray(x)?x[0]:x));
  const top=[...cnt.entries()].filter(([j,c])=>c>=2&&!fam.has(j)).map(([j,c])=>[j,c,c/Math.sqrt(refs(D[j]).length)]).sort((a,b)=>b[2]-a[2]).slice(0,10);
- return top.length?`<p class="mute">People and places that appear in the same verses as ${esc(e.n)}.</p><div class="nmcs">${top.map(([j,c])=>chip(j,c+'×')).join('')}</div>`:''}
+ return top.length?`<div class="nmcs">${top.map(([j,c])=>chip(j,c+'×')).join('')}</div>`:''}
 const byBook=e=>{const by=new Map();refs(e).forEach(k=>{const b=Math.floor(k/1e6);(by.get(b)||by.set(b,[]).get(b)).push(k)});return by};
 function verses(i){const e=D[i],rs=refs(e),by=byBook(e),open=rs.length<=40;
- return `<p class="mute">${rs.length} verse${rs.length===1?'':'s'} in ${by.size} book${by.size===1?'':'s'}. Tap a verse to read it in the Bible.</p>`+[...by.entries()].map(([b,ks],n)=>{const o=open||n===0&&rs.length<=120;return `<details class="nmb" data-b="${b}" ${o?'open data-done="1"':''}><summary>${esc(BIB[b][0])} <span class="nmtag">${ks.length}</span></summary><div class="nmvs">${o?vlist(ks):''}</div></details>`}).join('')}
+ return ``+[...by.entries()].map(([b,ks],n)=>{const o=open||n===0&&rs.length<=120;return `<details class="nmb" data-b="${b}" ${o?'open data-done="1"':''}><summary>${esc(BIB[b][0])} <span class="nmtag">${ks.length}</span></summary><div class="nmvs">${o?vlist(ks):''}</div></details>`}).join('')}
 function vlist(ks){return ks.slice(0,300).map(k=>{const[b,c,v]=vp(k),t=NM.cfg.text(b,c,v);return `<button class="nmvl" data-nmgo="${b}:${c}:${v}"><b>${c}:${v}</b>${t?`<span>${esc(t)}</span>`:''}</button>`}).join('')+(ks.length>300?`<p class="mute">Showing the first 300 of ${ks.length}.</p>`:'')}
 function bgHtml(i){const e=D[i];if(BG===null)return '<p class="mute">Loading background…</p>';const g=BG&&BG[i]||['',''],sh=g[0],ar=g[1],x=g[2]||{};
  const one=x.sum||sh||e.br||e.bf||'';if(!one&&!ar&&!x.ea)return '<p class="mute">No background note is available for this name.</p>';
  const T=t=>esc(String(t).replace(/<[^>]+>/g,'').trim());
  return (one?`<p class="nmsum">${esc(one)}</p>`:'')+(x.yr?`<p><b>When:</b> ${esc(x.yr)}</p>`:'')+(x.nt?`<p>${esc(x.nt)}</p>`:'')
-  +(ar?ar.split(/<BR>/i).map(p=>`<p>${T(p)}</p>`).join('')+`<p class="nmsrc">Background notes are AI-assisted summaries supplied with the STEPBible name database (Tyndale House). Check them against the linked verses.</p>`:'')
-  +(x.ea?`<details class="nmea"><summary>Easton’s Bible Dictionary (1897)</summary><p>${T(x.ea)}</p><p class="nmsrc">Public-domain text, older wording; matched to this person by name and verses.</p></details>`:'')}
+  +(ar?ar.split(/<BR>/i).map(p=>`<p>${T(p)}</p>`).join(''):'')
+  +(x.ea?`<details class="nmea"><summary>Easton’s Bible Dictionary (1897)</summary><p>${T(x.ea)}</p></details>`:'')}
 function detail(i,ri){const e=D[i],n=refs(e).length,r0=ri!=null?e.rw[ri]:null,al=r0&&r0.alt,title=al?r0.alt:e.n,mean=r0?rowMean(e,r0):e.m;
  const altH=alts&&alts.length>1?`<div class="nmalt"><span class="mute">Same name in this verse:</span> ${alts.map(z=>`<button class="nmc ${z.i===i?'on':''} n-${D[z.i].t}" data-nmo="${z.i}.${z.ri}" data-keep="1">${esc(kind(D[z.i]))}${D[z.i].d?' · '+esc(D[z.i].d.replace(/ living at the time of /,' · ')):''}</button>`).join('')}</div>`:'';
  return `<div class="nmhd"><button class="g s" data-nmback ${stack.length>1?'':'hidden'}>‹ Back</button><span class="grow"></span><button class="g s" data-nmx aria-label="Close">✕</button></div>
@@ -281,7 +281,7 @@ function detail(i,ri){const e=D[i],n=refs(e).length,r0=ri!=null?e.rw[ri]:null,al
  ${sec(e.t==='l'?'People and places connected':'Family and connections',family(e))}
  ${sec('Related people and places',related(i))}
  ${sec('Linked verses ('+n+')',verses(i),'vs')}
- <p class="nmsrc">Sources: STEPBible TIPNR and lexicons (Tyndale House, CC BY 4.0); Strong's Dictionary (Open Scriptures, CC BY-SA); Easton’s Bible Dictionary and Theographic (CC BY-SA 4.0); OpenBible geolocation.</p></div>`}
+ </div>`}
 const evRow=(l,h)=>h?`<div class="nmevr"><b>${l}</b><div>${h}</div></div>`:'';
 const EVRE=new RegExp('\\b('+BIB.map(x=>x[0]).sort((a,b)=>b.length-a.length).join('|')+') (\\d+):(\\d+)(?:[–-]\\d+)?','g');
 const evLink=t=>esc(t).replace(EVRE,(m,n,c,v)=>{const b=BIB.findIndex(x=>x[0]===n);return `<button class="nmvl nmin" data-nmgo="${b}:${c}:${v}">${m}</button>`});
@@ -294,7 +294,7 @@ const evOne=(e,o,n)=>`<details class="nmev"${o?' open':''}><summary>${e.c?'📖'
 const evHtml=k=>{const[b,c,v]=k.split('.').map(Number),ix=(VM&&VM[k]||[]).slice(0,4);
  return `<div class="nmhd"><button class="g s" data-nmback ${stack.length>1?'':'hidden'}>‹ Back</button><span class="grow"></span><button class="g s" data-nmx aria-label="Close">✕</button></div>
  <div class="nmbody"><div class="nmtitle"><h2>${esc(BIB[b][0])} ${c}:${v}</h2><span class="nmtag big">What is happening here</span></div>${ix.map((n,j)=>evOne(EV[n],j===0,n)).join('')}
- <p class="nmsrc">📖 summaries are written from the Scripture text. 📌 events, people and places come from Theographic (CC BY-SA 4.0); dates are approximate scholarly estimates.</p></div>`};
+ </div>`};
 let EVK=[];
 NM.openEv=k=>{if(!EV||!VM||!VM[k])return;hidePop();
  if(!sheet){sheet=document.createElement('div');sheet.className='nmsheet';sheet.innerHTML='<div class="nmscrim" data-nmx></div><div class="nmpanel" role="dialog" aria-modal="true" aria-label="Verse events" tabindex="-1"></div>';document.body.appendChild(sheet);document.body.classList.add('nmlock')}
