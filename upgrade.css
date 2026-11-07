@@ -132,3 +132,4 @@ i.dr{background:#C9A24A}i.db{background:#E59A2E}i.de{background:#4B5FD6}.day.sel
 
 /* Desktop: show every highlight chip (hidden-scrollbar strip was unreachable with a mouse) */
 @media(min-width:861px){.rd .rtools{flex-wrap:wrap;overflow-x:visible}}
+.hx-row{grid-template-columns:1fr}.hx-row .hx-c{min-height:0}.hx-row .hx-none{margin:0}
