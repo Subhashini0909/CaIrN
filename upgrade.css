@@ -126,3 +126,9 @@ i.dr{background:#C9A24A}i.db{background:#E59A2E}i.de{background:#4B5FD6}.day.sel
 @media(prefers-reduced-motion:reduce){.hx-arc{animation:none}#rdprog{transition:none}}
 .rd .tools button{white-space:nowrap}
 @media(max-width:860px){.rd .tools{gap:6px}.rd .tools button.s{padding:6px 9px}}
+
+/* About <book> card: show right under the chapter heading */
+.card.rd>.bkabout{order:3;margin-top:6px;margin-bottom:6px}
+
+/* Desktop: show every highlight chip (hidden-scrollbar strip was unreachable with a mouse) */
+@media(min-width:861px){.rd .rtools{flex-wrap:wrap;overflow-x:visible}}
