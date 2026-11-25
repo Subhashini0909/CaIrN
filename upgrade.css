@@ -133,3 +133,106 @@ i.dr{background:#C9A24A}i.db{background:#E59A2E}i.de{background:#4B5FD6}.day.sel
 /* Desktop: show every highlight chip (hidden-scrollbar strip was unreachable with a mouse) */
 @media(min-width:861px){.rd .rtools{flex-wrap:wrap;overflow-x:visible}}
 .hx-row{grid-template-columns:1fr}.hx-row .hx-c{min-height:0}.hx-row .hx-none{margin:0}
+/* =====================================================================
+   CaIrN redesign: full-screen layout, calmer reader, quieter chrome
+   (loaded last, so it overrides earlier theme files)
+   ===================================================================== */
+:root{--canvas:#FAF7F0;--surface:#fff;--ink:#14172B;--mute:#6B7088;--line:#E9E3D3;--gold:#B8913F;--gold2:#D9B96A;--night:#0B1026;--hdr:76px;--r:16px}
+body{background:var(--canvas);color:var(--ink);font:14.5px/1.55 Inter,system-ui,sans-serif}
+h1{font-family:'Cormorant Garamond',Georgia,serif;font-size:34px;font-weight:600;letter-spacing:-.005em}
+h2{letter-spacing:0}
+
+/* ---------- Cards, buttons, inputs: flat, quiet, consistent ---------- */
+.card{border-radius:var(--r);border:1px solid var(--line);box-shadow:0 1px 2px #14172b08;background:var(--surface)}
+.card:hover{transform:none;box-shadow:0 1px 2px #14172b08}
+button{border-radius:10px;background:var(--acc);box-shadow:none;font-weight:500}
+button:hover{background:#2A3670}
+button.g,button.g.s{background:#F4EFE2;color:#2A2F55;border:1px solid transparent}
+button.g:hover{background:#EDE5CF;border-color:var(--gold2)}
+input,select,textarea{border-radius:10px;border:1px solid var(--line);background:#fff;min-height:40px}
+select{cursor:pointer}
+:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+
+/* ---------- Study tabs: underline tabs + compact version switch ---------- */
+.seg.main{max-width:none;background:none;padding:0;border-radius:0;gap:30px;margin:0 0 20px;border-bottom:1px solid var(--line)}
+.seg.main button{flex:0 0 auto;background:none;color:var(--mute);border-radius:0;padding:12px 2px;font-size:14.5px;border-bottom:2px solid transparent;margin-bottom:-1px}
+.seg.main button:hover{color:var(--ink);background:none}
+.seg.main button.on{background:none;color:var(--ink);font-weight:600;box-shadow:none;border-bottom-color:var(--gold)}
+.seg:not(.main){display:inline-flex;max-width:100%;background:#F1ECDD;padding:3px;gap:2px;margin:0 0 18px}
+.seg:not(.main) button{flex:0 0 auto;min-width:92px;padding:7px 20px;font-size:13.5px;background:none;color:#4A4F6E}
+.seg:not(.main) button.on{background:#fff;color:var(--ink);box-shadow:0 1px 4px #14172b1f;font-weight:600}
+
+/* ---------- Reader header: one tidy row ---------- */
+.card.rd{background:var(--rdbg);padding:8px 32px 36px}
+.rd .rdh{gap:12px;padding:12px 0;border-bottom:1px solid var(--line)}
+.rd .pick{flex:1 1 320px;max-width:520px}
+.rd .tools{gap:6px;flex-wrap:wrap}
+.rd .tools button{height:40px;padding:0 14px}
+.rd h2.ref{font-family:'Cormorant Garamond',Georgia,serif;font-size:clamp(30px,2.6vw,42px);color:var(--ink);text-align:left;margin:26px 0 12px;font-weight:600}
+
+/* highlight palette: one scrolling line instead of a big wrapped box */
+.rd .rtools{flex-wrap:nowrap;overflow-x:auto;gap:6px;border:0;border-bottom:1px solid var(--line);border-radius:0;box-shadow:none;padding:10px 0;margin:0;background:var(--rdbg);scrollbar-width:none;-webkit-mask-image:linear-gradient(90deg,#000 94%,transparent)}
+.rd .rtools button{background:#F6F2E7;color:var(--ink);border:1px solid transparent;border-radius:99px;padding:6px 12px 6px 8px;font-size:12.5px;gap:6px}
+.rd .rtools button:hover{border-color:var(--gold2);background:#FBF6E6}
+.rd .rtools button.on{background:var(--night);color:#F3E3B0;border-color:var(--night)}
+.rd .rtools .sw{transform:scale(.9)}
+
+/* reading text */
+.rd .scr{font-size:clamp(19px,1.35vw,22px);line-height:var(--rlh,1.85);max-width:54rem;margin:8px 0 0;color:#1b1d2e}
+.rd .scr.tam{font-size:clamp(18px,1.25vw,21px)}
+.rd .scr .vs{border-radius:6px}
+
+/* About / background panels: calm notes, not boxes in the middle of the page */
+.card.rd:not(.rt-night) .exp,.card.rd:not(.rt-night) .chintro,.card.rd:not(.rt-night) .bkabout{background:#FBF7EA;border:1px solid #EADFC0;border-radius:var(--r);padding:16px 20px;margin:14px 0 0;max-width:none;width:auto}
+.bgstrip{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:14px 0 0}
+.bgstrip .bgh{width:100%;text-transform:none;letter-spacing:0;font-weight:600;font-size:13px;color:var(--mute)}
+.bgchip{background:#fff;border:1px solid #E8DBB4}
+.bgchip:hover{border-color:var(--gold);background:#FFFBEF}
+.rdf{display:flex;flex-wrap:wrap;gap:10px;padding-top:22px;margin-top:28px;border-top:1px solid var(--line)}
+
+/* ---------- Desktop: true full-screen shell ---------- */
+@media(min-width:861px){
+ .shell{max-width:none;margin:0;padding:0;gap:0;grid-template-columns:264px minmax(0,1fr);min-height:100vh}
+ aside{top:0;height:100vh;border-radius:0;padding:26px 16px;background:linear-gradient(185deg,#0B1026,#121A40);box-shadow:none;border-right:1px solid #ffffff10}
+ .brandlogo img{max-width:150px}
+ .grp{margin:22px 10px 8px;font-size:11px;letter-spacing:.12em;color:#7F86AD}
+ nav button{border-radius:10px;padding:11px 14px;color:#C9CDE6;font-weight:500}
+ nav button:hover{background:#ffffff0f;color:#fff}
+ nav button.on{background:linear-gradient(90deg,#d9b96a2e,#d9b96a0a);color:#F3E3B0;box-shadow:inset 3px 0 0 var(--gold2)}
+ nav button.on svg{stroke:var(--gold2)}
+ .content{background:var(--canvas);border-radius:0;box-shadow:none;padding:0 clamp(24px,3.2vw,56px) 56px;min-width:0}
+ header{position:sticky;top:0;z-index:20;min-height:var(--hdr);padding:0;margin:0 calc(-1*clamp(24px,3.2vw,56px)) 22px;padding-inline:clamp(24px,3.2vw,56px);background:#FAF7F0ec;backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
+ .date{background:#fff;border:1px solid var(--line);color:var(--mute)}
+ main#view{width:100%;max-width:1760px}
+ .rd .rdh{top:var(--hdr)}
+ .rd .rtools{top:calc(var(--hdr) + var(--rdh,64px))}
+}
+
+/* ---------- Wide screens: text on the left, chapter context on the right ---------- */
+@media(min-width:1180px){
+ .card.rd{display:grid;grid-template-columns:minmax(0,1fr) clamp(300px,24vw,400px);grid-template-rows:auto auto auto auto auto auto 1fr auto auto;column-gap:clamp(32px,4vw,64px);align-items:start}
+ .card.rd>*{grid-column:1/-1;order:0}
+ .card.rd>.rdh{grid-row:1}.card.rd>.rtools{grid-row:2}
+ .card.rd>h2.ref{grid-column:1;grid-row:3;margin-top:28px}
+ .card.rd>.scr{grid-column:1;grid-row:4/8;margin:0}
+ .card.rd>.bgstrip{grid-column:2;grid-row:3;margin:30px 0 0}
+ .card.rd>.exp{grid-column:2;grid-row:4}
+ .card.rd>.chintro{grid-column:2;grid-row:5}
+ .card.rd>.bkabout{grid-column:2;grid-row:6}
+ .card.rd>.rdf{grid-row:8}.card.rd>p.mute{grid-row:9}
+}
+
+/* ---------- Dashboard & other tabs: breathe, but fill the screen ---------- */
+.dash{gap:20px}.three{gap:16px}
+.hx-hero{border-radius:20px}
+.tbl .h{background:#F4EFE2}
+.chip{background:#F4EFE2}
+
+/* ---------- Phones keep the bottom bar ---------- */
+@media(max-width:860px){
+ .card.rd{padding:4px 16px 28px}
+ .rd .scr{font-size:19px;max-width:none}
+ .seg.main{gap:20px;overflow-x:auto}
+ header{background:var(--canvas)}
+}
+@media(prefers-reduced-motion:reduce){.rd .rtools{scroll-behavior:auto}}
