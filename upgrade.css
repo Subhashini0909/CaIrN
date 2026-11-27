@@ -176,6 +176,8 @@ select{cursor:pointer}
 .rd .rtools button:hover{border-color:var(--gold2);background:#FBF6E6}
 .rd .rtools button.on{background:var(--night);color:#F3E3B0;border-color:var(--night)}
 .rd .rtools .sw{transform:scale(.9)}
+/* Desktop/tablet: wrap so every chip (incl. Note, Related, Clear) is visible; must come after the nowrap rule above */
+@media(min-width:861px){.rd .rtools{flex-wrap:wrap;overflow-x:visible;-webkit-mask-image:none;mask-image:none}}
 
 /* reading text */
 .rd .scr{font-size:clamp(19px,1.35vw,22px);line-height:var(--rlh,1.85);max-width:54rem;margin:8px 0 0;color:#1b1d2e}
