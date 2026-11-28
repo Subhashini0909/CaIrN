@@ -165,6 +165,7 @@ const NEW=(()=>{
 })();
 
 TAB.mr=8.5;TEM.mr=8.5;
+NEH.photo={url:'https://cdn.gamma.app/gi175i9v47ldswm/design-anything/SHiIwkjQyhMrKsdrlmpnS/IMXW8bEuiEapRUKTeKy9k.jpg',alt:'Artist\u2019s impression of Jerusalem with its rebuilt wall, gate towers and the temple at dawn',cap:'Artist\u2019s impression (AI-generated), not a historical record. The map below shows the order of the gates.'};
 const PLANS=[NEH,TAB,CAMP,TEM,ARK,NEW];
 PLANS.forEach(p=>{if(ART.draw[p.id])p.draw=ART.draw[p.id](p);p.facts=ART.facts[p.id]||[];p.pts.forEach(q=>{q.b=BK(q.r[0]);(q.m||[]).forEach(m=>{m.b=BK(m[0])})})});
 
@@ -198,7 +199,7 @@ function index(){const p=cur(),t=st(),w=here();
 function view(){const p=cur(),t=st(),pb=FROM?`<button class="g s bgback" data-pl="back">\u2039 Back to ${esc(BIB[FROM[0]][0])} ${FROM[1]}</button>`:'';
  return `<div class="card plp${p.dense?' pl-dense':''}">${pb}<div class="plsw" role="tablist" aria-label="Plans">${PLANS.map(x=>`<button class="${x.id===p.id?'on':''}" role="tab" aria-selected="${x.id===p.id}" data-pl="plan:${x.id}"><span aria-hidden="true">${x.ico}</span><b>${esc(x.t)}</b><small>${esc(x.sub)}</small></button>`).join('')}</div>
 <div class="pl-head"><h2>${esc(p.t)}</h2><p class="pl-intro">${esc(fill(p.intro))}</p>${p.facts.length?`<ul class="pl-facts">${p.facts.map(f=>`<li>${esc(fill(f))}</li>`).join('')}</ul>`:''}</div>
-<div class="pl-grid"><div class="pl-stage">${stage(p)}</div><div class="pl-side"><div class="pld" aria-live="polite">${side()}</div><div class="pl-nav">${nav()}</div><p class="pl-foot">${esc(p.foot)}</p></div></div>
+${p.photo?`<figure class="pl-photo"><img class="pl-ph-img" src="${esc(p.photo.url)}" alt="${esc(p.photo.alt)}" loading="lazy" decoding="async"><figcaption>${esc(p.photo.cap)}</figcaption></figure>`:''}<div class="pl-grid"><div class="pl-stage">${stage(p)}</div><div class="pl-side"><div class="pld" aria-live="polite">${side()}</div><div class="pl-nav">${nav()}</div><p class="pl-foot">${esc(p.foot)}</p></div></div>
 <div class="pl-index" role="list" aria-label="All points">${index()}</div><p class="pl-tip">Tap a number or its name. Arrow keys move between points.</p></div>`}
 
 /* ---------- updates without redrawing (keeps keyboard focus) ---------- */
@@ -225,5 +226,6 @@ document.addEventListener('keydown',e=>{if(typeof tab==='undefined'||tab!=='stud
  const k=e.key;if(k==='ArrowRight'||k==='ArrowDown'){e.preventDefault();pick(st().i+1);const n=r.querySelector(`.plm[data-pt="${st().i}"]`);n&&e.target.closest('.plm')&&n.focus()}
  else if(k==='ArrowLeft'||k==='ArrowUp'){e.preventDefault();pick(st().i-1);const n=r.querySelector(`.plm[data-pt="${st().i}"]`);n&&e.target.closest('.plm')&&n.focus()}});
 
+document.addEventListener('error',e=>{const t=e.target;if(t&&t.classList&&t.classList.contains('pl-ph-img')){const f=t.closest('figure');if(f)f.hidden=true}},true);
 window.PLN={view,strip,plans:PLANS,forChapter};
 })();
