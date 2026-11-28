@@ -139,3 +139,16 @@
 .df-tog,.df-tog.on,.df-tog:hover{background:#fff!important;color:var(--ink)!important}
 .rd .rtools{row-gap:14px}.rtg-hl .rtcur{white-space:nowrap}
 .un-ab{font:500 15px Inter,sans-serif;color:#C9CDE6}.un-p:hover,.un-p:focus,.un-p:active{background:#FFFBEF!important;color:var(--ink)!important;border-color:var(--gold)}.un-p small{color:var(--mute)!important}
+
+/* ---------- Plans: painted scenes ---------- */
+.pl-stage{padding:0;overflow:hidden;border-radius:20px;background:#0B1026}
+.pl-svg{border-radius:20px}
+.pll{paint-order:stroke;stroke:#0B1026;stroke-opacity:.78;stroke-width:3.6px;stroke-linejoin:round;fill:#FFF;font-weight:600}
+.pll.on{fill:#FFE9A6}
+.plm{filter:drop-shadow(0 2px 3px #000a)}
+.pl-comp text{fill:#fff;stroke:#0B1026;stroke-width:3px;paint-order:stroke}.pl-comp path{stroke:#fff;filter:drop-shadow(0 1px 1px #000)}
+.pl-sb text,.pl-t{fill:#fff;font-size:11px;stroke:#0B1026;stroke-width:2.6px;paint-order:stroke;stroke-linejoin:round}
+.pl-lead{stroke:#fff;stroke-opacity:.7;stroke-dasharray:2 3}
+.pl-facts{list-style:none;margin:0 0 16px;padding:0;display:flex;flex-wrap:wrap;gap:8px}
+.pl-facts li{font:500 12.5px Inter,sans-serif;color:#3a3f58;background:#fff;border:1px solid var(--line);border-radius:99px;padding:6px 13px;position:relative;padding-left:26px}
+.pl-facts li:before{content:'';position:absolute;left:11px;top:50%;width:6px;height:6px;margin-top:-3px;border-radius:50%;background:linear-gradient(135deg,#F0DA97,#B8913F)}

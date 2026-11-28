@@ -122,5 +122,6 @@ document.addEventListener('input',e=>{if(e.target.id!=='unA')return;const u=st()
 document.addEventListener('change',e=>{const t=e.target;if(t.id==='unF'){st().from=t.value;again()}else if(t.id==='unT'){st().to=t.value;again()}});
 document.addEventListener('toggle',e=>{if(e.target.classList&&e.target.classList.contains('un-all'))st().all=e.target.open?1:0},true);
 
-window.UNITS={view:body,say,chapterChips};
+function short(n,u){const c=u==='stadion'?185:cubit(),m=n*c,nm=u==='stadion'?(n===1?'stadion':'stadia'):(n===1?'cubit':'cubits');return `${sig(n,6)} ${nm} \u2248 ${metric(m)}`}
+window.UNITS={view:body,say,short,cub:cubit,chapterChips};
 })();

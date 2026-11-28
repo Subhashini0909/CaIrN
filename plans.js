@@ -9,7 +9,9 @@ const NM=window.NM;
 const BK=n=>BIB.findIndex(b=>b[0]===n);
 const refTxt=r=>`${r[0]} ${r[1]}${r[2]?':'+r[2]+(r[3]&&r[3]!==r[2]?'\u2013'+r[3]:''):''}`;
 const say=(n,u)=>window.UNITS?window.UNITS.say(n,u):`${n} ${u}${n==1?'':'s'}`;
-const fill=t=>String(t).replace(/\{\{(s:)?([\d.,]+)\}\}/g,(m,s,n)=>say(+String(n).replace(/,/g,''),s?'stadion':'cubit'));
+const short=(n,u)=>window.UNITS?window.UNITS.short(n,u):`${n} ${u}s`;
+const fill=t=>String(t).replace(/\{\{(s:|c:|k:)?([\d.,]+)\}\}/g,(m,s,n)=>{n=+String(n).replace(/,/g,'');return s==='c:'?short(n,'cubit'):s==='k:'?short(n,'stadion'):say(n,s?'stadion':'cubit')});
+const ART=window.PLNART||{defs:'',draw:{},facts:{}},DEFS=ART.defs;
 const compass=(x,y)=>`<g class="pl-comp" transform="translate(${x} ${y})"><text y="-6" text-anchor="middle">N</text><path d="M0 2v28M-5 9 0 2 5 9"/></g>`;
 
 /* ---------- 1. Jerusalem's wall (Nehemiah 3) ---------- */
@@ -35,7 +37,7 @@ const NEH={id:'neh',ico:'\u{1F9F1}',t:'Jerusalem\u2019s wall',sub:'Nehemiah 3',k
  ]};
 
 /* ---------- 2. The Tabernacle (Exodus 25\u201340) ---------- */
-const TAB={id:'tab',ico:'\u26FA',t:'The Tabernacle',sub:'Exodus 25\u201340',k:'Where',vb:[680,360],dense:1,
+const TAB={id:'tab',ico:'\u26FA',t:'The Tabernacle',sub:'Exodus 25\u201340',k:'Where',vb:[10,20,650,320],dense:1,
  refs:[['Exodus',25,31],['Exodus',35,40]],
  intro:'A worshipper walked in from the east gate toward the ark. Each point is in the order he would meet it.',
  foot:'Schematic, not to scale. The text gives sizes for the court, the tent and most furniture; where it is silent (for example the exact place of the basin), the position is the usual reading.',
@@ -90,7 +92,7 @@ const CAMP=(()=>{
    pts.push({n,x:cx-W/2+17,y:cy,l:[cx-W/2+36,cy+4,'start'],r:['Numbers',2,...ref[n]],s:side+' side of the camp',d:`${n} camped on the ${side.toLowerCase()} side with ${who} as leader. The tribe numbered ${fmt(ct)}. ${tot[side]}`})}
  }));
  draw+=`<text class="pl-area" x="320" y="150" text-anchor="middle">North</text><text class="pl-area" x="320" y="440" text-anchor="middle">South</text>${compass(596,40)}`;
- return{id:'camp',ico:'\u26FA',t:'The camp of Israel',sub:'Numbers 2\u20133',k:'Position',vb:[640,560],dense:1,refs:[['Numbers',1,4],['Numbers',10,10]],
+ return{T,lev,W,H,id:'camp',ico:'\u26FA',t:'The camp of Israel',sub:'Numbers 2\u20133',k:'Position',vb:[640,560],dense:1,refs:[['Numbers',1,4],['Numbers',10,10]],
   intro:'Four divisions of three tribes camped on the four sides of the tent, with the Levites between them and the tabernacle. Points run east, south, west, north.',
   foot:'Schematic, not to scale. Numbers 2 names each side\u2019s lead tribe and the two that camped beside it; the arrangement inside each block is simplified here.',draw,pts};
 })();
@@ -162,8 +164,9 @@ const NEW=(()=>{
   foot:'Schematic, not to scale. Revelation 21 says the gates carry the tribes\u2019 names and face all four directions; the order shown follows Ezekiel 48:31\u201334, which is the passage that assigns each name to a side.',draw,pts};
 })();
 
+TAB.mr=8.5;TEM.mr=8.5;
 const PLANS=[NEH,TAB,CAMP,TEM,ARK,NEW];
-PLANS.forEach(p=>{p.pts.forEach(q=>{q.b=BK(q.r[0]);(q.m||[]).forEach(m=>{m.b=BK(m[0])})})});
+PLANS.forEach(p=>{if(ART.draw[p.id])p.draw=ART.draw[p.id](p);p.facts=ART.facts[p.id]||[];p.pts.forEach(q=>{q.b=BK(q.r[0]);(q.m||[]).forEach(m=>{m.b=BK(m[0])})})});
 
 /* ---------- state ---------- */
 const st=()=>{const s=S.st||(S.st={});const t=s.pl&&typeof s.pl==='object'?s.pl:(s.pl={});if(!PLANS.some(p=>p.id===t.id))t.id=PLANS[0].id;const p=PLANS.find(x=>x.id===t.id);t.i=Math.max(0,Math.min(Math.floor(+t.i)||0,p.pts.length-1));return t};
@@ -180,12 +183,12 @@ function strip(b,c){const L=forChapter(b,c);if(!L.length)return '';
 
 /* ---------- drawing ---------- */
 const lines=t=>String(t).split('\n');
-function marker(q,i,on,w){const c=inch(q,w);
- return `<g class="plm${on?' on':''}${c?' inch':''}" data-pl="pt:${i}" data-pt="${i}" tabindex="0" role="button" aria-pressed="${on}" aria-label="${i+1}. ${esc(q.n)}, ${esc(refTxt(q.r))}" transform="translate(${q.x} ${q.y})"><circle class="plm-h" r="19"/><circle class="plm-c" r="11.5"/><text class="plm-n" y="4.2" text-anchor="middle">${i+1}</text></g>`}
+function marker(q,i,on,w,R){R=R||11.5;const c=inch(q,w);
+ return `<g class="plm${on?' on':''}${c?' inch':''}" data-pl="pt:${i}" data-pt="${i}" tabindex="0" role="button" aria-pressed="${on}" aria-label="${i+1}. ${esc(q.n)}, ${esc(refTxt(q.r))}" transform="translate(${q.x} ${q.y})"><circle class="plm-h" r="${R+7.5}"/><circle class="plm-c" r="${R}"/><text class="plm-n" y="${(R*.36).toFixed(1)}" font-size="${R<10?10:12}" text-anchor="middle">${i+1}</text></g>`}
 function label(q,i,on){if(!q.l||q.nolab)return '';const[x,y,a,t]=q.l,L=lines(fill(t||q.n));
  return `<text class="pll${on?' on':''}" data-pl="pt:${i}" data-pt="${i}" x="${x}" y="${y}" text-anchor="${a}">${L.map((s,j)=>`<tspan x="${x}" dy="${j?13.5:0}">${esc(s)}</tspan>`).join('')}</text>`}
 function stage(p){const t=st(),w=here();
- return `<svg viewBox="0 0 ${p.vb[0]} ${p.vb[1]}" class="pl-svg" role="group" aria-label="${esc(p.t)}: ${p.pts.length} points. Tap a number to read about it.">${p.draw}${p.pts.map(q=>q.lead?`<line class="pl-lead" x1="${q.lead[0]}" y1="${q.lead[1]}" x2="${q.lead[2]}" y2="${q.lead[3]}"/>`:'').join('')}${p.pts.map((q,i)=>label(q,i,i===t.i)).join('')}${p.pts.map((q,i)=>marker(q,i,i===t.i,w)).join('')}</svg>`}
+ return `<svg viewBox="${p.vb.length===4?p.vb.join(' '):'0 0 '+p.vb[0]+' '+p.vb[1]}" class="pl-svg" role="group" aria-label="${esc(p.t)}: ${p.pts.length} points. Tap a number to read about it.">${DEFS}${p.draw}${p.pts.map(q=>q.lead?`<line class="pl-lead" x1="${q.lead[0]}" y1="${q.lead[1]}" x2="${q.lead[2]}" y2="${q.lead[3]}"/>`:'').join('')}${p.pts.map((q,i)=>label(q,i,i===t.i)).join('')}${p.pts.map((q,i)=>marker(q,i,i===t.i,w,p.mr)).join('')}</svg>`}
 function side(){const p=cur(),t=st(),q=p.pts[t.i];
  return `<span class="pl-pill">${esc(refTxt(q.r))}</span><h3 class="pl-name">${esc(fill(q.n))}</h3><p class="pl-d">${esc(fill(q.d))}</p>${q.s?`<p class="pl-m"><span>${esc(p.k)}</span>${esc(q.s)}</p>`:''}<div class="pl-a">${goBtn(q.r,q.b)}${(q.m||[]).map(m=>goBtn(m,m.b,m[3])).join('')}</div>`}
 function nav(){const p=cur(),t=st();return `<button class="g" data-pl="prev" aria-label="Previous point">\u2039 Previous</button><span class="pl-cnt">${t.i+1} / ${p.pts.length}</span><button class="g" data-pl="next" aria-label="Next point">Next \u203A</button>`}
@@ -194,7 +197,7 @@ function index(){const p=cur(),t=st(),w=here();
 
 function view(){const p=cur(),t=st(),pb=FROM?`<button class="g s bgback" data-pl="back">\u2039 Back to ${esc(BIB[FROM[0]][0])} ${FROM[1]}</button>`:'';
  return `<div class="card plp${p.dense?' pl-dense':''}">${pb}<div class="plsw" role="tablist" aria-label="Plans">${PLANS.map(x=>`<button class="${x.id===p.id?'on':''}" role="tab" aria-selected="${x.id===p.id}" data-pl="plan:${x.id}"><span aria-hidden="true">${x.ico}</span><b>${esc(x.t)}</b><small>${esc(x.sub)}</small></button>`).join('')}</div>
-<div class="pl-head"><h2>${esc(p.t)}</h2><p class="pl-intro">${esc(fill(p.intro))}</p></div>
+<div class="pl-head"><h2>${esc(p.t)}</h2><p class="pl-intro">${esc(fill(p.intro))}</p>${p.facts.length?`<ul class="pl-facts">${p.facts.map(f=>`<li>${esc(fill(f))}</li>`).join('')}</ul>`:''}</div>
 <div class="pl-grid"><div class="pl-stage">${stage(p)}</div><div class="pl-side"><div class="pld" aria-live="polite">${side()}</div><div class="pl-nav">${nav()}</div><p class="pl-foot">${esc(p.foot)}</p></div></div>
 <div class="pl-index" role="list" aria-label="All points">${index()}</div><p class="pl-tip">Tap a number or its name. Arrow keys move between points.</p></div>`}
 
