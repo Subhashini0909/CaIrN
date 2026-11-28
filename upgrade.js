@@ -123,7 +123,7 @@ document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest
 // ---------- Search and jump palette (Ctrl or Cmd + K) ----------
 const ALIAS={jn:42,mt:39,mk:40,lk:41,ps:18,pss:18};
 const TABS=[['Dashboard','today'],['Bible reading plan','bible'],['Study','study'],['Wallet','wallet'],['Bills','subs'],['Monthly review','review'],['Calendar','calendar'],['Settings','settings']];
-const SUBS=[['Read the Bible','read'],['Treasured verses','tv'],['Compare versions','cmp'],['Background pages','bg'],['Study notes','notes'],['Search the Bible','search'],['Timeline','tl']];
+const SUBS=[['Read the Bible','read'],['Treasured verses','tv'],['Compare versions','cmp'],['Background pages','bg'],['Plans and maps','plans'],['Study notes','notes'],['Search the Bible','search'],['Timeline','tl']];
 const toStudy=sub=>{if(typeof tab==='undefined'||tab!=='study')clickTab('study');if(sub)clickSx('sub:'+sub)};
 function passages(q){const m=/^\s*((?:[1-3]\s*)?[a-z][a-z .]*?)\s*(?:(\d{1,3})(?:\s*[:.]\s*(\d{1,3}))?)?\s*$/i.exec(q);if(!m)return[];const nm=m[1].toLowerCase().replace(/[\s.]/g,'');if(nm.length<2)return[];const ch=m[2]?+m[2]:1,v=m[3]?+m[3]:0,out=[];
  BIB.forEach(([n,c],i)=>{const k=n.toLowerCase().replace(/\s/g,'');if((k.startsWith(nm)||ALIAS[nm]===i)&&ch>=1&&ch<=c)out.push({l:`${n} ${ch}${v?':'+v:''}`,s:'Bible',f:()=>go(i,ch,v)})});return out.slice(0,5)}

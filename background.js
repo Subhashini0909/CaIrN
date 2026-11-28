@@ -7,7 +7,7 @@ const NM=window.NM;
 const BK=n=>BIB.findIndex(b=>b[0]===n);
 // "Genesis 23:16" -> [0,23,16]
 const R=s=>{const m=/^(.+) (\d+):(\d+)$/.exec(s);return m?[BK(m[1]),+m[2],+m[3]]:null};
-const P={festivals:{ico:'\u{1F4C5}',t:'Festivals and calendar'},coins:{ico:'\u{1FA99}',t:'Coins and money'},measures:{ico:'⚖️',t:'Weights and measures'},customs:{ico:'\u{1F3FA}',t:'Customs'}};
+const P={festivals:{ico:'\u{1F4C5}',t:'Festivals and calendar'},coins:{ico:'\u{1FA99}',t:'Coins and money'},measures:{ico:'⚖️',t:'Weights and measures'},convert:{ico:'\u21C4',t:'Unit converter'},customs:{ico:'\u{1F3FA}',t:'Customs'}};
 
 // ---------- data: festivals and calendar ----------
 // months: [number in the sacred year, name in the Bible, about, what happens]
@@ -161,14 +161,14 @@ function pFest(){
 function pCoins(){
  return `<p class="trintro">The Bible spans many centuries and several empires, so its money changes. Early on, silver was weighed. Coins came later, and in the Gospels you meet Greek and Roman ones. Values below are rough.</p>`+COINS.map(c=>row(esc(c[0]),`<p class="bgm">KJV: ${esc(c[1])}</p><p>${esc(c[2])}</p><p><b>Worth:</b> ${esc(c[3])}</p>`,c[4],c[5])).join('')}
 function pMeas(){
- return `<p class="trintro">Measures were based on the body and on common vessels, and they differed by place and time. The sizes are approximate. A cubit, for example, was about the length of a forearm.</p>`+Object.values(MEAS).map(g=>`<h3 class="bgh3">${esc(g.t)}</h3>`+g.rows.map(r=>row(esc(r[0]),`<p class="bgm">About ${esc(r[1])}${r[2]&&r[2]!=='—'?' · '+esc(r[2]):''}</p><p>${esc(r[3])}</p>`,r[4],r[5])).join('')).join('')+`<p class="trhint">${esc(MEASNOTE)}</p>`}
+ return `<p class="trintro">Measures were based on the body and on common vessels, and they differed by place and time. The sizes are approximate. A cubit, for example, was about the length of a forearm.</p><p><button class="g s" data-bg="page:convert">\u21C4 Convert these to metric</button></p>`+Object.values(MEAS).map(g=>`<h3 class="bgh3">${esc(g.t)}</h3>`+g.rows.map(r=>row(esc(r[0]),`<p class="bgm">About ${esc(r[1])}${r[2]&&r[2]!=='—'?' · '+esc(r[2]):''}</p><p>${esc(r[3])}</p>`,r[4],r[5])).join('')).join('')+`<p class="trhint">${esc(MEASNOTE)}</p>`}
 function pCust(){
  return `<p class="trintro">Many scenes in the Bible make sense only if you know the everyday habits behind them.</p>`+CUSTOMS.map(c=>{const on=HL.includes(c[0])||OPEN===c[0];return `<details class="bgc${HL.includes(c[0])?' hit':''}" data-bgid="${c[0]}"${on?' open':''}><summary>${esc(c[1])}</summary><p>${esc(c[2])}</p><div class="trw2">${refBtns(c[4])}</div></details>`}).join('')}
 
 function view(){
  const b=B(),tabs=Object.keys(P).map(k=>`<button class="${b.p===k?'on':''}" data-bg="page:${k}" role="tab" aria-selected="${b.p===k}">${P[k].ico} ${P[k].t}</button>`).join('');
  const back=FROM?`<button class="g s bgback" data-bg="back">‹ Back to ${esc(BIB[FROM[0]][0])} ${FROM[1]}</button>`:'';
- const body=b.p==='festivals'?pFest():b.p==='coins'?pCoins():b.p==='measures'?pMeas():pCust();
+ const body=b.p==='festivals'?pFest():b.p==='coins'?pCoins():b.p==='measures'?pMeas():b.p==='convert'?(window.UNITS?UNITS.view():'<p class="mute">The converter could not be loaded.</p>'):pCust();
  return `<div class="card bgp">${back}<div class="seg bgs" role="tablist">${tabs}</div><h2>${esc(P[b.p].t)}</h2>${body}</div>`}
 
 // ---------- events ----------
@@ -183,5 +183,5 @@ document.addEventListener('click',e=>{
  if(a==='page'&&P[x]){e.preventDefault();B().p=x;HL=[];OPEN='';save();render();scrollTo({top:0})}
  else if(a==='go'){e.preventDefault();const r=x.split('.').map(Number);NM.cfg.go&&NM.cfg.go(r[0],r[1],r[2])}
  else if(a==='back'){e.preventDefault();if(FROM&&NM.cfg.go)NM.cfg.go(FROM[0],FROM[1],0)}});
-window.BGP={view,strip};
+window.BGP={view,strip,found};
 })();
